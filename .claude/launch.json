@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "redis",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "C:\\Users\\enmag\\redis\\redis-server.exe --port 6379"],
+      "port": 6379
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set PATH=C:\\Program Files\\nodejs;%PATH% && cd C:\\Users\\enmag\\Documents\\Proyecto_ChronoShield\\frontend && npm run dev"],
+      "port": 3000
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd C:\\Users\\enmag\\Documents\\Proyecto_ChronoShield\\backend && C:\\Users\\enmag\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\uvicorn.exe app.main:app --reload --port 8000"],
+      "port": 8000
+    },
+    {
+      "name": "celery-worker",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd C:\\Users\\enmag\\Documents\\Proyecto_ChronoShield\\backend && C:\\Users\\enmag\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\celery.exe -A app.workers.celery_app worker --loglevel=info"],
+      "port": null
+    },
+    {
+      "name": "celery-beat",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd C:\\Users\\enmag\\Documents\\Proyecto_ChronoShield\\backend && C:\\Users\\enmag\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\celery.exe -A app.workers.celery_app beat --loglevel=info"],
+      "port": null
+    },
+    {
+      "name": "flower",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd C:\\Users\\enmag\\Documents\\Proyecto_ChronoShield\\backend && C:\\Users\\enmag\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\celery.exe -A app.workers.celery_app flower --port=5555"],
+      "port": 5555
+    }
+  ]
+}
