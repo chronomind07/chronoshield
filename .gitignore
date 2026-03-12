@@ -30,3 +30,7 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Celery beat scheduler
+celerybeat-schedule*
+celerybeat.pid
