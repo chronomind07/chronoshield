@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import { Shield, LogOut, Globe, Mail, Bell, Loader2 } from "lucide-react";
+import { Shield, LogOut, Globe, Mail, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 const supabase = createClient(
@@ -58,7 +58,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition">
-            <Globe className="w-4 h-4" /> Dashboard
+            <Shield className="w-4 h-4" /> Dashboard
+          </Link>
+          <Link href="/dashboard/domains" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition">
+            <Globe className="w-4 h-4" /> Dominios
+          </Link>
+          <Link href="/dashboard/emails" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition">
+            <Mail className="w-4 h-4" /> Emails
           </Link>
           <span className="text-sm text-gray-400">{userEmail}</span>
           <button

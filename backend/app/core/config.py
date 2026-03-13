@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     FROM_EMAIL: str = "alerts@chronoshield.io"
 
+    # CORS
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://app.chronoshield.io",
+        "https://chronoshield-brown.vercel.app",
+        "https://chronoshield-9e4lqlu9h-chronomind07s-projects.vercel.app",
+    ]
+
     # Plans config
     PLAN_STARTER_DOMAINS: int = 1
     PLAN_STARTER_EMAILS: int = 10

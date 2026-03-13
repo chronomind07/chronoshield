@@ -142,11 +142,16 @@ export default function DashboardPage() {
   if (!summary) return (
     <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
       <Shield className="w-12 h-12 text-blue-300" />
-      <h2 className="text-lg font-semibold text-gray-700">Conecta el backend para ver tus datos</h2>
+      <h2 className="text-lg font-semibold text-gray-700">Empieza añadiendo tu primer dominio</h2>
       <p className="text-sm text-gray-500 max-w-sm">
-        Configura tu <code className="bg-gray-100 px-1 rounded">.env.local</code> con las credenciales de Supabase
-        y arranca el backend en <code className="bg-gray-100 px-1 rounded">localhost:8000</code>.
+        Monitoriza la seguridad de tus dominios y emails desde un solo lugar.
       </p>
+      <a
+        href="/dashboard/domains"
+        className="mt-2 inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+      >
+        Añadir dominio
+      </a>
     </div>
   );
 
