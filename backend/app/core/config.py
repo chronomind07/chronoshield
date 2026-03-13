@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     # App
     APP_NAME: str = "ChronoShield"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "1.0.1"
     DEBUG: bool = False
     API_V1_STR: str = "/api/v1"
 
