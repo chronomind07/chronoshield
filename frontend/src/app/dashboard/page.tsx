@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { dashboardApi, domainsApi } from "@/lib/api";
-import { Shield, AlertTriangle, Globe, Mail, TrendingUp } from "lucide-react";
+import { dashboardApi } from "@/lib/api";
+import { useTechMode } from "@/lib/mode-context";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 interface DashboardSummary {
   domains_monitored: number;
@@ -26,78 +27,235 @@ interface Alert {
   read_at: string | null;
 }
 
-function ScoreBadge({ score }: { score: number }) {
-  const color =
-    score >= 80 ? "text-green-500" : score >= 60 ? "text-yellow-500" : "text-red-500";
+// ─── Score Ring ──────────────────────────────────────────────────────────────
+function ScoreRing({ score }: { score: number }) {
+  const [animated, setAnimated] = useState(false);
+  const r = 52;
+  const circumference = 2 * Math.PI * r;
   const grade =
-    score >= 95 ? "A+" : score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+    score >= 95 ? "A+" : score >= 90 ? "A" : score >= 80 ? "B" :
+    score >= 70 ? "C" : score >= 60 ? "D" : "F";
+  const color =
+    score >= 80 ? "#00E5A0" : score >= 60 ? "#F59E0B" : "#FF4757";
+  const offset = animated ? circumference * (1 - score / 100) : circumference;
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 120);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
-    <div className="flex flex-col items-center">
-      <span className={`text-5xl font-bold ${color}`}>{score}</span>
-      <span className={`text-2xl font-semibold ${color}`}>{grade}</span>
+    <div className="relative inline-flex items-center justify-center">
+      <svg
+        viewBox="0 0 120 120"
+        className="w-36 h-36"
+        style={{ transform: "rotate(-90deg)" }}
+      >
+        {/* Track */}
+        <circle
+          cx="60" cy="60" r={r}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth="8"
+        />
+        {/* Progress */}
+        <circle
+          cx="60" cy="60" r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)" }}
+        />
+      </svg>
+      {/* Center label */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-mono text-3xl font-bold text-white leading-none">
+          {score}
+        </span>
+        <span className="font-mono text-sm font-semibold mt-0.5" style={{ color }}>
+          {grade}
+        </span>
+      </div>
     </div>
   );
 }
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+type BarColor = "green" | "yellow" | "red" | "brand";
+
+const BAR_COLORS: Record<BarColor, string> = {
+  green:  "#00E5A0",
+  yellow: "#F59E0B",
+  red:    "#FF4757",
+  brand:  "#00C2FF",
+};
 
 function StatCard({
-  icon: Icon,
   label,
+  labelSimple,
   value,
-  color = "text-gray-900",
+  barColor,
+  techMode,
 }: {
-  icon: any;
   label: string;
+  labelSimple: string;
   value: number | string;
-  color?: string;
+  barColor: BarColor;
+  techMode: boolean;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 flex items-center gap-4">
-      <div className="p-3 bg-blue-50 rounded-lg">
-        <Icon className="w-6 h-6 text-blue-600" />
-      </div>
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className={`text-2xl font-bold ${color}`}>{value}</p>
-      </div>
+    <div className="relative bg-[#0D1117] border border-white/[0.06] rounded-xl p-5 overflow-hidden flex flex-col gap-2">
+      <p className="text-xs text-slate-500 leading-snug">
+        {techMode ? label : labelSimple}
+      </p>
+      <p className="font-mono text-2xl font-bold text-white">{value}</p>
+      {/* Bottom color bar */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[3px]"
+        style={{ backgroundColor: BAR_COLORS[barColor] }}
+      />
     </div>
   );
 }
 
-function AlertItem({ alert, onRead }: { alert: Alert; onRead: (id: string) => void }) {
-  const severityColors = {
-    critical: "border-red-500 bg-red-50",
-    warning: "border-yellow-500 bg-yellow-50",
-    info: "border-blue-500 bg-blue-50",
-  };
-  const colors = severityColors[alert.severity as keyof typeof severityColors] || severityColors.info;
+// ─── Alert Timeline ───────────────────────────────────────────────────────────
+const SEVERITY_DOT: Record<string, string> = {
+  critical: "#FF4757",
+  warning:  "#F59E0B",
+  info:     "#00C2FF",
+};
+
+const SEVERITY_LABEL: Record<string, string> = {
+  critical: "Crítico",
+  warning:  "Aviso",
+  info:     "Info",
+};
+
+function AlertTimeline({
+  alerts,
+  onRead,
+  techMode,
+}: {
+  alerts: Alert[];
+  onRead: (id: string) => void;
+  techMode: boolean;
+}) {
+  if (alerts.length === 0) {
+    return (
+      <div className="bg-[#0D1117] border border-white/[0.06] rounded-xl p-8 flex flex-col items-center gap-3 text-center">
+        <div className="w-10 h-10 rounded-full bg-[#00E5A0]/10 flex items-center justify-center">
+          <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+            <path d="M5 10 L8.5 13.5 L15 7" stroke="#00E5A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <p className="text-sm font-medium text-slate-300">
+          {techMode ? "Sin alertas activas" : "¡Todo en orden!"}
+        </p>
+        <p className="text-xs text-slate-600">
+          {techMode
+            ? "No se han detectado incidencias."
+            : "No hay problemas de seguridad en este momento."}
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={`border-l-4 p-4 rounded-r-lg ${colors} ${!alert.read_at ? "opacity-100" : "opacity-60"}`}
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="font-semibold text-sm text-gray-900">{alert.title}</p>
-          <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
-        </div>
-        {!alert.read_at && (
-          <button
-            onClick={() => onRead(alert.id)}
-            className="text-xs text-blue-600 hover:underline ml-4 shrink-0"
-          >
-            Marcar leído
-          </button>
-        )}
+    <div className="relative pl-5">
+      {/* Vertical line */}
+      <div className="absolute left-[7px] top-3 bottom-3 w-px bg-white/[0.06]" />
+
+      <div className="space-y-3">
+        {alerts.map((alert) => {
+          const dotColor = SEVERITY_DOT[alert.severity] || "#00C2FF";
+          const isUnread = !alert.read_at;
+
+          return (
+            <div key={alert.id} className="relative flex gap-4">
+              {/* Dot */}
+              <div
+                className="relative z-10 mt-3.5 w-3 h-3 rounded-full shrink-0 ring-2 ring-[#080C10]"
+                style={{ backgroundColor: dotColor, marginLeft: "-1.5px" }}
+              />
+
+              {/* Card */}
+              <div
+                className={`flex-1 bg-[#0D1117] border rounded-xl p-4 transition-opacity ${
+                  isUnread
+                    ? "border-white/[0.08] opacity-100"
+                    : "border-white/[0.04] opacity-50"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
+                        style={{
+                          color: dotColor,
+                          backgroundColor: `${dotColor}18`,
+                        }}
+                      >
+                        {SEVERITY_LABEL[alert.severity] || alert.severity}
+                      </span>
+                      {isUnread && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#00C2FF]" />
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-slate-200 leading-snug">
+                      {alert.title}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      {alert.message}
+                    </p>
+                  </div>
+                  {isUnread && (
+                    <button
+                      onClick={() => onRead(alert.id)}
+                      className="text-[11px] text-slate-600 hover:text-[#00C2FF] transition-colors shrink-0 mt-0.5"
+                    >
+                      Leído
+                    </button>
+                  )}
+                </div>
+                <p className="font-mono text-[10px] text-slate-700 mt-2">
+                  {new Date(alert.sent_at).toLocaleString("es-ES")}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
-      <p className="text-xs text-gray-400 mt-2">
-        {new Date(alert.sent_at).toLocaleString("es-ES")}
-      </p>
     </div>
   );
 }
 
+// ─── Recommendations (simple mode) ────────────────────────────────────────────
+function Recommendation({
+  icon, title, body, level,
+}: {
+  icon: string; title: string; body: string; level: "ok" | "warn" | "danger";
+}) {
+  const border = { ok: "border-[#00E5A0]/20", warn: "border-[#F59E0B]/20", danger: "border-[#FF4757]/20" }[level];
+  const bg    = { ok: "bg-[#00E5A0]/05", warn: "bg-[#F59E0B]/05", danger: "bg-[#FF4757]/05" }[level];
+
+  return (
+    <div className={`flex items-start gap-3 bg-[#0D1117] ${bg} border ${border} rounded-xl p-4`}>
+      <span className="text-xl shrink-0 mt-0.5">{icon}</span>
+      <div>
+        <p className="text-sm font-semibold text-slate-200">{title}</p>
+        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{body}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const { techMode } = useTechMode();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -131,89 +289,180 @@ export default function DashboardPage() {
     loadSummary();
   }, []);
 
+  // ─── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="w-8 h-8 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!summary) return (
-    <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
-      <Shield className="w-12 h-12 text-blue-300" />
-      <h2 className="text-lg font-semibold text-gray-700">Empieza añadiendo tu primer dominio</h2>
-      <p className="text-sm text-gray-500 max-w-sm">
-        Monitoriza la seguridad de tus dominios y emails desde un solo lugar.
-      </p>
-      <a
-        href="/dashboard/domains"
-        className="mt-2 inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-      >
-        Añadir dominio
-      </a>
-    </div>
-  );
+  // ─── Empty state ───────────────────────────────────────────────────────────
+  if (!summary) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-5 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-[#00C2FF]/10 flex items-center justify-center">
+          <svg viewBox="0 0 32 32" fill="none" className="w-8 h-8">
+            <path d="M16 3 L28 8 L28 17 C28 23.5 22.5 28.5 16 30 C9.5 28.5 4 23.5 4 17 L4 8 Z"
+              fill="rgba(0,194,255,0.12)" stroke="#00C2FF" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M11.5 16.5 L14.5 19.5 L20.5 13" stroke="#00C2FF" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h2 className="font-syne text-lg font-bold text-white">
+            Empieza añadiendo tu primer dominio
+          </h2>
+          <p className="text-sm text-slate-500 mt-1 max-w-xs">
+            Monitoriza la seguridad de tus dominios y emails desde un solo lugar.
+          </p>
+        </div>
+        <Link
+          href="/dashboard/domains"
+          className="inline-flex items-center gap-2 bg-[#00C2FF] text-[#080C10] text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-[#00C2FF]/90 transition-colors"
+        >
+          Añadir dominio
+        </Link>
+      </div>
+    );
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  const scoreColor = (n: number): BarColor =>
+    n > 0 ? "red" : "green";
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Visión general de tu seguridad</p>
+        <h1 className="font-syne text-2xl font-bold text-white">
+          {techMode ? "Security Overview" : "Tu seguridad hoy"}
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          {techMode
+            ? "Real-time monitoring dashboard"
+            : "Un resumen claro del estado de tu agencia"}
+        </p>
       </div>
 
       {/* Score + Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center justify-center gap-2">
-          <Shield className="w-8 h-8 text-blue-600 mb-2" />
-          <p className="text-sm font-medium text-gray-500">Security Score</p>
-          <ScoreBadge score={summary.average_score} />
+      <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-5">
+        {/* Score ring card */}
+        <div className="bg-[#0D1117] border border-white/[0.06] rounded-xl p-6 flex flex-col items-center justify-center gap-3 min-w-[180px]">
+          <ScoreRing score={summary.average_score} />
+          <p className="text-xs text-slate-500">
+            {techMode ? "Security Score" : "Nivel de seguridad"}
+          </p>
         </div>
-        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-4">
-          <StatCard icon={Globe} label="Dominios" value={summary.domains_monitored} />
-          <StatCard icon={Mail} label="Emails" value={summary.emails_monitored} />
+
+        {/* Stat cards grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <StatCard
-            icon={AlertTriangle}
-            label="Alertas activas"
+            label="Domains monitored"
+            labelSimple="Webs vigiladas"
+            value={summary.domains_monitored}
+            barColor="brand"
+            techMode={techMode}
+          />
+          <StatCard
+            label="Emails monitored"
+            labelSimple="Emails vigilados"
+            value={summary.emails_monitored}
+            barColor="brand"
+            techMode={techMode}
+          />
+          <StatCard
+            label="Active alerts"
+            labelSimple="Alertas activas"
             value={summary.active_alerts}
-            color={summary.active_alerts > 0 ? "text-red-600" : "text-gray-900"}
+            barColor={scoreColor(summary.active_alerts)}
+            techMode={techMode}
           />
           <StatCard
-            icon={TrendingUp}
             label="SSL issues"
+            labelSimple="Problemas de seguridad web"
             value={summary.domains_with_ssl_issues}
-            color={summary.domains_with_ssl_issues > 0 ? "text-yellow-600" : "text-gray-900"}
+            barColor={summary.domains_with_ssl_issues > 0 ? "yellow" : "green"}
+            techMode={techMode}
           />
           <StatCard
-            icon={Globe}
-            label="Webs caídas"
+            label="Domains down"
+            labelSimple="Webs caídas"
             value={summary.domains_down}
-            color={summary.domains_down > 0 ? "text-red-600" : "text-gray-900"}
+            barColor={scoreColor(summary.domains_down)}
+            techMode={techMode}
           />
           <StatCard
-            icon={Mail}
-            label="Emails brechas"
+            label="Breached emails"
+            labelSimple="Emails comprometidos"
             value={summary.breached_emails}
-            color={summary.breached_emails > 0 ? "text-red-600" : "text-gray-900"}
+            barColor={scoreColor(summary.breached_emails)}
+            techMode={techMode}
           />
         </div>
       </div>
 
-      {/* Recent Alerts */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Alertas recientes</h2>
-        {summary.recent_alerts.length === 0 ? (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-            <Shield className="w-10 h-10 text-green-500 mx-auto mb-2" />
-            <p className="text-green-700 font-medium">¡Todo en orden! No hay alertas activas.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {summary.recent_alerts.map((alert) => (
-              <AlertItem key={alert.id} alert={alert} onRead={markRead} />
-            ))}
-          </div>
-        )}
+      {/* Recommendations — simple mode only */}
+      {!techMode && (
+        <div className="space-y-3">
+          <h2 className="font-syne text-base font-bold text-white">
+            ¿Qué debes hacer?
+          </h2>
+          {summary.domains_down > 0 && (
+            <Recommendation
+              icon="🔴"
+              title="Tu web está caída"
+              body="Los visitantes no pueden acceder. Contacta a tu proveedor de hosting o revisa el servidor."
+              level="danger"
+            />
+          )}
+          {summary.domains_with_ssl_issues > 0 && (
+            <Recommendation
+              icon="🔒"
+              title="Certificado de seguridad con problemas"
+              body="Tus clientes ven un aviso de 'sitio no seguro'. Renueva el certificado SSL cuanto antes."
+              level="warn"
+            />
+          )}
+          {summary.breached_emails > 0 && (
+            <Recommendation
+              icon="📧"
+              title="Email filtrado en brecha de datos"
+              body="Una de tus direcciones apareció en una filtración. Cambia esa contraseña inmediatamente."
+              level="danger"
+            />
+          )}
+          {summary.active_alerts === 0 &&
+            summary.domains_down === 0 &&
+            summary.breached_emails === 0 && (
+              <Recommendation
+                icon="✅"
+                title="Todo en orden"
+                body="No hay problemas detectados. Tus sistemas están funcionando correctamente."
+                level="ok"
+              />
+            )}
+        </div>
+      )}
+
+      {/* Alerts timeline */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-syne text-base font-bold text-white">
+            {techMode ? "Recent Alerts" : "Últimos avisos"}
+          </h2>
+          {summary.active_alerts > 0 && (
+            <span className="font-mono text-xs text-[#FF4757] bg-[#FF4757]/10 px-2.5 py-1 rounded-full">
+              {summary.active_alerts} sin leer
+            </span>
+          )}
+        </div>
+        <AlertTimeline
+          alerts={summary.recent_alerts}
+          onRead={markRead}
+          techMode={techMode}
+        />
       </div>
     </div>
   );
