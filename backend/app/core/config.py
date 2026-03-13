@@ -43,6 +43,7 @@ class Settings(BaseSettings):
         "https://app.chronoshield.io",
         "https://chronoshield-brown.vercel.app",
         "https://chronoshield-9e4lqlu9h-chronomind07s-projects.vercel.app",
+        "https://chronoshield-8zfsq6oz4-chronomind07s-projects.vercel.app",
     ]
 
     # Plans config
