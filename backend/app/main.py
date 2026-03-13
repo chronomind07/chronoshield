@@ -48,18 +48,12 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": settings.APP_VERSION}
-
-
-@app.get("/debug-config")
-async def debug_config():
-    """Temporary: show masked config to diagnose Railway env var issues."""
     sk = settings.SUPABASE_SERVICE_KEY
-    url = settings.SUPABASE_URL
     return {
-        "supabase_url": url,
-        "service_key_length": len(sk),
-        "service_key_prefix": sk[:20] if sk else "",
-        "service_key_suffix": sk[-10:] if sk else "",
-        "service_key_has_spaces": " " in sk or sk != sk.strip(),
+        "status": "ok",
+        "version": settings.APP_VERSION,
+        "supabase_url": settings.SUPABASE_URL,
+        "service_key_len": len(sk),
+        "service_key_tail": sk[-8:] if sk else "",
+        "service_key_stripped": sk == sk.strip(),
     }
