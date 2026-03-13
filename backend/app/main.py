@@ -48,12 +48,4 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/health")
 async def health():
-    sk = settings.SUPABASE_SERVICE_KEY
-    return {
-        "status": "ok",
-        "version": settings.APP_VERSION,
-        "supabase_url": settings.SUPABASE_URL,
-        "service_key_len": len(sk),
-        "service_key_tail": sk[-8:] if sk else "",
-        "service_key_stripped": sk == sk.strip(),
-    }
+    return {"status": "ok", "version": settings.APP_VERSION}
