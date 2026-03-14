@@ -55,9 +55,12 @@ export const billingApi = {
 
 // Dark Web endpoints
 export const darkwebApi = {
-  summary: ()                          => api.get("/darkweb/summary"),
-  manualScan: ()                       => api.post("/darkweb/scan/manual"),
-  results: (scanType?: string)         => api.get("/darkweb/results", { params: { scan_type: scanType } }),
+  summary: ()                               => api.get("/darkweb/summary"),
+  scanEmail: (emailId: string)              => api.post(`/darkweb/scan/email/${emailId}`),
+  scanDomain: (domainId: string)            => api.post(`/darkweb/scan/domain/${domainId}`),
+  scanImpersonation: (domainId: string)     => api.post(`/darkweb/scan/impersonation/${domainId}`),
+  scanAll: ()                               => api.post("/darkweb/scan/all"),
+  results: (scanType?: string)              => api.get("/darkweb/results", { params: { scan_type: scanType } }),
 };
 
 // Credits endpoints

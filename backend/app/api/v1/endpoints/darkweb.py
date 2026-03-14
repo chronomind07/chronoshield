@@ -1,36 +1,110 @@
 """
-Dark Web monitoring endpoints.
+Dark Web monitoring endpoints — granular per-item scans.
 
-GET  /darkweb/summary         — latest results + credits + next scan
-POST /darkweb/scan/manual     — manual scan (consumes 1 credit)
-GET  /darkweb/results         — paginated history
+GET  /darkweb/summary                       — credits + per-email + per-domain + impersonation
+POST /darkweb/scan/email/{email_id}         — scan 1 email (1 credit)
+POST /darkweb/scan/domain/{domain_id}       — scan 1 domain breach (1 credit)
+POST /darkweb/scan/impersonation/{domain_id}— company impersonation (1 credit, Business only)
+POST /darkweb/scan/all                      — scan everything (N credits)
+GET  /darkweb/results                       — paginated history
 """
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from app.core.security import get_current_user_id
 from app.db.supabase import get_db
-from app.services.credits_service import consume_credit, get_or_init_credits
+from app.services.credits_service import consume_credit, consume_credits, get_or_init_credits
 import structlog
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/darkweb", tags=["darkweb"])
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+# ── helpers ────────────────────────────────────────────────────────────────────
 
-def _latest_results(user_id: str, scan_type: str, db) -> list[dict]:
-    """Get the most recent scan results of a given type."""
+def _get_plan(user_id: str, db) -> str:
+    sub = db.table("subscriptions").select("plan").eq("user_id", user_id).execute().data
+    return sub[0]["plan"] if sub else "trial"
+
+
+def _latest_result(user_id: str, scan_type: str, query_value: str, db) -> dict | None:
     rows = (
         db.table("dark_web_results")
-        .select("id,scan_type,query_value,total_results,results,is_manual,scanned_at")
+        .select("id,total_results,results,is_manual,scanned_at")
         .eq("user_id", user_id)
         .eq("scan_type", scan_type)
+        .eq("query_value", query_value)
         .order("scanned_at", desc=True)
-        .limit(50)
+        .limit(1)
         .execute()
         .data
     )
-    return rows or []
+    return rows[0] if rows else None
+
+
+def _build_email_item(user_id: str, row: dict, db) -> dict:
+    result = _latest_result(user_id, "email_breach", row["email"], db)
+    if result:
+        count = result["total_results"]
+        status = "breached" if count > 0 else "clean"
+        last_scan_at = result["scanned_at"]
+        latest_breaches = (result.get("results") or [])[:5]
+    else:
+        count = 0
+        status = "never_scanned"
+        last_scan_at = None
+        latest_breaches = []
+    return {
+        "id": row["id"],
+        "email": row["email"],
+        "last_scan_at": last_scan_at,
+        "breach_count": count,
+        "status": status,
+        "latest_breaches": latest_breaches,
+    }
+
+
+def _build_domain_item(user_id: str, row: dict, db) -> dict:
+    result = _latest_result(user_id, "domain_breach", row["domain"], db)
+    if result:
+        count = result["total_results"]
+        status = "found" if count > 0 else "clean"
+        last_scan_at = result["scanned_at"]
+        latest_results = (result.get("results") or [])[:5]
+    else:
+        count = 0
+        status = "never_scanned"
+        last_scan_at = None
+        latest_results = []
+    return {
+        "id": row["id"],
+        "domain": row["domain"],
+        "last_scan_at": last_scan_at,
+        "breach_count": count,
+        "status": status,
+        "latest_results": latest_results,
+    }
+
+
+def _build_impersonation_item(user_id: str, row: dict, db) -> dict:
+    result = _latest_result(user_id, "typosquatting", row["domain"], db)
+    if result:
+        count = result["total_results"]
+        status = "threatened" if count > 0 else "clean"
+        last_scan_at = result["scanned_at"]
+        latest_threats = (result.get("results") or [])[:5]
+    else:
+        count = 0
+        status = "never_scanned"
+        last_scan_at = None
+        latest_threats = []
+    return {
+        "id": row["id"],
+        "domain": row["domain"],
+        "last_scan_at": last_scan_at,
+        "threats_count": count,
+        "status": status,
+        "latest_threats": latest_threats,
+    }
 
 
 def _last_scan_at(user_id: str, db) -> str | None:
@@ -46,15 +120,97 @@ def _last_scan_at(user_id: str, db) -> str | None:
     return row[0]["scanned_at"] if row else None
 
 
-def _run_darkweb_scan(user_id: str, is_manual: bool, db):
-    """
-    Core scan logic: search all user's emails + domains in InsecureWeb.
-    Saves results per email and per domain into dark_web_results.
-    For Business plan, also runs typosquatting.
-    """
-    from app.services import insecureweb_service as iw
+# ── background scan functions ──────────────────────────────────────────────────
 
-    # Get all active emails
+def _scan_email_bg(user_id: str, email: str, db):
+    from app.services import insecureweb_service as iw
+    try:
+        data = iw.search_dark_web(emails=[email])
+        db.table("dark_web_results").insert({
+            "user_id": user_id,
+            "scan_type": "email_breach",
+            "query_value": email,
+            "total_results": data.get("totalResults", 0),
+            "results": data.get("results", []),
+            "is_manual": True,
+        }).execute()
+        logger.info("Email scan complete", email=email, results=data.get("totalResults", 0))
+    except Exception as e:
+        logger.error("Email breach scan error", email=email, error=str(e))
+
+
+def _scan_domain_bg(user_id: str, domain: str, db):
+    from app.services import insecureweb_service as iw
+    try:
+        data = iw.search_dark_web(domains=[domain])
+        db.table("dark_web_results").insert({
+            "user_id": user_id,
+            "scan_type": "domain_breach",
+            "query_value": domain,
+            "total_results": data.get("totalResults", 0),
+            "results": data.get("results", []),
+            "is_manual": True,
+        }).execute()
+        logger.info("Domain scan complete", domain=domain, results=data.get("totalResults", 0))
+    except Exception as e:
+        logger.error("Domain breach scan error", domain=domain, error=str(e))
+
+
+def _scan_impersonation_bg(user_id: str, domain: str, db):
+    from app.services import insecureweb_service as iw
+    try:
+        profile = db.table("profiles").select("company_name").eq("id", user_id).execute().data
+        org_name = (profile[0].get("company_name") or "ChronoShield Org") if profile else "ChronoShield Org"
+        emails_rows = (
+            db.table("monitored_emails").select("email")
+            .eq("user_id", user_id).eq("is_active", True).execute().data
+        ) or []
+        domains_rows = (
+            db.table("domains").select("domain")
+            .eq("user_id", user_id).eq("is_active", True).execute().data
+        ) or []
+        org_id = iw.ensure_org(user_id, org_name,
+                               [r["domain"] for r in domains_rows],
+                               [r["email"] for r in emails_rows], db)
+        typo_data = iw.get_typosquatting_threats(org_id)
+        threats = typo_data.get("content", typo_data.get("results", []))
+        db.table("dark_web_results").insert({
+            "user_id": user_id,
+            "scan_type": "typosquatting",
+            "query_value": domain,
+            "total_results": len(threats),
+            "results": threats,
+            "is_manual": True,
+        }).execute()
+        logger.info("Impersonation scan complete", domain=domain, threats=len(threats))
+    except Exception as e:
+        logger.error("Impersonation scan error", domain=domain, error=str(e))
+
+
+def _scan_all_bg(user_id: str, plan: str, email_items: list, domain_items: list, db):
+    """Run all scans sequentially in the background."""
+    for item in email_items:
+        _scan_email_bg(user_id, item["email"], db)
+    for item in domain_items:
+        _scan_domain_bg(user_id, item["domain"], db)
+    if plan == "business":
+        for item in domain_items:
+            _scan_impersonation_bg(user_id, item["domain"], db)
+
+
+# ── Endpoints ──────────────────────────────────────────────────────────────────
+
+@router.get("/summary")
+async def get_darkweb_summary(
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """
+    Returns per-email and per-domain dark web status, credits, and scan cost preview.
+    """
+    credits = get_or_init_credits(user_id, db)
+    plan = _get_plan(user_id, db)
+
     emails_rows = (
         db.table("monitored_emails")
         .select("id,email")
@@ -64,7 +220,6 @@ def _run_darkweb_scan(user_id: str, is_manual: bool, db):
         .data
     ) or []
 
-    # Get all active domains
     domains_rows = (
         db.table("domains")
         .select("id,domain")
@@ -74,127 +229,181 @@ def _run_darkweb_scan(user_id: str, is_manual: bool, db):
         .data
     ) or []
 
-    emails = [r["email"] for r in emails_rows]
-    domains = [r["domain"] for r in domains_rows]
+    emails = [_build_email_item(user_id, r, db) for r in emails_rows]
+    domains = [_build_domain_item(user_id, r, db) for r in domains_rows]
+    impersonation = (
+        [_build_impersonation_item(user_id, r, db) for r in domains_rows]
+        if plan == "business" else []
+    )
 
-    # ── Email breach scan ──────────────────────────────────────────────────────
-    for email in emails:
-        try:
-            data = iw.search_dark_web(emails=[email])
-            db.table("dark_web_results").insert({
-                "user_id": user_id,
-                "scan_type": "email_breach",
-                "query_value": email,
-                "total_results": data.get("totalResults", 0),
-                "results": data.get("results", []),
-                "is_manual": is_manual,
-            }).execute()
-        except Exception as e:
-            logger.error("Email breach scan error", email=email, error=str(e))
-
-    # ── Domain breach scan ─────────────────────────────────────────────────────
-    for domain in domains:
-        try:
-            data = iw.search_dark_web(domains=[domain])
-            db.table("dark_web_results").insert({
-                "user_id": user_id,
-                "scan_type": "domain_breach",
-                "query_value": domain,
-                "total_results": data.get("totalResults", 0),
-                "results": data.get("results", []),
-                "is_manual": is_manual,
-            }).execute()
-        except Exception as e:
-            logger.error("Domain breach scan error", domain=domain, error=str(e))
-
-    # ── Typosquatting (Business only) ──────────────────────────────────────────
-    sub = db.table("subscriptions").select("plan").eq("user_id", user_id).execute().data
-    plan = sub[0]["plan"] if sub else "trial"
-    if plan == "business" and domains:
-        try:
-            profile = db.table("profiles").select("company_name").eq("id", user_id).execute().data
-            org_name = (profile[0].get("company_name") or "ChronoShield Org") if profile else "ChronoShield Org"
-            org_id = iw.ensure_org(user_id, org_name, domains, emails, db)
-            typo_data = iw.get_typosquatting_threats(org_id)
-            threats = typo_data.get("content", typo_data.get("results", []))
-            db.table("dark_web_results").insert({
-                "user_id": user_id,
-                "scan_type": "typosquatting",
-                "query_value": domains[0],
-                "total_results": len(threats),
-                "results": threats,
-                "is_manual": is_manual,
-            }).execute()
-        except Exception as e:
-            logger.error("Typosquatting scan error", user_id=user_id, error=str(e))
-
-
-# ── Endpoints ─────────────────────────────────────────────────────────────────
-
-@router.get("/summary")
-async def get_darkweb_summary(
-    user_id: str = Depends(get_current_user_id),
-    db=Depends(get_db),
-):
-    """
-    Returns:
-    - credits (available, used, reset_date)
-    - email_breaches: latest results per email
-    - domain_breaches: latest results per domain
-    - typosquatting: latest (Business only)
-    - last_scan_at, next_auto_scan
-    """
-    credits = get_or_init_credits(user_id, db)
-
-    # Get latest unique result per query_value for each type
-    email_breaches = _latest_results(user_id, "email_breach", db)
-    domain_breaches = _latest_results(user_id, "domain_breach", db)
-    typo_results = _latest_results(user_id, "typosquatting", db)
-
-    # Deduplicate: keep only most recent per query_value
-    def latest_per_query(rows: list[dict]) -> list[dict]:
-        seen: set[str] = set()
-        out = []
-        for r in rows:
-            key = r.get("query_value", "")
-            if key not in seen:
-                seen.add(key)
-                out.append(r)
-        return out
-
-    sub = db.table("subscriptions").select("plan").eq("user_id", user_id).execute().data
-    plan = sub[0]["plan"] if sub else "trial"
+    n_emails = len(emails_rows)
+    n_domains = len(domains_rows)
+    n_impersonation = n_domains if plan == "business" else 0
+    scan_all_cost = n_emails + n_domains + n_impersonation
 
     return {
         "plan": plan,
         "credits": credits,
-        "email_breaches": latest_per_query(email_breaches),
-        "domain_breaches": latest_per_query(domain_breaches),
-        "typosquatting": latest_per_query(typo_results) if plan == "business" else [],
-        "typosquatting_available": plan == "business",
+        "emails": emails,
+        "domains": domains,
+        "impersonation": impersonation,
+        "impersonation_available": plan == "business",
+        "scan_all_cost": scan_all_cost,
+        "scan_all_breakdown": {
+            "emails": n_emails,
+            "domains": n_domains,
+            "impersonation": n_impersonation,
+        },
         "last_scan_at": _last_scan_at(user_id, db),
-        "next_auto_scan": "03:00 UTC (diario)",
+        "next_auto_scan": "03:15 UTC (diario)",
     }
 
 
-@router.post("/scan/manual", status_code=202)
-async def manual_scan(
+@router.post("/scan/email/{email_id}", status_code=202)
+async def scan_email(
+    email_id: str,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """Scan a single email for dark web breaches. Costs 1 credit."""
+    row = (
+        db.table("monitored_emails")
+        .select("id,email")
+        .eq("id", email_id)
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+        .data
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Email no encontrado")
+
+    updated_credits = consume_credit(user_id, db)
+    background_tasks.add_task(_scan_email_bg, user_id, row[0]["email"], get_db())
+
+    return {
+        "message": f"Escaneo iniciado para {row[0]['email']}",
+        "credits_remaining": updated_credits["credits_available"],
+    }
+
+
+@router.post("/scan/domain/{domain_id}", status_code=202)
+async def scan_domain(
+    domain_id: str,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """Scan a single domain for dark web breaches. Costs 1 credit."""
+    row = (
+        db.table("domains")
+        .select("id,domain")
+        .eq("id", domain_id)
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+        .data
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Dominio no encontrado")
+
+    updated_credits = consume_credit(user_id, db)
+    background_tasks.add_task(_scan_domain_bg, user_id, row[0]["domain"], get_db())
+
+    return {
+        "message": f"Escaneo iniciado para {row[0]['domain']}",
+        "credits_remaining": updated_credits["credits_available"],
+    }
+
+
+@router.post("/scan/impersonation/{domain_id}", status_code=202)
+async def scan_impersonation(
+    domain_id: str,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """Scan company impersonation / typosquatting for a domain. Costs 1 credit. Business only."""
+    plan = _get_plan(user_id, db)
+    if plan != "business":
+        raise HTTPException(
+            status_code=403,
+            detail="La detección de suplantación requiere el plan Business",
+        )
+
+    row = (
+        db.table("domains")
+        .select("id,domain")
+        .eq("id", domain_id)
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+        .data
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Dominio no encontrado")
+
+    updated_credits = consume_credit(user_id, db)
+    background_tasks.add_task(_scan_impersonation_bg, user_id, row[0]["domain"], get_db())
+
+    return {
+        "message": f"Escaneo de suplantación iniciado para {row[0]['domain']}",
+        "credits_remaining": updated_credits["credits_available"],
+    }
+
+
+@router.post("/scan/all", status_code=202)
+async def scan_all(
     background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
     """
-    Trigger a manual Dark Web scan. Consumes 1 credit.
-    Returns immediately; scan runs in background.
+    Scan all emails + domains + impersonation (Business only).
+    Costs 1 credit per item.
     """
-    # Check & consume credit first (raises 402 if none)
-    updated_credits = consume_credit(user_id, db)
+    plan = _get_plan(user_id, db)
 
-    background_tasks.add_task(_run_darkweb_scan, user_id, True, get_db())
+    emails_rows = (
+        db.table("monitored_emails")
+        .select("id,email")
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+        .data
+    ) or []
+
+    domains_rows = (
+        db.table("domains")
+        .select("id,domain")
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+        .data
+    ) or []
+
+    n_impersonation = len(domains_rows) if plan == "business" else 0
+    total_cost = len(emails_rows) + len(domains_rows) + n_impersonation
+
+    if total_cost == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No hay emails ni dominios activos para escanear",
+        )
+
+    updated_credits = consume_credits(user_id, total_cost, db)
+    background_tasks.add_task(_scan_all_bg, user_id, plan, emails_rows, domains_rows, get_db())
 
     return {
-        "message": "Escaneo iniciado",
+        "message": f"Escaneo general iniciado",
+        "credits_consumed": total_cost,
         "credits_remaining": updated_credits["credits_available"],
+        "breakdown": {
+            "emails": len(emails_rows),
+            "domains": len(domains_rows),
+            "impersonation": n_impersonation,
+        },
     }
 
 

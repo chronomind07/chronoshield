@@ -102,6 +102,31 @@ def consume_credit(user_id: str, db) -> dict:
     return updated.data[0]
 
 
+def consume_credits(user_id: str, amount: int, db) -> dict:
+    """
+    Deduct `amount` credits at once. Raises HTTP 402 if insufficient.
+    Returns updated credits row.
+    """
+    row = get_or_init_credits(user_id, db)
+    if row["credits_available"] < amount:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "code": "NO_CREDITS",
+                "message": f"Necesitas {amount} créditos pero solo tienes {row['credits_available']} disponibles.",
+                "credits_available": row["credits_available"],
+                "credits_needed": amount,
+            },
+        )
+    updated = db.table("credits").update({
+        "credits_available": row["credits_available"] - amount,
+        "credits_used": row["credits_used"] + amount,
+    }).eq("user_id", user_id).execute()
+    logger.info("Credits consumed", user_id=user_id, amount=amount,
+                remaining=updated.data[0]["credits_available"])
+    return updated.data[0]
+
+
 def add_credits(user_id: str, amount: int, plan: str | None, db) -> dict:
     """Add credits to a user (from Stripe purchase or plan upgrade)."""
     row = get_or_init_credits(user_id, db)
