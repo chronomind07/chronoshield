@@ -11,55 +11,81 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-function ShieldLogo() {
-  return (
-    <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7">
-      <path
-        d="M16 3 L28 8 L28 17 C28 23.5 22.5 28.5 16 30 C9.5 28.5 4 23.5 4 17 L4 8 Z"
-        fill="rgba(0,194,255,0.12)"
-        stroke="#00C2FF"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M11.5 16.5 L14.5 19.5 L20.5 13"
-        stroke="#00C2FF"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function NavLink({
+// ─── Nav item ─────────────────────────────────────────────────────────────────
+function NavItem({
   href,
+  icon,
+  label,
   active,
-  children,
+  badge,
+  techOnly,
+  techMode,
 }: {
   href: string;
+  icon: string;
+  label: string;
   active: boolean;
-  children: React.ReactNode;
+  badge?: number;
+  techOnly?: boolean;
+  techMode: boolean;
 }) {
+  if (techOnly && !techMode) return null;
   return (
     <Link
       href={href}
-      className={`px-4 py-1.5 rounded-lg text-sm transition-all duration-150 ${
+      className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
         active
-          ? "bg-[#00C2FF]/10 text-[#00C2FF] font-medium"
-          : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.04]"
+          ? "bg-[rgba(0,194,255,0.08)] text-[#00C2FF] border border-[rgba(0,194,255,0.15)]"
+          : "text-[#5A6B7A] hover:bg-white/[0.04] hover:text-[#E8EDF2]"
       }`}
     >
-      {children}
+      {active && (
+        <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#00C2FF] rounded-r" />
+      )}
+      <span className="w-[18px] text-center text-[15px]">{icon}</span>
+      <span className="flex-1">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="ml-auto bg-[#FF4D6A] text-white text-[9px] font-bold px-1.5 py-px rounded-full leading-none">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }
 
+// ─── Nav section ─────────────────────────────────────────────────────────────
+function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="px-3 mb-1">
+      <p className="font-mono text-[9px] uppercase tracking-[2px] text-[#5A6B7A] px-3 mb-1.5 mt-3">
+        {label}
+      </p>
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  );
+}
+
+// ─── Logo icon ────────────────────────────────────────────────────────────────
+function LogoIcon() {
+  return (
+    <div
+      className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px]"
+      style={{
+        background: "linear-gradient(135deg, #0077FF, #00C2FF)",
+        boxShadow: "0 0 16px rgba(0,194,255,0.3)",
+      }}
+    >
+      🛡
+    </div>
+  );
+}
+
+// ─── Layout ───────────────────────────────────────────────────────────────────
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const router   = useRouter();
   const pathname = usePathname();
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking]   = useState(true);
   const [techMode, setTechModeState] = useState(true);
 
   useEffect(() => {
@@ -74,14 +100,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace("/login");
-      } else {
-        setUserEmail(data.session.user.email ?? null);
-      }
+      if (!data.session) router.replace("/login");
+      else setUserEmail(data.session.user.email ?? null);
       setChecking(false);
     });
-
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") router.replace("/login");
     });
@@ -101,81 +123,90 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  // Initials from email
+  const initials = userEmail
+    ? userEmail.split("@")[0].slice(0, 2).toUpperCase()
+    : "??";
+
   return (
     <ModeContext.Provider value={{ techMode, setTechMode }}>
-      <div className="min-h-screen bg-[#080C10] font-sans">
-        {/* Navbar */}
-        <nav className="sticky top-0 z-20 border-b border-white/[0.06] bg-[#080C10]/90 backdrop-blur-md">
-          <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
-            {/* Logo */}
-            <div className="flex items-center gap-2.5 shrink-0">
-              <ShieldLogo />
-              <span className="font-syne font-bold text-white text-base tracking-tight">
-                ChronoShield
-              </span>
-            </div>
+      <div className="flex min-h-screen font-sans">
 
-            {/* Nav links */}
-            <div className="flex items-center gap-1">
-              <NavLink href="/dashboard" active={pathname === "/dashboard"}>
-                Dashboard
-              </NavLink>
-              <NavLink
-                href="/dashboard/domains"
-                active={pathname === "/dashboard/domains"}
-              >
-                Dominios
-              </NavLink>
-              <NavLink
-                href="/dashboard/emails"
-                active={pathname === "/dashboard/emails"}
-              >
-                Emails
-              </NavLink>
-            </div>
-
-            {/* Right side */}
-            <div className="flex items-center gap-3 shrink-0">
-              {/* Técnico / Simple toggle */}
-              <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.08] rounded-full p-1">
-                <button
-                  onClick={() => setTechMode(false)}
-                  className={`px-3 py-1 rounded-full text-xs transition-all duration-150 ${
-                    !techMode
-                      ? "bg-[#00C2FF] text-[#080C10] font-semibold"
-                      : "text-slate-500 hover:text-slate-300"
-                  }`}
-                >
-                  Simple
-                </button>
-                <button
-                  onClick={() => setTechMode(true)}
-                  className={`px-3 py-1 rounded-full text-xs transition-all duration-150 font-mono ${
-                    techMode
-                      ? "bg-[#00C2FF] text-[#080C10] font-semibold"
-                      : "text-slate-500 hover:text-slate-300"
-                  }`}
-                >
-                  Técnico
-                </button>
+        {/* ── Sidebar ─────────────────────────────────────────────────── */}
+        <aside
+          className="fixed left-0 top-0 bottom-0 w-[220px] flex flex-col z-20"
+          style={{
+            background: "#0D1218",
+            borderRight: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          {/* Logo */}
+          <div
+            className="px-6 pt-7 pb-7"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <div className="flex items-center gap-2.5">
+              <LogoIcon />
+              <div>
+                <div className="font-syne font-extrabold text-[18px] text-[#E8EDF2] tracking-[-0.5px] leading-none">
+                  ChronoShield
+                </div>
               </div>
-
-              <span className="text-xs text-slate-600 hidden lg:block max-w-[160px] truncate">
-                {userEmail}
-              </span>
-
-              <button
-                onClick={handleLogout}
-                className="text-xs text-slate-600 hover:text-red-400 transition-colors"
-              >
-                Salir
-              </button>
+            </div>
+            <div className="font-mono text-[9px] text-[#5A6B7A] tracking-[2px] uppercase mt-1.5 ml-[38px]">
+              Security Platform
             </div>
           </div>
-        </nav>
 
-        {/* Main content */}
-        <main className="max-w-6xl mx-auto px-6 py-8">{children}</main>
+          {/* Nav */}
+          <nav className="flex-1 overflow-y-auto py-2">
+            <NavSection label="Monitor">
+              <NavItem href="/dashboard"          icon="◈" label="Overview"  active={pathname === "/dashboard"}         techMode={techMode} />
+              <NavItem href="/dashboard/emails"   icon="✉" label="Emails"    active={pathname === "/dashboard/emails"}  techMode={techMode} />
+              <NavItem href="/dashboard/domains"  icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} techMode={techMode} />
+            </NavSection>
+
+            <NavSection label="Gestión">
+              <NavItem href="/dashboard"          icon="⚡" label="Alertas"  active={false} techMode={techMode} />
+              <NavItem href="/dashboard"          icon="≡" label="Historial" active={false} techOnly techMode={techMode} />
+              <NavItem href="/dashboard"          icon="◷" label="Informes"  active={false} techOnly techMode={techMode} />
+            </NavSection>
+
+            <NavSection label="Cuenta">
+              <NavItem href="/dashboard"          icon="⊙" label="Ajustes"   active={false} techMode={techMode} />
+            </NavSection>
+          </nav>
+
+          {/* Footer — org pill */}
+          <div
+            className="px-6 py-4"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-[#121A22] hover:border-white/10 transition-colors text-left"
+            >
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center font-syne font-bold text-[11px] text-white shrink-0"
+                style={{ background: "linear-gradient(135deg, #1A3A5C, #0077FF)" }}
+              >
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[12px] font-medium text-[#E8EDF2] truncate">
+                  {userEmail?.split("@")[0] ?? "Usuario"}
+                </div>
+                <div className="text-[10px] text-[#5A6B7A]">Plan Starter</div>
+              </div>
+            </button>
+          </div>
+        </aside>
+
+        {/* ── Main content ─────────────────────────────────────────────── */}
+        <main className="flex-1 ml-[220px] min-h-screen">
+          {children}
+        </main>
+
       </div>
     </ModeContext.Provider>
   );
