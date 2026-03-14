@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     # App
     APP_NAME: str = "ChronoShield"
-    APP_VERSION: str = "1.1.0"
+    APP_VERSION: str = "1.1.1"
     DEBUG: bool = False
     API_V1_STR: str = "/api/v1"
 
@@ -28,7 +28,12 @@ class Settings(BaseSettings):
     STRIPE_BUSINESS_PRICE_ID: str = ""
 
     # InsecureWeb
+    # Auth method 1 (API-key plan): set INSECUREWEB_API_KEY in Railway
+    # Auth method 2 (user/pass plan): set INSECUREWEB_USERNAME + INSECUREWEB_PASSWORD
+    # The service tries method 1 first; falls back to method 2 automatically.
     INSECUREWEB_API_KEY: str = ""
+    INSECUREWEB_USERNAME: str = ""   # your InsecureWeb login email
+    INSECUREWEB_PASSWORD: str = ""   # your InsecureWeb login password
     INSECUREWEB_BASE_URL: str = "https://app.insecureweb.com"
 
     # Stripe — Credit packs (one-time payments)

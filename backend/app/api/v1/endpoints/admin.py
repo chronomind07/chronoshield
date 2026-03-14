@@ -181,6 +181,22 @@ async def setup_demo_user(
     }
 
 
+@router.get("/test-insecureweb")
+async def test_insecureweb(
+    _: None = Depends(require_admin),
+):
+    """
+    Diagnostic: test InsecureWeb connectivity and auth.
+    Returns the exact status codes for api-key and JWT methods.
+
+    curl https://<railway-url>/api/v1/admin/test-insecureweb \
+         -H "X-Admin-Key: <ADMIN_SECRET_KEY>"
+    """
+    from app.services.insecureweb_service import ping
+    result = ping()
+    return result
+
+
 @router.get("/user-info")
 async def get_user_info(
     email: str,
