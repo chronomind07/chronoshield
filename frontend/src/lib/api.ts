@@ -53,6 +53,28 @@ export const billingApi = {
   portal: () => api.post("/billing/portal"),
 };
 
+// Alerts endpoints
+export const alertsApi = {
+  list: (params?: { unread_only?: boolean; severity?: string }) =>
+    api.get("/alerts", { params }),
+  unreadCount: () => api.get("/alerts/unread-count"),
+  markRead: (id: string) => api.patch(`/alerts/${id}/read`),
+  markAllRead: () => api.patch("/alerts/read-all"),
+};
+
+// History endpoints
+export const historyApi = {
+  list: (params?: { dateFilter?: string; eventType?: string; page?: number; per_page?: number }) =>
+    api.get("/history", {
+      params: {
+        date_filter: params?.dateFilter,
+        event_type: params?.eventType,
+        page: params?.page,
+        per_page: params?.per_page,
+      },
+    }),
+};
+
 // Dark Web endpoints
 export const darkwebApi = {
   summary: ()                               => api.get("/darkweb/summary"),

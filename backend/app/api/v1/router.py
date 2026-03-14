@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import domains, emails, billing, dashboard, ai_analysis, darkweb, credits, admin
+from app.api.v1.endpoints import domains, emails, billing, dashboard, ai_analysis, darkweb, credits, admin, alerts, history
 
 api_router = APIRouter()
 
@@ -11,3 +11,5 @@ api_router.include_router(ai_analysis.router)
 api_router.include_router(darkweb.router)
 api_router.include_router(credits.router)
 api_router.include_router(admin.router)
+api_router.include_router(alerts.router)
+api_router.include_router(history.router)

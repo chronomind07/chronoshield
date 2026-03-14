@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { alertsApi } from "@/lib/api";
 import Link from "next/link";
 
 // ─── Nav item ─────────────────────────────────────────────────────────────────
@@ -73,8 +74,25 @@ function LogoIcon() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter();
   const pathname = usePathname();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [checking, setChecking]   = useState(true);
+  const [userEmail, setUserEmail]     = useState<string | null>(null);
+  const [checking, setChecking]       = useState(true);
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
+
+  // Load unread alert count
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await alertsApi.unreadCount();
+        setUnreadAlerts(res.data.unread_count ?? 0);
+      } catch {
+        // silent fail — sidebar badge is non-critical
+      }
+    };
+    // Poll every 2 minutes
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 120_000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -144,9 +162,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </NavSection>
 
           <NavSection label="Gestión">
-            <NavItem href="/dashboard" icon="⚡" label="Alertas"  active={false} />
-            <NavItem href="/dashboard" icon="≡"  label="Historial" active={false} />
-            <NavItem href="/dashboard" icon="◷" label="Informes"  active={false} />
+            <NavItem href="/dashboard/alerts"  icon="⚡" label="Alertas"   active={pathname === "/dashboard/alerts"}  badge={unreadAlerts} />
+            <NavItem href="/dashboard/history" icon="≡"  label="Historial" active={pathname === "/dashboard/history"} />
+            <NavItem href="/dashboard"         icon="◷"  label="Informes"  active={false} />
           </NavSection>
 
           <NavSection label="Cuenta">
