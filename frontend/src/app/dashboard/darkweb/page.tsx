@@ -161,7 +161,7 @@ function ScanBtn({
   scanning, onClick, small,
 }: {
   scanning: boolean;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   small?: boolean;
 }) {
   return (
