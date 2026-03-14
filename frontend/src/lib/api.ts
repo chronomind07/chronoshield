@@ -91,5 +91,22 @@ export const creditsApi = {
   checkout: (pack: "s" | "m" | "l")   => api.post(`/credits/checkout/${pack}`),
 };
 
+// Settings endpoints
+export const settingsApi = {
+  getProfile:   () => api.get("/settings/profile"),
+  updateProfile: (data: { full_name?: string; language?: string; timezone?: string }) =>
+    api.put("/settings/profile", data),
+  getNotifications:    () => api.get("/settings/notifications"),
+  updateNotifications: (data: Record<string, boolean>) =>
+    api.put("/settings/notifications", data),
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    api.post("/settings/change-password", data),
+  getSessions:    () => api.get("/settings/sessions"),
+  signOutOthers:  () => api.post("/settings/sessions/sign-out-others"),
+  getSubscription: () => api.get("/settings/subscription"),
+  deleteAccount:  (confirmation: string) =>
+    api.post("/settings/delete-account", { confirmation }),
+};
+
 export { supabase };
 export default api;

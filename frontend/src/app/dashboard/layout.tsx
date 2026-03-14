@@ -168,7 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </NavSection>
 
           <NavSection label="Cuenta">
-            <NavItem href="/dashboard" icon="⊙" label="Ajustes" active={false} />
+            <NavItem href="/dashboard/settings" icon="⊙" label="Ajustes" active={pathname === "/dashboard/settings"} />
           </NavSection>
         </nav>
 
