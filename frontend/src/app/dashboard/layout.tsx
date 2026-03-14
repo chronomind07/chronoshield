@@ -163,64 +163,143 @@ function AlertRow({
   );
 }
 
+// ─── Buy credits modal ────────────────────────────────────────────────────────
+const PACKS = [
+  { key: "s" as const, label: "Pack S", credits: 5,  price: "9,99€",  per: "2,00€/créd." },
+  { key: "m" as const, label: "Pack M", credits: 10, price: "18,99€", per: "1,90€/créd." },
+  { key: "l" as const, label: "Pack L", credits: 20, price: "34,99€", per: "1,75€/créd.", popular: true },
+];
+
+function BuyCreditsModal({
+  creditsAvailable, onClose,
+}: {
+  creditsAvailable: number | null;
+  onClose: () => void;
+}) {
+  const [buying, setBuying] = useState<string | null>(null);
+
+  const handleBuy = async (pack: "s" | "m" | "l") => {
+    if (buying) return;
+    setBuying(pack);
+    try {
+      const res = await creditsApi.checkout(pack);
+      window.location.href = res.data.url;
+    } catch {
+      setBuying(null);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(8,12,16,0.88)", backdropFilter: "blur(6px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[420px] rounded-2xl p-7"
+        style={{
+          background: "#0D1218",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h2 className="font-syne font-bold text-[18px] text-[#E8EDF2]">Comprar créditos</h2>
+            <p className="text-[12px] text-[#5A6B7A] mt-0.5">
+              {creditsAvailable !== null
+                ? `Tienes ${creditsAvailable} crédito${creditsAvailable !== 1 ? "s" : ""} disponible${creditsAvailable !== 1 ? "s" : ""}`
+                : "Saldo de créditos"}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-[#5A6B7A] hover:text-[#E8EDF2] transition-colors text-[22px] leading-none mt-0.5"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Packs */}
+        <div className="space-y-3 mb-5">
+          {PACKS.map((pack) => (
+            <button
+              key={pack.key}
+              onClick={() => handleBuy(pack.key)}
+              disabled={!!buying}
+              className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-all disabled:opacity-60"
+              style={{
+                background: pack.popular ? "rgba(0,119,255,0.06)" : "#121A22",
+                border:     pack.popular ? "1px solid rgba(0,194,255,0.2)" : "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center font-syne font-bold text-[13px] shrink-0"
+                style={{
+                  background: pack.popular ? "rgba(0,194,255,0.12)" : "rgba(255,255,255,0.04)",
+                  color:      pack.popular ? "#00C2FF" : "#5A6B7A",
+                }}
+              >
+                {buying === pack.key
+                  ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin block" />
+                  : pack.credits
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-syne font-semibold text-[14px] text-[#E8EDF2]">{pack.label}</span>
+                  {pack.popular && (
+                    <span className="font-mono text-[9px] px-1.5 py-px rounded" style={{ background: "rgba(0,194,255,0.1)", color: "#00C2FF" }}>
+                      POPULAR
+                    </span>
+                  )}
+                </div>
+                <div className="text-[12px] text-[#5A6B7A]">{pack.credits} créditos · {pack.per}</div>
+              </div>
+              <div className="font-syne font-bold text-[16px] text-[#E8EDF2] shrink-0">{pack.price}</div>
+            </button>
+          ))}
+        </div>
+
+        <p className="text-[11px] text-[#5A6B7A] text-center leading-relaxed">
+          1 crédito = 1 escaneo (email, dominio o suplantación). Los créditos no caducan.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Credits pill ─────────────────────────────────────────────────────────────
-function CreditsPill({ credits }: { credits: number | null }) {
-  const isLow  = credits !== null && credits <= 5;
-  const isNull = credits === null;
+function CreditsPill({ credits, onClick }: { credits: number | null; onClick: () => void }) {
+  const isLow = credits !== null && credits <= 5;
 
   const colors = isLow
     ? { bg: "rgba(255,179,64,0.08)", border: "rgba(255,179,64,0.2)", text: "#FFB340", dot: "#FFB340" }
     : { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.07)", text: "#9AACBA", dot: "#00C2FF" };
 
   return (
-    <Link
-      href="/dashboard/darkweb"
-      className="flex items-center gap-1.5 h-9 px-3 rounded-xl transition-all"
-      style={{
-        background: colors.bg,
-        border:     `1px solid ${colors.border}`,
-      }}
-      title="Créditos disponibles — Ir a Dark Web"
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1.5 h-9 px-3 rounded-xl transition-all cursor-pointer"
+      style={{ background: colors.bg, border: `1px solid ${colors.border}` }}
+      title="Comprar créditos"
     >
-      {/* Icon */}
-      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
         <circle cx="6.5" cy="6.5" r="5.5" stroke={colors.dot} strokeWidth="1.2" />
-        <text
-          x="6.5" y="9.5"
-          textAnchor="middle"
-          fontSize="7"
-          fill={colors.dot}
-          fontFamily="monospace"
-          fontWeight="700"
-        >
-          C
-        </text>
+        <text x="6.5" y="9.5" textAnchor="middle" fontSize="7" fill={colors.dot} fontFamily="monospace" fontWeight="700">C</text>
       </svg>
-
-      {/* Count */}
-      <span
-        className="font-mono text-[12px] font-semibold leading-none"
-        style={{ color: colors.text }}
-      >
-        {isNull ? "—" : credits}
+      <span className="font-mono text-[12px] font-semibold leading-none" style={{ color: colors.text }}>
+        {credits === null ? "—" : credits}
       </span>
-
-      {/* Label */}
-      <span
-        className="font-mono text-[9px] uppercase tracking-[1px] leading-none"
-        style={{ color: isLow ? "#FFB340" : "#3D4F5E" }}
-      >
+      <span className="font-mono text-[9px] uppercase tracking-[1px] leading-none" style={{ color: isLow ? "#FFB340" : "#3D4F5E" }}>
         créditos
       </span>
-
-      {/* Low-warning dot */}
       {isLow && (
-        <span
-          className="w-1.5 h-1.5 rounded-full shrink-0"
-          style={{ background: "#FFB340", boxShadow: "0 0 6px rgba(255,179,64,0.6)" }}
-        />
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#FFB340", boxShadow: "0 0 6px rgba(255,179,64,0.6)" }} />
       )}
-    </Link>
+    </button>
   );
 }
 
@@ -410,6 +489,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [checking, setChecking]         = useState(true);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [credits, setCredits]           = useState<number | null>(null);
+  const [showBuyModal, setShowBuyModal] = useState(false);
 
   // Poll unread count every 2 min
   useEffect(() => {
@@ -472,6 +552,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen font-sans">
+
+      {/* ── Buy credits modal (global, z-50) ─────────────────────────── */}
+      {showBuyModal && (
+        <BuyCreditsModal
+          creditsAvailable={credits}
+          onClose={() => setShowBuyModal(false)}
+        />
+      )}
 
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
       <aside
@@ -561,7 +649,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          <CreditsPill credits={credits} />
+          <CreditsPill credits={credits} onClick={() => setShowBuyModal(true)} />
           <NotificationBell
             unreadCount={unreadAlerts}
             setUnreadCount={setUnreadAlerts}
