@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { alertsApi } from "@/lib/api";
+import { alertsApi, creditsApi } from "@/lib/api";
 import Link from "next/link";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -160,6 +160,67 @@ function AlertRow({
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Credits pill ─────────────────────────────────────────────────────────────
+function CreditsPill({ credits }: { credits: number | null }) {
+  const isLow  = credits !== null && credits <= 5;
+  const isNull = credits === null;
+
+  const colors = isLow
+    ? { bg: "rgba(255,179,64,0.08)", border: "rgba(255,179,64,0.2)", text: "#FFB340", dot: "#FFB340" }
+    : { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.07)", text: "#9AACBA", dot: "#00C2FF" };
+
+  return (
+    <Link
+      href="/dashboard/darkweb"
+      className="flex items-center gap-1.5 h-9 px-3 rounded-xl transition-all"
+      style={{
+        background: colors.bg,
+        border:     `1px solid ${colors.border}`,
+      }}
+      title="Créditos disponibles — Ir a Dark Web"
+    >
+      {/* Icon */}
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="6.5" cy="6.5" r="5.5" stroke={colors.dot} strokeWidth="1.2" />
+        <text
+          x="6.5" y="9.5"
+          textAnchor="middle"
+          fontSize="7"
+          fill={colors.dot}
+          fontFamily="monospace"
+          fontWeight="700"
+        >
+          C
+        </text>
+      </svg>
+
+      {/* Count */}
+      <span
+        className="font-mono text-[12px] font-semibold leading-none"
+        style={{ color: colors.text }}
+      >
+        {isNull ? "—" : credits}
+      </span>
+
+      {/* Label */}
+      <span
+        className="font-mono text-[9px] uppercase tracking-[1px] leading-none"
+        style={{ color: isLow ? "#FFB340" : "#3D4F5E" }}
+      >
+        créditos
+      </span>
+
+      {/* Low-warning dot */}
+      {isLow && (
+        <span
+          className="w-1.5 h-1.5 rounded-full shrink-0"
+          style={{ background: "#FFB340", boxShadow: "0 0 6px rgba(255,179,64,0.6)" }}
+        />
+      )}
+    </Link>
   );
 }
 
@@ -348,6 +409,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userEmail, setUserEmail]       = useState<string | null>(null);
   const [checking, setChecking]         = useState(true);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [credits, setCredits]           = useState<number | null>(null);
 
   // Poll unread count every 2 min
   useEffect(() => {
@@ -361,6 +423,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 120_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch credits on mount (refresh every 5 min)
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const res = await creditsApi.get();
+        setCredits(res.data.credits_available ?? 0);
+      } catch {
+        // silent
+      }
+    };
+    fetchCredits();
+    const interval = setInterval(fetchCredits, 300_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -476,7 +553,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* ── Topbar ── */}
         <div
-          className="sticky top-0 z-10 flex items-center justify-end h-[52px] px-6 shrink-0"
+          className="sticky top-0 z-10 flex items-center justify-end gap-2 h-[52px] px-6 shrink-0"
           style={{
             background: "rgba(8,12,16,0.88)",
             backdropFilter: "blur(16px)",
@@ -484,6 +561,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
+          <CreditsPill credits={credits} />
           <NotificationBell
             unreadCount={unreadAlerts}
             setUnreadCount={setUnreadAlerts}
