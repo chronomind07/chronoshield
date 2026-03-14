@@ -199,7 +199,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ── Main content ─────────────────────────────────────────────── */}
       <main className="flex-1 ml-[220px] min-h-screen">
-        {children}
+        <div className="w-full max-w-[1200px] mx-auto">
+          {children}
+        </div>
       </main>
 
     </div>

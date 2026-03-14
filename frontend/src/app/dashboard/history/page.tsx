@@ -304,7 +304,7 @@ export default function HistoryPage() {
   const groups = data ? groupByDay(data.entries) : [];
 
   return (
-    <div className="p-9 max-w-3xl">
+    <div className="p-9">
       {/* ── Header ── */}
       <div className="mb-7 fade-up">
         <h1 className="font-syne font-bold text-[22px] text-[#E8EDF2]">Historial de actividad</h1>

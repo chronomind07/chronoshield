@@ -432,7 +432,7 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="p-9 max-w-3xl">
+    <div className="p-9">
       {/* ── Header ── */}
       <div className="flex items-start justify-between mb-7 fade-up">
         <div>

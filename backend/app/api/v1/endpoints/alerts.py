@@ -132,14 +132,25 @@ ALERT_CONTENT: dict[str, dict] = {
     },
 }
 
-SEVERITY_LABEL = {
-    "critical": "CRÍTICA",
-    "high": "ALTA",
-    "medium": "MEDIA",
-    "low": "BAJA",
+# Normalise DB severity values to canonical set used by the frontend.
+# alert_service.py writes: "critical" | "warning" | "info"
+# We expose:               "critical" | "medium"  | "low"
+_SEV_NORMALISE: dict[str, str] = {
+    "critical": "critical",
+    "high":     "critical",
+    "warning":  "medium",
+    "medium":   "medium",
+    "info":     "low",
+    "low":      "low",
 }
 
-SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+SEVERITY_LABEL = {
+    "critical": "CRÍTICA",
+    "medium":   "MEDIA",
+    "low":      "BAJA",
+}
+
+SEVERITY_ORDER = {"critical": 0, "medium": 1, "low": 2}
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -192,12 +203,14 @@ async def list_alerts(
     enriched: List[AlertEnriched] = []
     for r in rows:
         content = ALERT_CONTENT.get(r.get("alert_type", ""), {})
+        raw_sev = r.get("severity", "info")
+        sev = _SEV_NORMALISE.get(raw_sev, "low")   # normalise warning→medium, info→low
         enriched.append(
             AlertEnriched(
                 id=str(r["id"]),
                 alert_type=r.get("alert_type", "unknown"),
-                severity=r.get("severity", "low"),
-                severity_label=SEVERITY_LABEL.get(r.get("severity", "low"), "BAJA"),
+                severity=sev,
+                severity_label=SEVERITY_LABEL.get(sev, "BAJA"),
                 title=r.get("title", "Alerta"),
                 message=r.get("message", ""),
                 human_impact=content.get(
