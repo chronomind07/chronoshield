@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     # App
     APP_NAME: str = "ChronoShield"
-    APP_VERSION: str = "1.0.1"
+    APP_VERSION: str = "1.1.0"
     DEBUG: bool = False
     API_V1_STR: str = "/api/v1"
 
@@ -40,14 +40,17 @@ class Settings(BaseSettings):
     PLAN_STARTER_CREDITS: int = 5
     PLAN_BUSINESS_CREDITS: int = 20
 
+    # Admin — set ADMIN_SECRET_KEY in Railway env vars
+    ADMIN_SECRET_KEY: str = "change-me-in-railway"
+
     # Claude AI
     ANTHROPIC_API_KEY: str = ""
 
     # Email (Resend)
     RESEND_API_KEY: str = ""
-    FROM_EMAIL: str = "alerts@chronoshield.io"
+    FROM_EMAIL: str = "alerts@chronoshield.eu"
 
-    # CORS
+    # CORS — do NOT set CORS_ORIGINS in Railway; delete that var if it exists.
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "https://app.chronoshield.io",
