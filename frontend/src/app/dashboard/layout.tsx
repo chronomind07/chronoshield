@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { ModeContext } from "@/lib/mode-context";
 
 // ─── Nav item ─────────────────────────────────────────────────────────────────
 function NavItem({
@@ -13,18 +12,13 @@ function NavItem({
   label,
   active,
   badge,
-  techOnly,
-  techMode,
 }: {
-  href: string;
-  icon: string;
-  label: string;
+  href:   string;
+  icon:   string;
+  label:  string;
   active: boolean;
   badge?: number;
-  techOnly?: boolean;
-  techMode: boolean;
 }) {
-  if (techOnly && !techMode) return null;
   return (
     <Link
       href={href}
@@ -81,17 +75,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [checking, setChecking]   = useState(true);
-  const [techMode, setTechModeState] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("cs_tech_mode");
-    if (stored !== null) setTechModeState(stored === "true");
-  }, []);
-
-  const setTechMode = (v: boolean) => {
-    setTechModeState(v);
-    localStorage.setItem("cs_tech_mode", String(v));
-  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -118,91 +101,88 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Initials from email
   const initials = userEmail
     ? userEmail.split("@")[0].slice(0, 2).toUpperCase()
     : "??";
 
   return (
-    <ModeContext.Provider value={{ techMode, setTechMode }}>
-      <div className="flex min-h-screen font-sans">
+    <div className="flex min-h-screen font-sans">
 
-        {/* ── Sidebar ─────────────────────────────────────────────────── */}
-        <aside
-          className="fixed left-0 top-0 bottom-0 w-[220px] flex flex-col z-20"
-          style={{
-            background: "#0D1218",
-            borderRight: "1px solid rgba(255,255,255,0.06)",
-          }}
+      {/* ── Sidebar ─────────────────────────────────────────────────── */}
+      <aside
+        className="fixed left-0 top-0 bottom-0 w-[220px] flex flex-col z-20"
+        style={{
+          background: "#0D1218",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        {/* Logo */}
+        <div
+          className="px-5 pt-6 pb-6"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
-          {/* Logo */}
-          <div
-            className="px-5 pt-6 pb-6"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <LogoIcon />
-              <div className="min-w-0 overflow-hidden">
-                <div className="font-syne font-extrabold text-[15px] text-[#E8EDF2] tracking-tight leading-none truncate">
-                  ChronoShield
-                </div>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <LogoIcon />
+            <div className="min-w-0 overflow-hidden">
+              <div className="font-syne font-extrabold text-[15px] text-[#E8EDF2] tracking-tight leading-none truncate">
+                ChronoShield
               </div>
             </div>
-            <div className="font-mono text-[9px] text-[#5A6B7A] tracking-[2px] uppercase mt-1.5 ml-[38px]">
-              Security Platform
-            </div>
           </div>
+          <div className="font-mono text-[9px] text-[#5A6B7A] tracking-[2px] uppercase mt-1.5 ml-[38px]">
+            Security Platform
+          </div>
+        </div>
 
-          {/* Nav */}
-          <nav className="flex-1 overflow-y-auto py-2">
-            <NavSection label="Monitor">
-              <NavItem href="/dashboard"          icon="◈" label="Dashboard" active={pathname === "/dashboard"}         techMode={techMode} />
-              <NavItem href="/dashboard/emails"   icon="✉" label="Emails"    active={pathname === "/dashboard/emails"}  techMode={techMode} />
-              <NavItem href="/dashboard/domains"  icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} techMode={techMode} />
-            </NavSection>
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-2">
+          <NavSection label="Monitor">
+            <NavItem href="/dashboard"         icon="◈" label="Dashboard" active={pathname === "/dashboard"} />
+            <NavItem href="/dashboard/emails"  icon="✉" label="Emails"    active={pathname === "/dashboard/emails"} />
+            <NavItem href="/dashboard/domains" icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} />
+          </NavSection>
 
-            <NavSection label="Gestión">
-              <NavItem href="/dashboard"          icon="⚡" label="Alertas"  active={false} techMode={techMode} />
-              <NavItem href="/dashboard"          icon="≡" label="Historial" active={false} techOnly techMode={techMode} />
-              <NavItem href="/dashboard"          icon="◷" label="Informes"  active={false} techOnly techMode={techMode} />
-            </NavSection>
+          <NavSection label="Gestión">
+            <NavItem href="/dashboard" icon="⚡" label="Alertas"  active={false} />
+            <NavItem href="/dashboard" icon="≡"  label="Historial" active={false} />
+            <NavItem href="/dashboard" icon="◷" label="Informes"  active={false} />
+          </NavSection>
 
-            <NavSection label="Cuenta">
-              <NavItem href="/dashboard"          icon="⊙" label="Ajustes"   active={false} techMode={techMode} />
-            </NavSection>
-          </nav>
+          <NavSection label="Cuenta">
+            <NavItem href="/dashboard" icon="⊙" label="Ajustes" active={false} />
+          </NavSection>
+        </nav>
 
-          {/* Footer — org pill */}
-          <div
-            className="px-6 py-4"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        {/* Footer */}
+        <div
+          className="px-6 py-4"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-[#121A22] hover:border-white/10 transition-colors text-left"
           >
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-[#121A22] hover:border-white/10 transition-colors text-left"
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center font-syne font-bold text-[11px] text-white shrink-0"
+              style={{ background: "linear-gradient(135deg, #1A3A5C, #0077FF)" }}
             >
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center font-syne font-bold text-[11px] text-white shrink-0"
-                style={{ background: "linear-gradient(135deg, #1A3A5C, #0077FF)" }}
-              >
-                {initials}
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[12px] font-medium text-[#E8EDF2] truncate">
+                {userEmail?.split("@")[0] ?? "Usuario"}
               </div>
-              <div className="min-w-0">
-                <div className="text-[12px] font-medium text-[#E8EDF2] truncate">
-                  {userEmail?.split("@")[0] ?? "Usuario"}
-                </div>
-                <div className="text-[10px] text-[#5A6B7A]">Plan Starter</div>
-              </div>
-            </button>
-          </div>
-        </aside>
+              <div className="text-[10px] text-[#5A6B7A]">Plan Starter</div>
+            </div>
+          </button>
+        </div>
+      </aside>
 
-        {/* ── Main content ─────────────────────────────────────────────── */}
-        <main className="flex-1 ml-[220px] min-h-screen">
-          {children}
-        </main>
+      {/* ── Main content ─────────────────────────────────────────────── */}
+      <main className="flex-1 ml-[220px] min-h-screen">
+        {children}
+      </main>
 
-      </div>
-    </ModeContext.Provider>
+    </div>
   );
 }

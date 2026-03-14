@@ -80,14 +80,26 @@ async def add_email(
 
     existing = (
         db.table("monitored_emails")
-        .select("id")
+        .select("id, is_active")
         .eq("user_id", user_id)
         .eq("email", str(payload.email))
         .execute()
         .data
     )
     if existing:
-        raise HTTPException(status_code=409, detail="Email already monitored")
+        record = existing[0]
+        if record["is_active"]:
+            raise HTTPException(status_code=409, detail="Email already monitored")
+        # Email was previously deleted — reactivate instead of inserting
+        result = (
+            db.table("monitored_emails")
+            .update({"is_active": True})
+            .eq("id", record["id"])
+            .execute()
+        )
+        email = result.data[0]
+        background_tasks.add_task(scan_email_breaches, email["id"], str(payload.email), user_id)
+        return EmailResponse(**email)
 
     result = (
         db.table("monitored_emails")
