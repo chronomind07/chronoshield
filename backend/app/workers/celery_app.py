@@ -47,7 +47,17 @@ celery_app.conf.beat_schedule = {
         "task": "app.workers.tasks.scan_breaches_all_emails",
         "schedule": crontab(hour=3, minute=0),
     },
-    # Recalculate all scores: every hour
+    # Dark Web (email+domain breach + typosquatting): daily at 3:15am
+    "darkweb-scan-all-users": {
+        "task": "app.workers.tasks.darkweb_scan_all_users",
+        "schedule": crontab(hour=3, minute=15),
+    },
+    # Monthly credit reset check: every day at midnight
+    "reset-monthly-credits": {
+        "task": "app.workers.tasks.reset_monthly_credits",
+        "schedule": crontab(hour=0, minute=0),
+    },
+    # Recalculate all scores: every 30 min
     "recalculate-scores": {
         "task": "app.workers.tasks.recalculate_all_scores",
         "schedule": crontab(minute=30),

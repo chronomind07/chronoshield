@@ -137,9 +137,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
           <NavSection label="Monitor">
-            <NavItem href="/dashboard"         icon="◈" label="Dashboard" active={pathname === "/dashboard"} />
-            <NavItem href="/dashboard/emails"  icon="✉" label="Emails"    active={pathname === "/dashboard/emails"} />
-            <NavItem href="/dashboard/domains" icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} />
+            <NavItem href="/dashboard"           icon="◈" label="Dashboard" active={pathname === "/dashboard"} />
+            <NavItem href="/dashboard/emails"    icon="✉" label="Emails"    active={pathname === "/dashboard/emails"} />
+            <NavItem href="/dashboard/domains"   icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} />
+            <NavItem href="/dashboard/darkweb"   icon="🕸" label="Dark Web"  active={pathname === "/dashboard/darkweb"} />
           </NavSection>
 
           <NavSection label="Gestión">

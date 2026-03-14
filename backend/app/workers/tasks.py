@@ -93,3 +93,122 @@ def recalculate_all_scores(self):
         except Exception as e:
             logger.error("Score calculation failed", domain=d["domain"], error=str(e))
     logger.info("Score recalculation finished", count=len(domains))
+
+
+@celery_app.task(name="app.workers.tasks.darkweb_scan_all_users", bind=True, max_retries=2)
+def darkweb_scan_all_users(self):
+    """
+    Daily automatic Dark Web scan for all users.
+    No credit cost — automatic scan included in plan.
+    Starter: email breach + domain breach.
+    Business: same + typosquatting.
+    """
+    from app.services import insecureweb_service as iw
+    from app.core.config import settings
+
+    if not settings.INSECUREWEB_API_KEY:
+        logger.warning("INSECUREWEB_API_KEY not configured — skipping dark web scan")
+        return
+
+    db = get_supabase_client()
+
+    # Get distinct user_ids with active subscriptions (starter or business)
+    subs = (
+        db.table("subscriptions")
+        .select("user_id,plan")
+        .in_("plan", ["starter", "business"])
+        .eq("status", "active")
+        .execute()
+        .data
+    ) or []
+
+    logger.info("Dark web auto-scan started", users=len(subs))
+
+    for sub in subs:
+        user_id = sub["user_id"]
+        plan = sub["plan"]
+        try:
+            # Active emails
+            emails_rows = (
+                db.table("monitored_emails")
+                .select("email")
+                .eq("user_id", user_id)
+                .eq("is_active", True)
+                .execute()
+                .data
+            ) or []
+            emails = [r["email"] for r in emails_rows]
+
+            # Active domains
+            domains_rows = (
+                db.table("domains")
+                .select("domain")
+                .eq("user_id", user_id)
+                .eq("is_active", True)
+                .execute()
+                .data
+            ) or []
+            domains = [r["domain"] for r in domains_rows]
+
+            # Email breach scans
+            for email in emails:
+                try:
+                    data = iw.search_dark_web(emails=[email])
+                    db.table("dark_web_results").insert({
+                        "user_id": user_id,
+                        "scan_type": "email_breach",
+                        "query_value": email,
+                        "total_results": data.get("totalResults", 0),
+                        "results": data.get("results", []),
+                        "is_manual": False,
+                    }).execute()
+                except Exception as e:
+                    logger.error("Auto email breach scan failed", email=email, error=str(e))
+
+            # Domain breach scans
+            for domain in domains:
+                try:
+                    data = iw.search_dark_web(domains=[domain])
+                    db.table("dark_web_results").insert({
+                        "user_id": user_id,
+                        "scan_type": "domain_breach",
+                        "query_value": domain,
+                        "total_results": data.get("totalResults", 0),
+                        "results": data.get("results", []),
+                        "is_manual": False,
+                    }).execute()
+                except Exception as e:
+                    logger.error("Auto domain breach scan failed", domain=domain, error=str(e))
+
+            # Typosquatting — Business only
+            if plan == "business" and domains:
+                try:
+                    profile = db.table("profiles").select("company_name").eq("id", user_id).execute().data
+                    org_name = (profile[0].get("company_name") or "ChronoShield Org") if profile else "ChronoShield Org"
+                    org_id = iw.ensure_org(user_id, org_name, domains, emails, db)
+                    typo_data = iw.get_typosquatting_threats(org_id)
+                    threats = typo_data.get("content", typo_data.get("results", []))
+                    db.table("dark_web_results").insert({
+                        "user_id": user_id,
+                        "scan_type": "typosquatting",
+                        "query_value": domains[0],
+                        "total_results": len(threats),
+                        "results": threats,
+                        "is_manual": False,
+                    }).execute()
+                except Exception as e:
+                    logger.error("Auto typosquatting scan failed", user_id=user_id, error=str(e))
+
+        except Exception as e:
+            logger.error("Dark web auto-scan failed for user", user_id=user_id, error=str(e))
+
+    logger.info("Dark web auto-scan finished", users=len(subs))
+
+
+@celery_app.task(name="app.workers.tasks.reset_monthly_credits", bind=True, max_retries=2)
+def reset_monthly_credits(self):
+    """Reset monthly credits for all users on the 1st of each month."""
+    from app.services.credits_service import reset_monthly_credits_all
+    db = get_supabase_client()
+    count = reset_monthly_credits_all(db)
+    logger.info("Monthly credit reset complete", users_reset=count)

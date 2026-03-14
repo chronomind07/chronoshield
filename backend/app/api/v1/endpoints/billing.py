@@ -98,8 +98,23 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None))
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
-        user_id = session["metadata"]["user_id"]
-        plan = session["metadata"]["plan"]
+        user_id = session["metadata"].get("user_id")
+        if not user_id:
+            return {"status": "ok"}
+
+        # ── Credit pack purchase (one-time payment) ──────────────────────────
+        credit_pack = session["metadata"].get("credit_pack")
+        if credit_pack:
+            from app.services.credits_service import add_credits
+            credits_to_add = int(session["metadata"].get("credits_to_add", 0))
+            if credits_to_add > 0:
+                add_credits(user_id, credits_to_add, None, db)
+            return {"status": "ok"}
+
+        # ── Subscription upgrade ─────────────────────────────────────────────
+        plan = session["metadata"].get("plan")
+        if not plan or plan not in PLAN_LIMITS:
+            return {"status": "ok"}
         limits = PLAN_LIMITS[plan]
 
         db.table("subscriptions").update(
@@ -110,6 +125,10 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None))
                 **limits,
             }
         ).eq("user_id", user_id).execute()
+
+        # Sync credits when plan changes
+        from app.services.credits_service import add_credits
+        add_credits(user_id, 0, plan, db)  # just updates the plan label
 
     elif event["type"] == "customer.subscription.updated":
         sub = event["data"]["object"]

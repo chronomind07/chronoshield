@@ -53,5 +53,18 @@ export const billingApi = {
   portal: () => api.post("/billing/portal"),
 };
 
+// Dark Web endpoints
+export const darkwebApi = {
+  summary: ()                          => api.get("/darkweb/summary"),
+  manualScan: ()                       => api.post("/darkweb/scan/manual"),
+  results: (scanType?: string)         => api.get("/darkweb/results", { params: { scan_type: scanType } }),
+};
+
+// Credits endpoints
+export const creditsApi = {
+  get: ()                              => api.get("/credits"),
+  checkout: (pack: "s" | "m" | "l")   => api.post(`/credits/checkout/${pack}`),
+};
+
 export { supabase };
 export default api;

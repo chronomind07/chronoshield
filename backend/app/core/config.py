@@ -29,6 +29,16 @@ class Settings(BaseSettings):
 
     # InsecureWeb
     INSECUREWEB_API_KEY: str = ""
+    INSECUREWEB_BASE_URL: str = "https://app.insecureweb.com"
+
+    # Stripe — Credit packs (one-time payments)
+    STRIPE_CREDITS_S_PRICE_ID: str = ""   # Pack S: 9.99€ → 5 credits
+    STRIPE_CREDITS_M_PRICE_ID: str = ""   # Pack M: 18.99€ → 10 credits
+    STRIPE_CREDITS_L_PRICE_ID: str = ""   # Pack L: 34.99€ → 20 credits
+
+    # Plan credits per month
+    PLAN_STARTER_CREDITS: int = 5
+    PLAN_BUSINESS_CREDITS: int = 20
 
     # Claude AI
     ANTHROPIC_API_KEY: str = ""
