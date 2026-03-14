@@ -270,7 +270,7 @@ function TabGeneral({ profile, lang, onChange, onSave, saving }: {
   const t = T[lang];
   return (
     <div className="space-y-5">
-      <SectionCard title={t.general ?? "General"}>
+      <SectionCard title={t.tabs.general}>
         <Field label={t.fullName}>
           <Input value={profile.full_name} onChange={(v) => onChange({ full_name: v })} placeholder="Tu nombre" />
         </Field>
