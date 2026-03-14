@@ -125,7 +125,7 @@ export default function DomainsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="p-9 space-y-6 min-h-screen">
       {/* Header */}
       <div>
         <h1 className="font-syne text-2xl font-bold text-white">
