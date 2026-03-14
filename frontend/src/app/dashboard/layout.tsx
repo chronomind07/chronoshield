@@ -2,14 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { ModeContext } from "@/lib/mode-context";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Nav item ─────────────────────────────────────────────────────────────────
 function NavItem({
@@ -69,7 +64,7 @@ function NavSection({ label, children }: { label: string; children: React.ReactN
 function LogoIcon() {
   return (
     <div
-      className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px]"
+      className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px] shrink-0"
       style={{
         background: "linear-gradient(135deg, #0077FF, #00C2FF)",
         boxShadow: "0 0 16px rgba(0,194,255,0.3)",
@@ -142,13 +137,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         >
           {/* Logo */}
           <div
-            className="px-6 pt-7 pb-7"
+            className="px-5 pt-6 pb-6"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <LogoIcon />
-              <div>
-                <div className="font-syne font-extrabold text-[18px] text-[#E8EDF2] tracking-[-0.5px] leading-none">
+              <div className="min-w-0 overflow-hidden">
+                <div className="font-syne font-extrabold text-[15px] text-[#E8EDF2] tracking-tight leading-none truncate">
                   ChronoShield
                 </div>
               </div>
@@ -161,7 +156,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Nav */}
           <nav className="flex-1 overflow-y-auto py-2">
             <NavSection label="Monitor">
-              <NavItem href="/dashboard"          icon="◈" label="Overview"  active={pathname === "/dashboard"}         techMode={techMode} />
+              <NavItem href="/dashboard"          icon="◈" label="Dashboard" active={pathname === "/dashboard"}         techMode={techMode} />
               <NavItem href="/dashboard/emails"   icon="✉" label="Emails"    active={pathname === "/dashboard/emails"}  techMode={techMode} />
               <NavItem href="/dashboard/domains"  icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} techMode={techMode} />
             </NavSection>

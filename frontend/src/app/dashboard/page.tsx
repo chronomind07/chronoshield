@@ -486,7 +486,7 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between mb-7 fade-up">
         <div>
           <h1 className="font-syne font-bold text-[22px] text-[#E8EDF2]">
-            {techMode ? "Overview" : "Tu seguridad"}
+            {techMode ? "Dashboard" : "Tu seguridad"}
           </h1>
           <p className="text-[12px] text-[#5A6B7A] mt-0.5">
             {techMode ? "Security monitoring dashboard" : "Un resumen claro del estado de tu agencia"}
