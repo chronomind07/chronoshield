@@ -709,7 +709,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="p-9">
+    <div className="p-9 max-w-[1200px] mx-auto">
       {showDelete && (
         <DeleteModal lang={lang} onConfirm={handleDeleteAccount} onClose={() => setShowDelete(false)} />
       )}

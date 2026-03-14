@@ -79,10 +79,10 @@ function NavSection({ label, children }: { label: string; children: React.ReactN
 function LogoIcon() {
   return (
     <div
-      className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px] shrink-0"
+      className="w-9 h-9 rounded-xl flex items-center justify-center text-[17px] shrink-0"
       style={{
         background: "linear-gradient(135deg, #0077FF, #00C2FF)",
-        boxShadow: "0 0 16px rgba(0,194,255,0.3)",
+        boxShadow: "0 0 20px rgba(0,194,255,0.35)",
       }}
     >
       🛡
@@ -406,19 +406,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {/* Logo */}
         <div
-          className="px-5 pt-6 pb-6"
+          className="flex flex-col items-center pt-7 pb-6 px-4"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <LogoIcon />
-            <div className="min-w-0 overflow-hidden">
-              <div className="font-syne font-extrabold text-[15px] text-[#E8EDF2] tracking-tight leading-none truncate">
-                ChronoShield
-              </div>
+          <LogoIcon />
+          <div className="mt-3 text-center">
+            <div
+              className="uppercase leading-none tracking-[4px] text-[#9AACBA]"
+              style={{ fontFamily: "'DM Mono', 'Courier New', monospace", fontSize: "10px" }}
+            >
+              CHRONOSHIELD
             </div>
-          </div>
-          <div className="font-mono text-[9px] text-[#5A6B7A] tracking-[2px] uppercase mt-1.5 ml-[38px]">
-            Security Platform
+            <div
+              className="uppercase mt-1 leading-none tracking-[2.5px] text-[#3D4F5E]"
+              style={{ fontFamily: "'DM Mono', 'Courier New', monospace", fontSize: "8px" }}
+            >
+              SECURITY PLATFORM
+            </div>
           </div>
         </div>
 

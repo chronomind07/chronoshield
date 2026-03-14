@@ -424,19 +424,6 @@ export default function DashboardPage() {
           <p className="text-[12px] text-[#5A6B7A] mt-0.5">Security monitoring dashboard</p>
         </div>
         <div className="flex items-center gap-2.5">
-          {/* Notification bell */}
-          <div
-            className="relative w-9 h-9 flex items-center justify-center rounded-lg text-[15px] cursor-pointer"
-            style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            🔔
-            {summary.active_alerts > 0 && (
-              <span
-                className="absolute top-[7px] right-[7px] w-[7px] h-[7px] rounded-full border-[1.5px] border-[#0D1218]"
-                style={{ background: "#FF4D6A" }}
-              />
-            )}
-          </div>
           {/* Scan button */}
           <button
             onClick={load}
