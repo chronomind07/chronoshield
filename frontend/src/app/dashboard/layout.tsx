@@ -1,24 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { alertsApi } from "@/lib/api";
 import Link from "next/link";
 
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface AlertItem {
+  id: string;
+  severity: string;
+  title: string;
+  message: string;
+  sent_at: string;
+  is_unread: boolean;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function relTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "ahora";
+  if (m < 60) return `hace ${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `hace ${h}h`;
+  const d = Math.floor(h / 24);
+  return `hace ${d}d`;
+}
+
+const SEV_ICONS: Record<string, string> = {
+  critical: "🔴",
+  medium:   "🟡",
+  low:      "🔵",
+};
+
 // ─── Nav item ─────────────────────────────────────────────────────────────────
 function NavItem({
-  href,
-  icon,
-  label,
-  active,
-  badge,
+  href, icon, label, active, badge,
 }: {
-  href:   string;
-  icon:   string;
-  label:  string;
-  active: boolean;
-  badge?: number;
+  href: string; icon: string; label: string; active: boolean; badge?: number;
 }) {
   return (
     <Link
@@ -70,25 +90,275 @@ function LogoIcon() {
   );
 }
 
+// ─── Alert row (notification panel) ──────────────────────────────────────────
+function AlertRow({
+  alert, onDismiss, onClose,
+}: {
+  alert: AlertItem;
+  onDismiss: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [dismissing, setDismissing] = useState(false);
+  const icon = SEV_ICONS[alert.severity] ?? "🔵";
+
+  const handleDismiss = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDismissing(true);
+    await onDismiss(alert.id);
+    setDismissing(false);
+  };
+
+  return (
+    <div
+      className="flex items-start gap-3 px-4 py-3.5 transition-colors"
+      style={{
+        background: alert.is_unread ? "rgba(255,255,255,0.025)" : "transparent",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+      }}
+    >
+      {/* Severity icon */}
+      <span className="text-[13px] mt-px shrink-0">{icon}</span>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <p
+            className="text-[12px] font-semibold leading-snug"
+            style={{ color: alert.is_unread ? "#E8EDF2" : "#9AACBA" }}
+          >
+            {alert.title}
+          </p>
+          {alert.is_unread && (
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
+              style={{ background: "#FF4D6A" }}
+            />
+          )}
+        </div>
+        <p className="text-[10px] text-[#5A6B7A] mt-0.5">{relTime(alert.sent_at)}</p>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-2">
+          <Link
+            href="/dashboard/alerts"
+            onClick={onClose}
+            className="text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors"
+            style={{ color: "#00C2FF", background: "rgba(0,194,255,0.08)", border: "1px solid rgba(0,194,255,0.12)" }}
+          >
+            Ver alerta
+          </Link>
+          {alert.is_unread && (
+            <button
+              onClick={handleDismiss}
+              disabled={dismissing}
+              className="text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
+              style={{ color: "#5A6B7A", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              {dismissing ? "…" : "Descartar"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Notification bell ────────────────────────────────────────────────────────
+function NotificationBell({
+  unreadCount, setUnreadCount,
+}: {
+  unreadCount: number;
+  setUnreadCount: (n: number) => void;
+}) {
+  const [open, setOpen]     = useState(false);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const fetchAlerts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await alertsApi.list();
+      setAlerts((res.data.alerts as AlertItem[]).slice(0, 8));
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) fetchAlerts();
+  }, [open, fetchAlerts]);
+
+  const handleDismiss = async (id: string) => {
+    try {
+      await alertsApi.markRead(id);
+      setAlerts((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, is_unread: false } : a))
+      );
+      setUnreadCount(Math.max(0, unreadCount - 1));
+    } catch {
+      // silent
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await alertsApi.markAllRead();
+      setAlerts((prev) => prev.map((a) => ({ ...a, is_unread: false })));
+      setUnreadCount(0);
+    } catch {
+      // silent
+    }
+  };
+
+  return (
+    <div ref={panelRef} className="relative">
+      {/* Bell button */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+        style={{
+          background: open
+            ? "rgba(0,194,255,0.08)"
+            : "rgba(255,255,255,0.04)",
+          border: `1px solid ${open ? "rgba(0,194,255,0.2)" : "rgba(255,255,255,0.06)"}`,
+        }}
+        aria-label="Notificaciones"
+      >
+        <span className="text-[15px] select-none">🔔</span>
+        {unreadCount > 0 && (
+          <span
+            className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-[#FF4D6A] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none"
+            style={{ boxShadow: "0 0 8px rgba(255,77,106,0.5)" }}
+          >
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div
+          className="absolute right-0 top-[calc(100%+10px)] w-[360px] rounded-2xl overflow-hidden"
+          style={{
+            background: "#0D1218",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,194,255,0.05)",
+          }}
+        >
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-4 py-3.5"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-syne font-bold text-[14px] text-[#E8EDF2]">
+                Notificaciones
+              </span>
+              {unreadCount > 0 && (
+                <span
+                  className="font-mono text-[9px] font-bold px-1.5 py-px rounded-full text-white"
+                  style={{ background: "#FF4D6A" }}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-[11px] font-semibold transition-colors"
+                style={{ color: "#00C2FF" }}
+              >
+                Marcar todas como leídas
+              </button>
+            )}
+          </div>
+
+          {/* List */}
+          <div className="max-h-[400px] overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-6 h-6 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : alerts.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-12 text-center px-6">
+                <span className="text-3xl">🛡</span>
+                <div>
+                  <div className="font-syne font-bold text-[15px] text-[#E8EDF2]">
+                    Todo en orden
+                  </div>
+                  <div className="text-[12px] text-[#5A6B7A] mt-0.5">
+                    Sin alertas activas. Tu seguridad está vigilada.
+                  </div>
+                </div>
+              </div>
+            ) : (
+              alerts.map((alert) => (
+                <AlertRow
+                  key={alert.id}
+                  alert={alert}
+                  onDismiss={handleDismiss}
+                  onClose={() => setOpen(false)}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
+          {!loading && alerts.length > 0 && (
+            <div
+              className="px-4 py-3"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              <Link
+                href="/dashboard/alerts"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center gap-1 text-[12px] font-semibold transition-colors"
+                style={{ color: "#00C2FF" }}
+              >
+                Ver todas las alertas →
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Layout ───────────────────────────────────────────────────────────────────
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter();
   const pathname = usePathname();
-  const [userEmail, setUserEmail]     = useState<string | null>(null);
-  const [checking, setChecking]       = useState(true);
+  const [userEmail, setUserEmail]       = useState<string | null>(null);
+  const [checking, setChecking]         = useState(true);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
 
-  // Load unread alert count
+  // Poll unread count every 2 min
   useEffect(() => {
     const fetchUnread = async () => {
       try {
         const res = await alertsApi.unreadCount();
         setUnreadAlerts(res.data.unread_count ?? 0);
       } catch {
-        // silent fail — sidebar badge is non-critical
+        // silent
       }
     };
-    // Poll every 2 minutes
     fetchUnread();
     const interval = setInterval(fetchUnread, 120_000);
     return () => clearInterval(interval);
@@ -155,10 +425,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
           <NavSection label="Monitor">
-            <NavItem href="/dashboard"           icon="◈" label="Dashboard" active={pathname === "/dashboard"} />
-            <NavItem href="/dashboard/emails"    icon="✉" label="Emails"    active={pathname === "/dashboard/emails"} />
-            <NavItem href="/dashboard/domains"   icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} />
-            <NavItem href="/dashboard/darkweb"   icon="🕸" label="Dark Web"  active={pathname === "/dashboard/darkweb"} />
+            <NavItem href="/dashboard"         icon="◈" label="Dashboard" active={pathname === "/dashboard"} />
+            <NavItem href="/dashboard/emails"  icon="✉" label="Emails"    active={pathname === "/dashboard/emails"} />
+            <NavItem href="/dashboard/domains" icon="◎" label="Dominios"  active={pathname === "/dashboard/domains"} />
+            <NavItem href="/dashboard/darkweb" icon="🕸" label="Dark Web"  active={pathname === "/dashboard/darkweb"} />
           </NavSection>
 
           <NavSection label="Gestión">
@@ -198,10 +468,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── Main content ─────────────────────────────────────────────── */}
-      <main className="flex-1 ml-[220px] min-h-screen">
-        <div className="w-full max-w-[1200px] mx-auto">
+      <main className="flex-1 ml-[220px] min-h-screen flex flex-col">
+
+        {/* ── Topbar ── */}
+        <div
+          className="sticky top-0 z-10 flex items-center justify-end h-[52px] px-6 shrink-0"
+          style={{
+            background: "rgba(8,12,16,0.88)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <NotificationBell
+            unreadCount={unreadAlerts}
+            setUnreadCount={setUnreadAlerts}
+          />
+        </div>
+
+        {/* ── Page content ── */}
+        <div className="flex-1 w-full max-w-[1200px] mx-auto">
           {children}
         </div>
+
       </main>
 
     </div>

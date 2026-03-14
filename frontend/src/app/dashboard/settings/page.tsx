@@ -741,7 +741,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab content */}
-      <div className="fade-up max-w-2xl">
+      <div className="fade-up">
         {tab === "general" && (
           <TabGeneral
             profile={profile}
