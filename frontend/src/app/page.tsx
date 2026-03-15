@@ -14,15 +14,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1
 function ShieldLogo({ size = 36 }: { size?: number }) {
   return (
     <div
-      className="rounded-xl flex items-center justify-center shrink-0"
-      style={{ width: size, height: size, background: "linear-gradient(135deg,#0077FF,#00C2FF)" }}
+      className="rounded-xl overflow-hidden flex items-center justify-center shrink-0"
+      style={{ width: size, height: size, background: "#080C10" }}
     >
-      <svg width={Math.round(size * 0.5)} height={Math.round(size * 0.5)} viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7L12 2z"
-          fill="white" fillOpacity="0.92" />
-        <path d="M9 12l2 2 4-4" stroke="rgba(0,220,255,0.9)" strokeWidth="1.8"
-          strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo.jpeg"
+        alt="ChronoShield"
+        width={size}
+        height={size}
+        className="w-full h-full object-contain"
+      />
     </div>
   );
 }
@@ -975,8 +977,9 @@ function Footer() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-[#5A6B7A]">
-            <a href="#" className="hover:text-[#9AACBA] transition-colors">Política de privacidad</a>
-            <a href="#" className="hover:text-[#9AACBA] transition-colors">Términos de uso</a>
+            <Link href="/privacidad" className="hover:text-[#9AACBA] transition-colors">Política de privacidad</Link>
+            <Link href="/terminos" className="hover:text-[#9AACBA] transition-colors">Términos y condiciones</Link>
+            <Link href="/cookies" className="hover:text-[#9AACBA] transition-colors">Cookies</Link>
             <a href="#contacto" className="hover:text-[#9AACBA] transition-colors">Contacto</a>
           </div>
         </div>

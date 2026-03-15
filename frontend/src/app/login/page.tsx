@@ -9,15 +9,11 @@ import toast from "react-hot-toast";
 function ShieldIcon() {
   return (
     <div
-      className="w-12 h-12 rounded-2xl flex items-center justify-center"
-      style={{ background: "linear-gradient(135deg,#0077FF,#00C2FF)", boxShadow: "0 8px 32px rgba(0,119,255,0.35)" }}
+      className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center"
+      style={{ background: "#080C10", boxShadow: "0 8px 32px rgba(0,119,255,0.25)" }}
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7L12 2z"
-          fill="white" fillOpacity="0.92" />
-        <path d="M9 12l2 2 4-4" stroke="rgba(0,220,255,0.9)" strokeWidth="1.8"
-          strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.jpeg" alt="ChronoShield" width={56} height={56} className="w-full h-full object-contain" />
     </div>
   );
 }

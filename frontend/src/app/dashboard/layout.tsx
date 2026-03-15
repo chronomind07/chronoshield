@@ -78,14 +78,16 @@ function NavSection({ label, children }: { label: string; children: React.ReactN
 // ─── Logo icon ────────────────────────────────────────────────────────────────
 function LogoIcon() {
   return (
-    <div
-      className="w-9 h-9 rounded-xl flex items-center justify-center text-[17px] shrink-0"
-      style={{
-        background: "linear-gradient(135deg, #0077FF, #00C2FF)",
-        boxShadow: "0 0 20px rgba(0,194,255,0.35)",
-      }}
-    >
-      🛡
+    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+      style={{ background: "#080C10", boxShadow: "0 0 16px rgba(0,194,255,0.2)" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo.jpeg"
+        alt="ChronoShield"
+        width={40}
+        height={40}
+        className="w-full h-full object-contain"
+      />
     </div>
   );
 }
