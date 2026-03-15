@@ -24,6 +24,7 @@ class DomainResponse(BaseModel):
     is_active: bool
     verified: bool
     created_at: datetime
+    last_scanned_at: Optional[datetime] = None
 
 
 class DomainWithMetrics(DomainResponse):

@@ -1,5 +1,6 @@
 """Orchestrates all scans for a domain in sequence."""
 import structlog
+from datetime import datetime, timezone
 from app.workers.ssl.scanner import scan_ssl
 from app.workers.uptime.scanner import scan_uptime
 from app.workers.email_security.scanner import scan_email_security
@@ -24,5 +25,10 @@ async def trigger_domain_scan(domain_id: str, user_id: str):
     scan_uptime(domain_id, domain, user_id)
     scan_email_security(domain_id, domain, user_id)
     calculate_domain_score(domain_id, user_id)
+
+    # Stamp the last_scanned_at timestamp on the domain record
+    db.table("domains").update(
+        {"last_scanned_at": datetime.now(timezone.utc).isoformat()}
+    ).eq("id", domain_id).execute()
 
     logger.info("Domain scan complete", domain=domain)

@@ -28,6 +28,7 @@ export const emailsApi = {
   list: () => api.get("/emails"),
   add: (email: string) => api.post("/emails", { email }),
   remove: (id: string) => api.delete(`/emails/${id}`),
+  scan: (id: string) => api.post(`/emails/${id}/scan`),
 };
 
 // Dashboard endpoints

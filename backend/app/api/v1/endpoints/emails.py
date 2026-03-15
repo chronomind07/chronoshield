@@ -5,6 +5,7 @@ from app.core.security import get_current_user_id
 from app.db.supabase import get_db
 from app.schemas.email import EmailCreate, EmailResponse, EmailWithBreaches
 from app.workers.breach.scanner import scan_email_breaches
+from app.services.credits_service import consume_credit
 
 router = APIRouter(prefix="/emails", tags=["emails"])
 
@@ -109,6 +110,38 @@ async def add_email(
     email = result.data[0]
     background_tasks.add_task(scan_email_breaches, email["id"], str(payload.email), user_id)
     return EmailResponse(**email)
+
+
+@router.post("/{email_id}/scan", status_code=202)
+async def trigger_email_scan(
+    email_id: UUID,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """Manually trigger a breach scan for an email. Costs 1 credit."""
+    email_row = (
+        db.table("monitored_emails")
+        .select("id,email")
+        .eq("id", str(email_id))
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .single()
+        .execute()
+    )
+    if not email_row.data:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    # Consume 1 credit — raises HTTP 402 with code NO_CREDITS if insufficient
+    credits = consume_credit(user_id, db)
+
+    background_tasks.add_task(
+        scan_email_breaches,
+        str(email_id),
+        email_row.data["email"],
+        user_id,
+    )
+    return {"message": "Scan initiated", "credits_remaining": credits["credits_available"]}
 
 
 @router.delete("/{email_id}", status_code=204)

@@ -5,6 +5,7 @@ from app.core.security import get_current_user_id
 from app.db.supabase import get_db
 from app.schemas.domain import DomainCreate, DomainResponse, DomainWithMetrics
 from app.services.scan_orchestrator import trigger_domain_scan
+from app.services.credits_service import consume_credit
 
 router = APIRouter(prefix="/domains", tags=["domains"])
 
@@ -148,7 +149,7 @@ async def trigger_scan(
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
-    """Manually trigger a full scan for a domain."""
+    """Manually trigger a full scan for a domain. Costs 1 credit."""
     domain = (
         db.table("domains")
         .select("id")
@@ -160,5 +161,8 @@ async def trigger_scan(
     if not domain.data:
         raise HTTPException(status_code=404, detail="Domain not found")
 
+    # Consume 1 credit — raises HTTP 402 with code NO_CREDITS if insufficient
+    credits = consume_credit(user_id, db)
+
     background_tasks.add_task(trigger_domain_scan, str(domain_id), user_id)
-    return {"message": "Scan initiated"}
+    return {"message": "Scan initiated", "credits_remaining": credits["credits_available"]}
