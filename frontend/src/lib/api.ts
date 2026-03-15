@@ -108,5 +108,11 @@ export const settingsApi = {
     api.post("/settings/delete-account", { confirmation }),
 };
 
+// Contact endpoint (public — no auth required by backend)
+export const contactApi = {
+  send: (data: { name: string; email: string; message: string }) =>
+    api.post("/contact", data),
+};
+
 export { supabase };
 export default api;

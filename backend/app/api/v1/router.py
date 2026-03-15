@@ -1,8 +1,15 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import domains, emails, billing, dashboard, ai_analysis, darkweb, credits, admin, alerts, history, settings
+from app.api.v1.endpoints import (
+    domains, emails, billing, dashboard, ai_analysis,
+    darkweb, credits, admin, alerts, history, settings, contact,
+)
 
 api_router = APIRouter()
 
+# ── Public endpoints (no auth required) ───────────────────────────────────────
+api_router.include_router(contact.router)
+
+# ── Protected endpoints (auth enforced per-route via get_current_user_id) ─────
 api_router.include_router(dashboard.router)
 api_router.include_router(domains.router)
 api_router.include_router(emails.router)

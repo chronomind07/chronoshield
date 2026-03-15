@@ -35,3 +35,9 @@ body {
 .pulse-dot {
   animation: pulseDot 2s ease-in-out infinite;
 }
+
+/* ── Landing page: smooth scroll with fixed navbar offset ── */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
