@@ -22,9 +22,72 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+const BASE_URL = "https://chronoshield.eu";
+
 export const metadata: Metadata = {
-  title: "ChronoShield – Ciberseguridad para Inmobiliarias",
-  description: "Protege tu agencia inmobiliaria con monitorización continua de seguridad",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "ChronoShield – Ciberseguridad para Inmobiliarias",
+    template: "%s | ChronoShield",
+  },
+  description:
+    "Protege tu agencia inmobiliaria con monitorización continua: vigilancia de filtraciones, SSL, uptime y seguridad del email. Alertas en tiempo real.",
+  keywords: [
+    "ciberseguridad inmobiliaria",
+    "monitorización seguridad web",
+    "filtraciones de datos",
+    "SSL monitoring",
+    "uptime monitoring",
+    "seguridad email SPF DKIM DMARC",
+  ],
+  authors: [{ name: "ChronoShield", url: BASE_URL }],
+  creator: "ChronoShield",
+  publisher: "ChronoShield",
+
+  // ── Favicon & icons ──────────────────────────────────────────
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+
+  // ── Open Graph (WhatsApp, Facebook, LinkedIn…) ───────────────
+  openGraph: {
+    type: "website",
+    url: BASE_URL,
+    siteName: "ChronoShield",
+    title: "ChronoShield – Ciberseguridad para Inmobiliarias",
+    description:
+      "Monitorización continua de seguridad para agencias inmobiliarias. Detección de filtraciones, SSL, uptime y email security en un solo panel.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "ChronoShield – Ciberseguridad para Inmobiliarias",
+      },
+    ],
+    locale: "es_ES",
+  },
+
+  // ── Twitter / X Card ─────────────────────────────────────────
+  twitter: {
+    card: "summary_large_image",
+    title: "ChronoShield – Ciberseguridad para Inmobiliarias",
+    description:
+      "Monitorización continua de seguridad para agencias inmobiliarias. Detección de filtraciones, SSL, uptime y email security en un solo panel.",
+    images: ["/og-image.png"],
+    creator: "@chronoshield",
+  },
+
+  // ── Robots / crawling ────────────────────────────────────────
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

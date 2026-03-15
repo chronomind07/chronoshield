@@ -41,7 +41,13 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error de autenticación";
+      const raw = err instanceof Error ? err.message : "Error de autenticación";
+      // Translate Supabase's "Email not confirmed" to Spanish
+      const msg = raw.toLowerCase().includes("email not confirmed")
+        ? "Debes confirmar tu email antes de acceder. Revisa tu bandeja de entrada."
+        : raw.toLowerCase().includes("invalid login credentials")
+        ? "Email o contraseña incorrectos."
+        : raw;
       toast.error(msg);
     } finally {
       setLoading(false);

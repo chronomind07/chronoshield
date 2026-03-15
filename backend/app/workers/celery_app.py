@@ -57,9 +57,9 @@ celery_app.conf.beat_schedule = {
         "task": "app.workers.tasks.reset_monthly_credits",
         "schedule": crontab(hour=0, minute=0),
     },
-    # Recalculate all scores: every 30 min
+    # Recalculate all scores: every 30 min (at :00 and :30)
     "recalculate-scores": {
         "task": "app.workers.tasks.recalculate_all_scores",
-        "schedule": crontab(minute=30),
+        "schedule": crontab(minute="*/30"),
     },
 }
