@@ -72,6 +72,9 @@ class Settings(BaseSettings):
     PLAN_BUSINESS_DOMAINS: int = 3
     PLAN_BUSINESS_EMAILS: int = 30
 
+    # Google Safe Browsing API (Chrome extension phishing detection)
+    GOOGLE_SAFE_BROWSING_API_KEY: str = ""
+
     # Scan intervals (minutes)
     BREACH_SCAN_INTERVAL: int = 1440   # daily
     SSL_SCAN_INTERVAL: int = 60         # hourly

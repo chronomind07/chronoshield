@@ -1,0 +1,232 @@
+/**
+ * ChronoShield Extension — Content Script Styles
+ * Injected into mail.google.com
+ * Dark theme matching the ChronoShield dashboard.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Side panel ──────────────────────────────────────────────────────────── */
+
+.cs-panel {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 320px;
+  max-height: calc(100vh - 80px);
+  background: #0D1218;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: none;
+  border-radius: 16px 0 0 16px;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  overflow: hidden;
+  animation: cs-slide-in 0.25s ease-out;
+}
+
+@keyframes cs-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Panel header */
+.cs-panel-header {
+  padding: 14px 16px 12px;
+  flex-shrink: 0;
+}
+
+.cs-panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cs-panel-title {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+}
+
+.cs-panel-close {
+  background: transparent;
+  border: none;
+  color: #5A6B7A;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.cs-panel-close:hover {
+  color: #E8EDF2;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cs-panel-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cs-meta-item {
+  font-size: 11px;
+  color: #5A6B7A;
+}
+.cs-meta-item strong {
+  color: #9BAEBF;
+  font-weight: 600;
+}
+
+/* Panel body */
+.cs-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+
+.cs-panel-body::-webkit-scrollbar { width: 4px; }
+.cs-panel-body::-webkit-scrollbar-track { background: transparent; }
+.cs-panel-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* Signals */
+.cs-signals-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #5A6B7A;
+  margin-bottom: 8px;
+}
+
+.cs-signal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border-left: 3px solid #5A6B7A;
+}
+
+.cs-signal-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.cs-signal-msg {
+  font-size: 12px;
+  color: #9BAEBF;
+  line-height: 1.5;
+}
+
+.cs-no-signals {
+  font-size: 13px;
+  color: #5A6B7A;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Footer / deep analysis */
+.cs-panel-footer {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 12px;
+}
+
+.cs-btn-deep {
+  width: 100%;
+  padding: 9px 12px;
+  background: rgba(0, 194, 255, 0.06);
+  border: 1px solid rgba(0, 194, 255, 0.15);
+  border-radius: 8px;
+  color: #00C2FF;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cs-btn-deep:hover { background: rgba(0, 194, 255, 0.1); }
+.cs-btn-deep:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cs-deep-result {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.cs-deep-safe {
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+.cs-deep-danger {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+.cs-deep-error {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #ef4444;
+}
+.cs-deep-error a {
+  color: #00C2FF;
+  text-decoration: none;
+}
+.cs-deep-error a:hover { text-decoration: underline; }
+
+.cs-breach-list {
+  margin: 6px 0 4px 14px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+.cs-breach-list li { margin-bottom: 2px; }
+
+.cs-deep-result small {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  opacity: 0.6;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Badge ───────────────────────────────────────────────────────────────── */
+
+.cs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 6px;
+  border-radius: 20px;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  vertical-align: middle;
+  user-select: none;
+}
+.cs-badge:hover { opacity: 0.85; transform: scale(1.02); }
+
+.cs-badge-emoji { font-size: 13px; line-height: 1; }
+.cs-badge-label { font-size: 12px; }
+.cs-badge-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  opacity: 0.7;
+}

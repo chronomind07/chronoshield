@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChronoShield</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 320px;
+      min-height: 400px;
+      background: #080C10;
+      color: #E8EDF2;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .header-logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, #0077FF, #00C2FF);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+      color: #E8EDF2;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: #5A6B7A;
+      margin-top: 1px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Login view ──────────────────────────────────────────── */
+    #view-login {
+      padding: 24px 18px;
+    }
+    .login-intro {
+      font-size: 13px;
+      color: #5A6B7A;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #5A6B7A;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 9px 12px;
+      background: #0D1218;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #E8EDF2;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+      border-color: rgba(0,194,255,0.4);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      background: linear-gradient(135deg, #0077FF, #00C2FF);
+      border: none;
+      border-radius: 8px;
+      color: #080C10;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 6px;
+      color: #ef4444;
+      font-size: 12px;
+      display: none;
+    }
+
+    /* ── Account view ────────────────────────────────────────── */
+    #view-account {
+      padding: 0;
+      display: none;
+    }
+    .account-body {
+      padding: 18px;
+    }
+    .account-email {
+      font-size: 13px;
+      color: #5A6B7A;
+      margin-bottom: 16px;
+      padding: 8px 12px;
+      background: #0D1218;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      word-break: break-all;
+    }
+
+    /* Credits card */
+    .credits-card {
+      padding: 16px;
+      background: rgba(0,194,255,0.04);
+      border: 1px solid rgba(0,194,255,0.12);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .credits-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #5A6B7A;
+      margin-bottom: 6px;
+    }
+    .credits-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #00C2FF;
+      font-family: 'DM Mono', monospace;
+      line-height: 1;
+    }
+    .credits-sub {
+      font-size: 11px;
+      color: #5A6B7A;
+      margin-top: 4px;
+    }
+
+    /* Status */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #0D1218;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-dot.active { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+    .status-dot.inactive { background: #5A6B7A; }
+
+    /* Buttons */
+    .btn-secondary {
+      width: 100%;
+      padding: 9px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #E8EDF2;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+    .btn-buy {
+      width: 100%;
+      padding: 9px;
+      background: linear-gradient(135deg, #0077FF22, #00C2FF22);
+      border: 1px solid rgba(0,194,255,0.2);
+      border-radius: 8px;
+      color: #00C2FF;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    .btn-buy:hover { background: linear-gradient(135deg, #0077FF33, #00C2FF33); }
+
+    .btn-logout {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 8px;
+      color: #ef4444;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,0.05); }
+
+    /* Footer */
+    .popup-footer {
+      padding: 10px 18px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 10px;
+      color: #3A4B5A;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* Loading state */
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: #00C2FF;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <!-- Header (always visible) -->
+  <div class="header">
+    <div class="header-logo">🛡</div>
+    <div>
+      <div class="header-title">ChronoShield</div>
+      <div class="header-sub">Phishing Detector · Gmail</div>
+    </div>
+  </div>
+
+  <!-- Login view -->
+  <div id="view-login">
+    <p class="login-intro">
+      Inicia sesión con tu cuenta de ChronoShield para activar la detección de phishing en Gmail.
+    </p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="inp-email" placeholder="tu@email.com" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="inp-password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn-primary" id="btn-login">Iniciar sesión</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+
+  <!-- Account view -->
+  <div id="view-account">
+    <div class="account-body">
+      <div class="account-email" id="account-email">—</div>
+
+      <div class="credits-card">
+        <div class="credits-label">Créditos disponibles</div>
+        <div class="credits-value" id="credits-value">—</div>
+        <div class="credits-sub">1 crédito = 1 análisis profundo</div>
+      </div>
+
+      <div class="status-row">
+        <div class="status-dot active"></div>
+        <span>Protección activa en Gmail</span>
+      </div>
+
+      <button class="btn-buy" id="btn-buy">⚡ Comprar créditos</button>
+      <button class="btn-secondary" id="btn-dashboard">🔗 Ir al dashboard</button>
+      <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="popup-footer">ChronoShield v1.0 · Datos en tránsito cifrados</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
