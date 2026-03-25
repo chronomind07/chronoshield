@@ -2,25 +2,240 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Background gradient on the app shell ── */
-body {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,119,255,0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(0,194,255,0.05) 0%, transparent 50%),
-    #080C10;
+/* ══════════════════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════════════════ */
+:root {
+  --bg-void: #050507;
+  --bg-surface: #0a0a0f;
+  --bg-card: #0f0f16;
+  --bg-card-hover: #14141d;
+  --border-ghost: rgba(255,255,255,0.03);
+  --border-whisper: rgba(255,255,255,0.06);
+  --border-soft: rgba(255,255,255,0.10);
+  --text-bright: #f0f0f5;
+  --text-mid: #9999ad;
+  --text-dim: #55556a;
+  --accent: #00e5bf;
+  --accent-glow: rgba(0,229,191,0.12);
+  --accent-bright: #00ffd5;
+  --accent-secondary: #6366f1;
+  --accent-sec-glow: rgba(99,102,241,0.10);
+  --danger: #ff4d6a;
+  --warning: #ffb020;
+  --font-serif-family: var(--font-serif, 'Georgia', serif);
+  --font-jakarta-family: var(--font-jakarta, system-ui, sans-serif);
+  --font-mono-family: var(--font-dm-mono, 'SF Mono', monospace);
 }
 
-/* ── Animations ── */
+/* ══════════════════════════════════════════════════════
+   BASE
+══════════════════════════════════════════════════════ */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-soft) transparent;
+}
+
+body {
+  font-family: var(--font-jakarta-family);
+  background: var(--bg-void);
+  color: var(--text-bright);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════════════════
+   NOISE TEXTURE OVERLAY
+══════════════════════════════════════════════════════ */
+.noise-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px;
+}
+
+/* ══════════════════════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════════════════════ */
+@keyframes orbBreathe {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 0.85; transform: translateX(-50%) scale(1.15); }
+}
+
+@keyframes orbBreathe2 {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.12); }
+}
+
+@keyframes scanMove {
+  0%   { top: 15%; }
+  50%  { top: 82%; }
+  100% { top: 15%; }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,229,191,0.4); }
+  50%       { opacity: 0.5; box-shadow: 0 0 0 6px rgba(0,229,191,0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes titleReveal {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes typeLine {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,106,0.25); }
+  50%       { box-shadow: 0 0 0 6px rgba(255,77,106,0); }
+}
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulseDot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,194,255,0.5); }
-  50%       { opacity: 0.8; box-shadow: 0 0 0 6px rgba(0,194,255,0); }
+/* ══════════════════════════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1),
+              transform 0.9s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-d1 { transition-delay: 0.1s; }
+.reveal-d2 { transition-delay: 0.2s; }
+.reveal-d3 { transition-delay: 0.3s; }
+.reveal-d4 { transition-delay: 0.4s; }
+.reveal-d5 { transition-delay: 0.5s; }
+
+/* ══════════════════════════════════════════════════════
+   HERO ANIMATIONS (immediate, no JS needed)
+══════════════════════════════════════════════════════ */
+.hero-tag-anim {
+  animation: fadeInDown 0.8s cubic-bezier(0.16,1,0.3,1) both;
+}
+.hero-title-anim {
+  animation: titleReveal 1s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+}
+.hero-sub-anim {
+  animation: titleReveal 1s cubic-bezier(0.16,1,0.3,1) 0.4s both;
+}
+.hero-actions-anim {
+  animation: titleReveal 1s cubic-bezier(0.16,1,0.3,1) 0.6s both;
 }
 
+/* ══════════════════════════════════════════════════════
+   TERMINAL TYPING
+══════════════════════════════════════════════════════ */
+.terminal-line {
+  opacity: 0;
+  animation: typeLine 0.35s ease forwards;
+}
+.terminal-animate .terminal-line:nth-child(1) { animation-delay: 0.5s; }
+.terminal-animate .terminal-line:nth-child(2) { animation-delay: 1.2s; }
+.terminal-animate .terminal-line:nth-child(3) { animation-delay: 1.9s; }
+.terminal-animate .terminal-line:nth-child(4) { animation-delay: 2.6s; }
+.terminal-animate .terminal-line:nth-child(5) { animation-delay: 3.3s; }
+.terminal-animate .terminal-line:nth-child(6) { animation-delay: 4.0s; }
+
+/* ══════════════════════════════════════════════════════
+   BTN PRIMARY SHIMMER
+══════════════════════════════════════════════════════ */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: translateX(-100%);
+  transition: transform 0s;
+}
+.btn-shimmer:hover::after {
+  animation: shimmer 0.6s ease forwards;
+}
+
+/* ══════════════════════════════════════════════════════
+   FEATURE CARD ACCENT LINE
+══════════════════════════════════════════════════════ */
+.feature-card-cs {
+  position: relative;
+  transition: background 0.4s;
+}
+.feature-card-cs::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 1px;
+  background: var(--accent);
+  transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.feature-card-cs:hover::before { width: 60%; }
+.feature-card-cs:hover { background: #14141d; }
+
+/* ══════════════════════════════════════════════════════
+   PRICE CARD FEATURED BADGE
+══════════════════════════════════════════════════════ */
+.price-featured-badge::before {
+  content: 'Popular';
+  position: absolute;
+  top: -12px; right: 28px;
+  padding: 4px 14px;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.7rem; font-weight: 700;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-jakarta-family);
+}
+
+/* ══════════════════════════════════════════════════════
+   PULSE DOT
+══════════════════════════════════════════════════════ */
+.pulse-dot-cs {
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════
+   MOCK BADGE PULSE
+══════════════════════════════════════════════════════ */
+.mock-badge-pulse {
+  animation: badgePulse 3s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════
+   DASHBOARD / APP SHELL (preserved)
+══════════════════════════════════════════════════════ */
 .fade-up {
   opacity: 0;
   transform: translateY(14px);
@@ -31,13 +246,3 @@ body {
 .fade-up:nth-child(3) { animation-delay: 0.19s; }
 .fade-up:nth-child(4) { animation-delay: 0.26s; }
 .fade-up:nth-child(5) { animation-delay: 0.33s; }
-
-.pulse-dot {
-  animation: pulseDot 2s ease-in-out infinite;
-}
-
-/* ── Landing page: smooth scroll with fixed navbar offset ── */
-html {
-  scroll-behavior: smooth;
-  scroll-padding-top: 80px;
-}

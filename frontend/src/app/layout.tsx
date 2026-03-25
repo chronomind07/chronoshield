@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Syne, DM_Mono, DM_Sans } from "next/font/google";
+import { DM_Sans, DM_Mono, Syne, Instrument_Serif, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
@@ -19,6 +19,21 @@ const dmMono = DM_Mono({
   subsets: ["latin"],
   weight: ["300", "400", "500"],
   variable: "--font-dm-mono",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+  display: "swap",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
   display: "swap",
 });
 
@@ -43,8 +58,6 @@ export const metadata: Metadata = {
   authors: [{ name: "ChronoShield", url: BASE_URL }],
   creator: "ChronoShield",
   publisher: "ChronoShield",
-
-  // ── Favicon & icons ──────────────────────────────────────────
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -52,8 +65,6 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
-
-  // ── Open Graph (WhatsApp, Facebook, LinkedIn…) ───────────────
   openGraph: {
     type: "website",
     url: BASE_URL,
@@ -71,8 +82,6 @@ export const metadata: Metadata = {
     ],
     locale: "es_ES",
   },
-
-  // ── Twitter / X Card ─────────────────────────────────────────
   twitter: {
     card: "summary_large_image",
     title: "ChronoShield – Ciberseguridad para Inmobiliarias",
@@ -81,8 +90,6 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
     creator: "@chronoshield",
   },
-
-  // ── Robots / crawling ────────────────────────────────────────
   robots: {
     index: true,
     follow: true,
@@ -93,7 +100,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={`${dmSans.variable} ${syne.variable} ${dmMono.variable} font-sans bg-[#080C10]`}>
+      <body
+        className={`${dmSans.variable} ${syne.variable} ${dmMono.variable} ${instrumentSerif.variable} ${plusJakartaSans.variable} font-sans bg-[#050507]`}
+      >
         {children}
         <Toaster
           position="top-right"
