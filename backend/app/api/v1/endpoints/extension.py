@@ -5,6 +5,11 @@ Level-1 analysis (free, no credits):
   - SPF / DMARC DNS checks on sender domain
   - Domain age via RDAP (< 30 days → phishing signal)
   - Typosquatting detection vs user's monitored domains (Levenshtein)
+  - Risky TLDs in email URLs (.tk, .xyz, etc.)
+  - Brand spoofing in email URLs (paypal-verify.tk vs paypal.com)
+  - HTTP (non-HTTPS) URLs
+  - IP-based URLs
+  - Risky TLD on sender domain
   - URL scan via Google Safe Browsing v4
 
 Level-2 deep analysis (1 credit):
@@ -21,7 +26,9 @@ from pydantic import BaseModel
 from typing import List, Optional
 import httpx
 import dns.resolver
+import re
 from datetime import datetime
+from urllib.parse import urlparse
 
 from app.core.security import get_current_user_id
 from app.db.supabase import get_db
@@ -35,6 +42,20 @@ router = APIRouter(prefix="/extension", tags=["extension"])
 
 # ── Daily limits per plan ──────────────────────────────────────────────────────
 DAILY_LIMITS = {"starter": 20, "business": 100, "trial": 5}
+
+# ── Risky TLDs & brand keywords ───────────────────────────────────────────────
+RISKY_TLDS = frozenset({
+    ".tk", ".ml", ".ga", ".cf", ".gq", ".xyz", ".top", ".buzz",
+    ".click", ".link", ".surf", ".rest", ".icu", ".cam", ".quest",
+})
+
+BRAND_KEYWORDS = [
+    "paypal", "amazon", "google", "microsoft", "apple", "netflix",
+    "banco", "bank", "instagram", "facebook", "meta", "whatsapp",
+    "telegram", "coinbase", "binance", "stripe",
+]
+
+_IP_URL_RE = re.compile(r"https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
 
 
 # ── Request / Response Models ──────────────────────────────────────────────────
@@ -231,6 +252,95 @@ def _check_typosquatting(
     return None
 
 
+# ── Risky TLDs in URLs ────────────────────────────────────────────────────────
+def _check_risky_tlds(urls: List[str]) -> List[AnalysisSignal]:
+    """Flag URLs whose domain uses a high-risk TLD."""
+    signals: List[AnalysisSignal] = []
+    for url in urls:
+        try:
+            host = urlparse(url).hostname or ""
+            for tld in RISKY_TLDS:
+                if host.lower().endswith(tld):
+                    signals.append(AnalysisSignal(
+                        type="risky_tld", severity="high",
+                        message=f"URL con dominio de alto riesgo: {url}",
+                    ))
+                    break
+        except Exception:
+            pass
+    return signals
+
+
+# ── Brand spoofing in URLs ────────────────────────────────────────────────────
+def _check_brand_spoofing(urls: List[str]) -> List[AnalysisSignal]:
+    """Detect brand keywords in URL domains that are NOT the official site."""
+    signals: List[AnalysisSignal] = []
+    for url in urls:
+        try:
+            host = (urlparse(url).hostname or "").lower()
+            # Strip www. prefix for comparison
+            bare = host[4:] if host.startswith("www.") else host
+            for brand in BRAND_KEYWORDS:
+                if brand not in bare:
+                    continue
+                # Legitimate if the bare domain IS brand.com / brand.es
+                # or a direct subdomain of those (e.g. mail.paypal.com)
+                if (
+                    bare == f"{brand}.com"
+                    or bare == f"{brand}.es"
+                    or bare.endswith(f".{brand}.com")
+                    or bare.endswith(f".{brand}.es")
+                ):
+                    continue
+                signals.append(AnalysisSignal(
+                    type="brand_spoofing", severity="critical",
+                    message=f"Posible suplantación de {brand} detectada en URL: {url}",
+                ))
+                break  # One signal per URL is enough
+        except Exception:
+            pass
+    return signals
+
+
+# ── HTTP (no HTTPS) URLs ──────────────────────────────────────────────────────
+def _check_http_urls(urls: List[str]) -> List[AnalysisSignal]:
+    """Flag unencrypted HTTP links."""
+    return [
+        AnalysisSignal(
+            type="http_no_tls", severity="warning",
+            message=f"Enlace sin cifrado HTTPS: {url}",
+        )
+        for url in urls
+        if url.startswith("http://")
+    ]
+
+
+# ── IP-based URLs ─────────────────────────────────────────────────────────────
+def _check_ip_urls(urls: List[str]) -> List[AnalysisSignal]:
+    """Flag URLs that use a raw IP address instead of a domain."""
+    return [
+        AnalysisSignal(
+            type="ip_url", severity="critical",
+            message=f"URL sospechosa con dirección IP directa: {url}",
+        )
+        for url in urls
+        if _IP_URL_RE.match(url)
+    ]
+
+
+# ── Risky TLD on sender domain ────────────────────────────────────────────────
+def _check_sender_tld(sender_domain: str) -> Optional[AnalysisSignal]:
+    """Flag sender domains that use a high-risk TLD."""
+    domain = sender_domain.lower()
+    for tld in RISKY_TLDS:
+        if domain.endswith(tld):
+            return AnalysisSignal(
+                type="risky_sender_tld", severity="high",
+                message=f"El remitente usa un dominio de alto riesgo ({sender_domain})",
+            )
+    return None
+
+
 # ── Google Safe Browsing ──────────────────────────────────────────────────────
 async def _check_safe_browsing(urls: List[str]) -> List[AnalysisSignal]:
     """Check URLs against Google Safe Browsing v4 API."""
@@ -345,7 +455,33 @@ async def analyze_email(
             signals.append(typo_sig)
     checks.append("typosquatting")
 
-    # 4. Google Safe Browsing URL check
+    # 4. Risky TLDs in email URLs
+    if payload.urls:
+        signals.extend(_check_risky_tlds(payload.urls))
+    checks.append("risky_tlds")
+
+    # 5. Brand spoofing in email URLs
+    if payload.urls:
+        signals.extend(_check_brand_spoofing(payload.urls))
+    checks.append("brand_spoofing")
+
+    # 6. HTTP (non-HTTPS) URLs
+    if payload.urls:
+        signals.extend(_check_http_urls(payload.urls))
+    checks.append("http_urls")
+
+    # 7. IP-based URLs
+    if payload.urls:
+        signals.extend(_check_ip_urls(payload.urls))
+    checks.append("ip_urls")
+
+    # 8. Risky TLD on sender domain
+    sender_tld_sig = _check_sender_tld(payload.sender_domain)
+    if sender_tld_sig:
+        signals.append(sender_tld_sig)
+    checks.append("sender_tld")
+
+    # 9. Google Safe Browsing URL check
     if payload.urls:
         sb_sigs = await _check_safe_browsing(payload.urls)
         signals.extend(sb_sigs)
