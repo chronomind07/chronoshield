@@ -68,7 +68,7 @@
   function getCurrentMsgId() {
     // Gmail URL: mail.google.com/mail/u/0/#inbox/MSGID
     const hash = window.location.hash;
-    const m = hash.match(/[#/]([a-f0-9]{16,})/i);
+    const m = hash.match(/[#/]([A-Za-z0-9_-]{16,})/);
     return m ? m[1] : null;
   }
 
