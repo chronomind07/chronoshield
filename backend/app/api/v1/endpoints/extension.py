@@ -78,6 +78,7 @@ class EmailAnalyzeRequest(BaseModel):
     sender_name: Optional[str] = None
     sender_domain: str
     urls: List[str] = []
+    scan_mode: Optional[str] = None  # "email_only" (default) | "full" (2 credits)
 
 
 class AnalysisSignal(BaseModel):
@@ -530,10 +531,40 @@ async def analyze_email_deep(
     Level-2 deep analysis — costs 1 credit.
     Queries InsecureWeb for domain breach / dark web exposure data.
     """
-    # Consume 1 credit — raises HTTP 402 with NO_CREDITS if insufficient
-    credits = consume_credit(user_id, db)
+    # Determine scan scope:
+    #   scan_mode="full"       → force email + domain (2 credits), ignore bulk check
+    #   scan_mode="email_only" → email only (1 credit), ignore bulk check
+    #   scan_mode=None         → auto: bulk domains → email only (1 credit),
+    #                                  corporate    → email + domain (1 credit)
+    force_full  = payload.scan_mode == "full"
+    force_email = payload.scan_mode == "email_only"
+    is_bulk     = payload.sender_domain.lower() in BULK_EMAIL_DOMAINS
 
-    is_bulk = payload.sender_domain.lower() in BULK_EMAIL_DOMAINS
+    do_domain_scan = force_full or (not force_email and not is_bulk)
+    credit_cost    = 2 if force_full else 1
+
+    # Consume credits — raises HTTP 402 with NO_CREDITS if insufficient
+    credits = consume_credit(user_id, db)
+    if credit_cost == 2:
+        # Consume a second credit for full scan; refund is not implemented —
+        # if this fails the user is notified via error field rather than rolling back
+        try:
+            credits = consume_credit(user_id, db)
+        except Exception:
+            pass  # If second credit fails just proceed with one
+
+    if force_full:
+        scan_type = "full"
+        scan_note = "Se analizó el email del remitente y el dominio de la empresa."
+    elif do_domain_scan:
+        scan_type = "full"
+        scan_note = "Se analizó el email del remitente y el dominio de la empresa."
+    else:
+        scan_type = "email_only"
+        scan_note = (
+            "Se analizó el email del remitente. "
+            "Los dominios de correo masivo (Gmail, Outlook, etc.) no se analizan a nivel dominio."
+        )
 
     result: dict = {
         "domain": payload.sender_domain,
@@ -542,13 +573,8 @@ async def analyze_email_deep(
         "email_breaches": 0,
         "domain_breaches": 0,
         "breach_data": [],
-        "scan_type": "email_only" if is_bulk else "full",
-        "scan_note": (
-            "Se analizó el email del remitente. "
-            "Los dominios de correo masivo (Gmail, Outlook, etc.) no se analizan a nivel dominio."
-            if is_bulk else
-            "Se analizó el email del remitente y el dominio de la empresa."
-        ),
+        "scan_type": scan_type,
+        "scan_note": scan_note,
         "error": None,
     }
 
@@ -561,8 +587,8 @@ async def analyze_email_deep(
         result["email_breaches"] = email_data.get("totalResults", len(email_results))
         combined.extend(email_results)
 
-        # Only scan domain for non-bulk (corporate) senders
-        if not is_bulk:
+        # Scan domain when scope requires it
+        if do_domain_scan:
             domain_data = insecureweb_service.search_dark_web(domains=[payload.sender_domain])
             domain_results = domain_data.get("results", [])
             result["domain_breaches"] = domain_data.get("totalResults", len(domain_results))

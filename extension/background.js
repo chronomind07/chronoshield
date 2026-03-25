@@ -179,7 +179,7 @@ async function handleMessage(message) {
       return data;
     }
 
-    // ── Level-2 deep analysis (1 credit) ──────────────────────────────────────
+    // ── Level-2 deep analysis (1 credit — email only) ─────────────────────────
     case "ANALYZE_EMAIL_DEEP": {
       const { sender_email, sender_name, sender_domain, urls } = message;
       const data = await callApi("POST", "/extension/analyze-deep", {
@@ -187,6 +187,20 @@ async function handleMessage(message) {
         sender_name,
         sender_domain,
         urls: urls || [],
+        scan_mode: "email_only",
+      });
+      return data;
+    }
+
+    // ── Level-2 full deep analysis (2 credits — email + domain) ───────────────
+    case "ANALYZE_EMAIL_DEEP_FULL": {
+      const { sender_email, sender_name, sender_domain, urls } = message;
+      const data = await callApi("POST", "/extension/analyze-deep", {
+        sender_email,
+        sender_name,
+        sender_domain,
+        urls: urls || [],
+        scan_mode: "full",
       });
       return data;
     }

@@ -2,8 +2,8 @@
  * ChronoShield — Gmail Content Script
  *
  * Detects email opens, extracts sender + links, injects:
- *  - Colored badge (🟢/🟡/🔴) in Gmail header
- *  - Side alert panel for suspicious/dangerous emails
+ *  - Colored badge (🟢/🟡/🔴) in Gmail header — always clickable to toggle panel
+ *  - Side panel for ALL emails (auto-shown for suspicious/danger, hidden for safe)
  */
 
 (function () {
@@ -12,6 +12,33 @@
   // Avoid double-injection
   if (window.__chronoshield_injected) return;
   window.__chronoshield_injected = true;
+
+  // ── Constants ─────────────────────────────────────────────────────────────
+
+  const BULK_EMAIL_DOMAINS = new Set([
+    "gmail.com", "googlemail.com",
+    "outlook.com", "hotmail.com", "hotmail.es", "live.com", "msn.com",
+    "yahoo.com", "yahoo.es",
+    "icloud.com", "me.com",
+    "aol.com",
+    "protonmail.com", "proton.me",
+    "zoho.com",
+    "gmx.com", "mail.com",
+    "yandex.com",
+  ]);
+
+  // Maps backend check key → human label + signal types that would disqualify it
+  const CHECK_LABELS = {
+    spf_dmarc:      { label: "SPF y DMARC verificados",                    types: ["spf_missing", "dmarc_missing", "domain_not_found", "spf_error"] },
+    domain_age:     { label: "Dominio con antigüedad verificada",           types: ["new_domain", "young_domain"] },
+    typosquatting:  { label: "Sin typosquatting detectado",                 types: ["typosquatting"] },
+    risky_tlds:     { label: "URLs sin TLDs de alto riesgo",                types: ["risky_tld"] },
+    brand_spoofing: { label: "Sin suplantación de marcas en URLs",          types: ["brand_spoofing"] },
+    http_urls:      { label: "Todos los enlaces usan HTTPS",                types: ["http_no_tls"] },
+    ip_urls:        { label: "Sin URLs con IPs directas",                   types: ["ip_url"] },
+    sender_tld:     { label: "Dominio del remitente sin TLD de riesgo",     types: ["risky_sender_tld"] },
+    safe_browsing:  { label: "URLs verificadas con Google Safe Browsing",   types: ["malicious_url"] },
+  };
 
   // ── State ─────────────────────────────────────────────────────────────────
   let currentMsgId = null;
@@ -39,7 +66,6 @@
   }
 
   function getSenderInfo() {
-    // Gmail stores sender email in [email] attribute on the sender span
     const senderEl =
       document.querySelector("h3.iw span[email]") ||
       document.querySelector(".gD[email]") ||
@@ -63,31 +89,27 @@
     );
   }
 
-  // ── Message ID detection (to avoid re-analyzing same email) ───────────────
+  // ── Message ID detection ──────────────────────────────────────────────────
 
   function getCurrentMsgId() {
-    // Gmail URL: mail.google.com/mail/u/0/#inbox/MSGID
     const hash = window.location.hash;
     const m = hash.match(/[#/]([A-Za-z0-9_-]{16,})/);
     return m ? m[1] : null;
   }
 
-  // ── Badge injection ───────────────────────────────────────────────────────
+  // ── Badge ─────────────────────────────────────────────────────────────────
 
   function removeBadge() {
-    if (badgeEl) {
-      badgeEl.remove();
-      badgeEl = null;
-    }
+    if (badgeEl) { badgeEl.remove(); badgeEl = null; }
   }
 
   function injectBadge(recommendation, score) {
     removeBadge();
 
     const configs = {
-      safe: { emoji: "🟢", label: "Seguro", color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-      suspicious: { emoji: "🟡", label: "Sospechoso", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-      danger: { emoji: "🔴", label: "Peligroso", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+      safe:       { emoji: "🟢", label: "Seguro",      color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
+      suspicious: { emoji: "🟡", label: "Sospechoso",  color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+      danger:     { emoji: "🔴", label: "Peligroso",   color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
     };
     const cfg = configs[recommendation] || configs.safe;
 
@@ -108,7 +130,6 @@
       transition: opacity 0.2s;
     `;
 
-    // Insert after subject line
     const subjectEl =
       document.querySelector("h2.hP") ||
       document.querySelector(".ha h2") ||
@@ -118,13 +139,13 @@
       subjectEl.parentElement.style.position = "relative";
       subjectEl.insertAdjacentElement("afterend", badgeEl);
     } else {
-      // Fallback: insert at top of email view
       const emailView =
         document.querySelector(".nH.if") ||
         document.querySelector("[role='main']");
       if (emailView) emailView.prepend(badgeEl);
     }
 
+    // Badge click: toggle panel (panel always exists after analysis)
     badgeEl.addEventListener("click", () => {
       if (panelEl) {
         panelEl.style.display = panelEl.style.display === "none" ? "flex" : "none";
@@ -135,53 +156,97 @@
   // ── Side Panel ────────────────────────────────────────────────────────────
 
   function removePanel() {
-    if (panelEl) {
-      panelEl.remove();
-      panelEl = null;
+    if (panelEl) { panelEl.remove(); panelEl = null; }
+  }
+
+  function severityIcon(sev) {
+    return { critical: "🔴", high: "🟠", warning: "🟡", info: "🔵" }[sev] || "⚪";
+  }
+
+  function severityColor(sev) {
+    return { critical: "#ef4444", high: "#f97316", warning: "#f59e0b", info: "#60a5fa" }[sev] || "#9ca3af";
+  }
+
+  /** Build the deep-analysis buttons HTML based on whether sender is bulk. */
+  function deepButtonsHtml(isBulk) {
+    if (isBulk) {
+      return `
+        <button class="cs-btn-deep" data-mode="email_only">
+          🔬 Analizar email del remitente (1 crédito)
+        </button>`;
     }
+    return `
+      <button class="cs-btn-deep" data-mode="email_only">
+        🔬 Analizar email del remitente (1 crédito)
+      </button>
+      <button class="cs-btn-deep cs-btn-deep-full" data-mode="full" style="margin-top:4px;">
+        🔬 Analizar email + dominio (2 créditos)
+      </button>`;
   }
 
-  function severityIcon(severity) {
-    const icons = {
-      critical: "🔴",
-      high: "🟠",
-      warning: "🟡",
-      info: "🔵",
-    };
-    return icons[severity] || "⚪";
+  /**
+   * Build the body content for a SAFE result.
+   * Shows "no risks" message + list of checks that passed (didn't fire a signal).
+   */
+  function safePanelBodyHtml(data) {
+    const signalTypes = new Set((data.signals || []).map((s) => s.type));
+    const checks = data.checks_performed || [];
+
+    const passedRows = checks
+      .filter((key) => {
+        const info = CHECK_LABELS[key];
+        if (!info) return false;
+        // Only show check as "passed" if none of its associated signal types fired
+        return !info.types.some((t) => signalTypes.has(t));
+      })
+      .map((key) => `
+        <div class="cs-check-row">
+          <span class="cs-check-icon">✓</span>
+          <span class="cs-check-label">${CHECK_LABELS[key].label}</span>
+        </div>`)
+      .join("");
+
+    return `
+      <div class="cs-no-signals">No se detectaron riesgos en este email</div>
+      ${passedRows ? `<div class="cs-signals-title" style="margin-top:10px;">Verificaciones realizadas</div>${passedRows}` : ""}
+    `;
   }
 
-  function severityColor(severity) {
-    const colors = {
-      critical: "#ef4444",
-      high: "#f97316",
-      warning: "#f59e0b",
-      info: "#60a5fa",
-    };
-    return colors[severity] || "#9ca3af";
-  }
-
-  function injectPanel(data, senderInfo) {
+  /**
+   * Inject the side panel.
+   * @param {object}  data        - API response from /analyze
+   * @param {object}  senderInfo  - { email, name, domain }
+   * @param {boolean} autoShow    - true = visible immediately; false = hidden until badge click
+   */
+  function injectPanel(data, senderInfo, autoShow) {
     removePanel();
 
     const { risk_score, recommendation, signals } = data;
+    const isBulk = BULK_EMAIL_DOMAINS.has(senderInfo.domain.toLowerCase());
 
     const headerColors = {
-      safe: { bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.2)", text: "#22c55e", label: "✅ Email Seguro" },
-      suspicious: { bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", text: "#f59e0b", label: "⚠️ Email Sospechoso" },
-      danger: { bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", text: "#ef4444", label: "🚨 Email Peligroso" },
+      safe:       { bg: "rgba(34,197,94,0.08)",    border: "rgba(34,197,94,0.2)",    text: "#22c55e", label: "✅ Email Seguro" },
+      suspicious: { bg: "rgba(245,158,11,0.08)",   border: "rgba(245,158,11,0.2)",   text: "#f59e0b", label: "⚠️ Email Sospechoso" },
+      danger:     { bg: "rgba(239,68,68,0.08)",    border: "rgba(239,68,68,0.2)",    text: "#ef4444", label: "🚨 Email Peligroso" },
     };
     const hc = headerColors[recommendation] || headerColors.safe;
 
-    const signalRows = signals
-      .map(
-        (s) => `
-        <div class="cs-signal-row" style="border-left: 3px solid ${severityColor(s.severity)};">
-          <span class="cs-signal-icon">${severityIcon(s.severity)}</span>
-          <span class="cs-signal-msg">${s.message}</span>
-        </div>`
-      )
-      .join("");
+    // Body: safe gets checks-passed list; others get signal rows
+    let bodyContent;
+    if (recommendation === "safe") {
+      bodyContent = safePanelBodyHtml(data);
+    } else {
+      const signalRows = signals
+        .map((s) => `
+          <div class="cs-signal-row" style="border-left: 3px solid ${severityColor(s.severity)};">
+            <span class="cs-signal-icon">${severityIcon(s.severity)}</span>
+            <span class="cs-signal-msg">${s.message}</span>
+          </div>`)
+        .join("");
+      bodyContent = signals.length === 0
+        ? `<div class="cs-no-signals">No se detectaron señales de riesgo</div>`
+        : `<div class="cs-signals-title">Señales detectadas</div>${signalRows}`;
+    }
 
     panelEl = document.createElement("div");
     panelEl.className = "cs-panel";
@@ -198,19 +263,16 @@
         </div>
       </div>
       <div class="cs-panel-body">
-        ${
-          signals.length === 0
-            ? `<div class="cs-no-signals">No se detectaron señales de riesgo</div>`
-            : `<div class="cs-signals-title">Señales detectadas</div>${signalRows}`
-        }
+        ${bodyContent}
         <div class="cs-panel-footer">
-          <button class="cs-btn-deep" id="cs-deep-btn">
-            🔬 Análisis profundo (1 crédito)
-          </button>
+          <div id="cs-deep-buttons">${deepButtonsHtml(isBulk)}</div>
           <div id="cs-deep-result"></div>
         </div>
       </div>
     `;
+
+    // Safe emails start hidden; suspicious/danger start visible
+    panelEl.style.display = autoShow ? "flex" : "none";
 
     document.body.appendChild(panelEl);
 
@@ -219,22 +281,29 @@
       panelEl.style.display = "none";
     });
 
-    // Deep analysis button
-    panelEl.querySelector("#cs-deep-btn").addEventListener("click", async () => {
-      const btn = panelEl.querySelector("#cs-deep-btn");
-      const resultEl = panelEl.querySelector("#cs-deep-result");
-      btn.disabled = true;
+    // ── Deep analysis click handler ─────────────────────────────────────────
+    panelEl.querySelector("#cs-deep-buttons").addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-mode]");
+      if (!btn) return;
+
+      const mode = btn.dataset.mode; // "email_only" | "full"
+      const buttonsEl = panelEl.querySelector("#cs-deep-buttons");
+      const resultEl  = panelEl.querySelector("#cs-deep-result");
+
+      // Disable all buttons and show loading state
+      buttonsEl.querySelectorAll("button").forEach((b) => { b.disabled = true; });
       btn.textContent = "Analizando...";
       resultEl.innerHTML = "";
 
       try {
         const bodyEl = getEmailBody();
-        const urls = extractUrls(bodyEl);
+        const urls   = extractUrls(bodyEl);
+        const msgType = mode === "full" ? "ANALYZE_EMAIL_DEEP_FULL" : "ANALYZE_EMAIL_DEEP";
 
         const deepData = await chrome.runtime.sendMessage({
-          type: "ANALYZE_EMAIL_DEEP",
-          sender_email: senderInfo.email,
-          sender_name: senderInfo.name,
+          type: msgType,
+          sender_email:  senderInfo.email,
+          sender_name:   senderInfo.name,
           sender_domain: senderInfo.domain,
           urls,
         });
@@ -289,8 +358,8 @@
       } catch (err) {
         resultEl.innerHTML = `<div class="cs-deep-error">Error inesperado: ${err.message}</div>`;
       } finally {
-        btn.disabled = false;
-        btn.textContent = "🔬 Análisis profundo (1 crédito)";
+        // Restore buttons
+        buttonsEl.innerHTML = deepButtonsHtml(isBulk);
       }
     });
   }
@@ -311,28 +380,27 @@
 
     try {
       const bodyEl = getEmailBody();
-      const urls = extractUrls(bodyEl);
+      const urls   = extractUrls(bodyEl);
 
       const result = await chrome.runtime.sendMessage({
-        type: "ANALYZE_EMAIL",
-        sender_email: senderInfo.email,
-        sender_name: senderInfo.name,
+        type:          "ANALYZE_EMAIL",
+        sender_email:  senderInfo.email,
+        sender_name:   senderInfo.name,
         sender_domain: senderInfo.domain,
         urls,
       });
 
       if (result.error) {
-        // Not authenticated or daily limit — silently remove badge
         removeBadge();
         return;
       }
 
       injectBadge(result.recommendation, result.risk_score);
 
-      // Auto-show panel for suspicious/dangerous emails
-      if (result.recommendation !== "safe" && result.signals.length > 0) {
-        injectPanel(result, senderInfo);
-      }
+      // Always create the panel; auto-show only for suspicious/danger
+      const autoShow = result.recommendation !== "safe";
+      injectPanel(result, senderInfo, autoShow);
+
     } catch (err) {
       removeBadge();
       console.debug("[ChronoShield] Analysis error:", err);
@@ -346,7 +414,6 @@
   function onNavigate() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      // Reset on navigation away from email
       const msgId = getCurrentMsgId();
       if (!msgId) {
         currentMsgId = null;
@@ -358,23 +425,14 @@
     }, 600);
   }
 
-  // hashchange covers most Gmail navigation
   window.addEventListener("hashchange", onNavigate);
 
-  // MutationObserver for cases where hash doesn't change (thread switching)
   const observer = new MutationObserver(() => {
     const msgId = getCurrentMsgId();
-    if (msgId && msgId !== currentMsgId) {
-      onNavigate();
-    }
+    if (msgId && msgId !== currentMsgId) onNavigate();
   });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: false,
-  });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: false });
 
-  // Initial check (page may load directly on an email)
   setTimeout(analyzeCurrentEmail, 1500);
 })();
