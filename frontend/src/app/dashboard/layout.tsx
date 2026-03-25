@@ -41,21 +41,19 @@ function NavItem({
   href: string; icon: string; label: string; active: boolean; badge?: number;
 }) {
   return (
-    <Link
-      href={href}
-      className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-        active
-          ? "bg-[rgba(0,194,255,0.08)] text-[#00C2FF] border border-[rgba(0,194,255,0.15)]"
-          : "text-[#5A6B7A] hover:bg-white/[0.04] hover:text-[#E8EDF2]"
+    <Link href={href}
+      className={`relative flex items-center gap-[11px] px-3 py-[9px] rounded-lg text-[0.84rem] font-medium transition-all duration-200 mb-px ${
+        active ? 'text-[#00e5bf]' : 'text-[#55556a] hover:text-[#9999ad] hover:bg-white/[0.02]'
       }`}
+      style={active ? { background: 'rgba(0,229,191,0.06)' } : {}}
     >
       {active && (
-        <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#00C2FF] rounded-r" />
+        <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[2px] h-[18px] rounded-r" style={{ background: '#00e5bf' }} />
       )}
-      <span className="w-[18px] text-center text-[15px]">{icon}</span>
+      <span className="w-[17px] text-center text-[15px]" style={{ opacity: active ? 1 : 0.5 }}>{icon}</span>
       <span className="flex-1">{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="ml-auto bg-[#FF4D6A] text-white text-[9px] font-bold px-1.5 py-px rounded-full leading-none">
+        <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center bg-[#ff4d6a] text-white text-[0.6rem] font-bold rounded-full px-[5px]">
           {badge}
         </span>
       )}
@@ -67,27 +65,10 @@ function NavItem({
 function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="px-3 mb-1">
-      <p className="font-mono text-[9px] uppercase tracking-[2px] text-[#5A6B7A] px-3 mb-1.5 mt-3">
+      <p style={{ fontFamily: 'var(--font-mono-family)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.16em', color: '#33334a', padding: '14px 12px 8px', fontWeight: 500 }}>
         {label}
       </p>
       <div className="space-y-0.5">{children}</div>
-    </div>
-  );
-}
-
-// ─── Logo icon ────────────────────────────────────────────────────────────────
-function LogoIcon() {
-  return (
-    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
-      style={{ background: "#080C10", boxShadow: "0 0 16px rgba(0,194,255,0.2)" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo.jpeg"
-        alt="ChronoShield"
-        width={40}
-        height={40}
-        className="w-full h-full object-contain"
-      />
     </div>
   );
 }
@@ -126,18 +107,18 @@ function AlertRow({
         <div className="flex items-start justify-between gap-2">
           <p
             className="text-[12px] font-semibold leading-snug"
-            style={{ color: alert.is_unread ? "#E8EDF2" : "#9AACBA" }}
+            style={{ color: alert.is_unread ? "#f0f0f5" : "#9999ad" }}
           >
             {alert.title}
           </p>
           {alert.is_unread && (
             <span
               className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
-              style={{ background: "#FF4D6A" }}
+              style={{ background: "#ff4d6a" }}
             />
           )}
         </div>
-        <p className="text-[10px] text-[#5A6B7A] mt-0.5">{relTime(alert.sent_at)}</p>
+        <p className="text-[10px] mt-0.5" style={{ color: '#55556a' }}>{relTime(alert.sent_at)}</p>
 
         {/* Actions */}
         <div className="flex items-center gap-2 mt-2">
@@ -145,7 +126,7 @@ function AlertRow({
             href="/dashboard/alerts"
             onClick={onClose}
             className="text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors"
-            style={{ color: "#00C2FF", background: "rgba(0,194,255,0.08)", border: "1px solid rgba(0,194,255,0.12)" }}
+            style={{ color: "#00e5bf", background: "rgba(0,229,191,0.08)", border: "1px solid rgba(0,229,191,0.12)" }}
           >
             Ver alerta
           </Link>
@@ -154,7 +135,7 @@ function AlertRow({
               onClick={handleDismiss}
               disabled={dismissing}
               className="text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
-              style={{ color: "#5A6B7A", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ color: "#55556a", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
             >
               {dismissing ? "…" : "Descartar"}
             </button>
@@ -194,14 +175,14 @@ function BuyCreditsModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(8,12,16,0.88)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(5,5,7,0.88)", backdropFilter: "blur(6px)" }}
       onClick={onClose}
     >
       <div
         className="w-full max-w-[420px] rounded-2xl p-7"
         style={{
-          background: "#0D1218",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "#0a0a0f",
+          border: "1px solid rgba(255,255,255,0.06)",
           boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -209,8 +190,8 @@ function BuyCreditsModal({
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h2 className="font-syne font-bold text-[18px] text-[#E8EDF2]">Comprar créditos</h2>
-            <p className="text-[12px] text-[#5A6B7A] mt-0.5">
+            <h2 className="font-bold text-[18px]" style={{ fontFamily: 'var(--font-serif-family)', color: '#f0f0f5' }}>Comprar créditos</h2>
+            <p className="text-[12px] mt-0.5" style={{ color: '#55556a' }}>
               {creditsAvailable !== null
                 ? `Tienes ${creditsAvailable} crédito${creditsAvailable !== 1 ? "s" : ""} disponible${creditsAvailable !== 1 ? "s" : ""}`
                 : "Saldo de créditos"}
@@ -218,7 +199,10 @@ function BuyCreditsModal({
           </div>
           <button
             onClick={onClose}
-            className="text-[#5A6B7A] hover:text-[#E8EDF2] transition-colors text-[22px] leading-none mt-0.5"
+            className="transition-colors text-[22px] leading-none mt-0.5"
+            style={{ color: '#55556a' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#f0f0f5')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#55556a')}
           >
             ×
           </button>
@@ -233,15 +217,16 @@ function BuyCreditsModal({
               disabled={!!buying}
               className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-all disabled:opacity-60"
               style={{
-                background: pack.popular ? "rgba(0,119,255,0.06)" : "#121A22",
-                border:     pack.popular ? "1px solid rgba(0,194,255,0.2)" : "1px solid rgba(255,255,255,0.06)",
+                background: pack.popular ? "rgba(0,229,191,0.04)" : "#0f0f16",
+                border:     pack.popular ? "1px solid rgba(0,229,191,0.15)" : "1px solid rgba(255,255,255,0.06)",
               }}
             >
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center font-syne font-bold text-[13px] shrink-0"
+                className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-[13px] shrink-0"
                 style={{
-                  background: pack.popular ? "rgba(0,194,255,0.12)" : "rgba(255,255,255,0.04)",
-                  color:      pack.popular ? "#00C2FF" : "#5A6B7A",
+                  fontFamily: 'var(--font-serif-family)',
+                  background: pack.popular ? "rgba(0,229,191,0.12)" : "rgba(255,255,255,0.04)",
+                  color:      pack.popular ? "#00e5bf" : "#55556a",
                 }}
               >
                 {buying === pack.key
@@ -251,21 +236,21 @@ function BuyCreditsModal({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-syne font-semibold text-[14px] text-[#E8EDF2]">{pack.label}</span>
+                  <span className="font-semibold text-[14px]" style={{ color: '#f0f0f5' }}>{pack.label}</span>
                   {pack.popular && (
-                    <span className="font-mono text-[9px] px-1.5 py-px rounded" style={{ background: "rgba(0,194,255,0.1)", color: "#00C2FF" }}>
+                    <span className="text-[9px] px-1.5 py-px rounded" style={{ fontFamily: 'var(--font-mono-family)', background: "rgba(0,229,191,0.10)", color: "#00e5bf" }}>
                       POPULAR
                     </span>
                   )}
                 </div>
-                <div className="text-[12px] text-[#5A6B7A]">{pack.credits} créditos · {pack.per}</div>
+                <div className="text-[12px]" style={{ color: '#55556a' }}>{pack.credits} créditos · {pack.per}</div>
               </div>
-              <div className="font-syne font-bold text-[16px] text-[#E8EDF2] shrink-0">{pack.price}</div>
+              <div className="font-bold text-[16px] shrink-0" style={{ color: '#f0f0f5' }}>{pack.price}</div>
             </button>
           ))}
         </div>
 
-        <p className="text-[11px] text-[#5A6B7A] text-center leading-relaxed">
+        <p className="text-[11px] text-center leading-relaxed" style={{ color: '#55556a' }}>
           1 crédito = 1 escaneo (email, dominio o suplantación). Los créditos no caducan.
         </p>
       </div>
@@ -278,8 +263,8 @@ function CreditsPill({ credits, onClick }: { credits: number | null; onClick: ()
   const isLow = credits !== null && credits <= 5;
 
   const colors = isLow
-    ? { bg: "rgba(255,179,64,0.08)", border: "rgba(255,179,64,0.2)", text: "#FFB340", dot: "#FFB340" }
-    : { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.07)", text: "#9AACBA", dot: "#00C2FF" };
+    ? { bg: "rgba(255,176,32,0.08)", border: "rgba(255,176,32,0.2)", text: "#ffb020", dot: "#ffb020" }
+    : { bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.06)", text: "#9999ad", dot: "#00e5bf" };
 
   return (
     <button
@@ -295,11 +280,11 @@ function CreditsPill({ credits, onClick }: { credits: number | null; onClick: ()
       <span className="font-mono text-[12px] font-semibold leading-none" style={{ color: colors.text }}>
         {credits === null ? "—" : credits}
       </span>
-      <span className="font-mono text-[9px] uppercase tracking-[1px] leading-none" style={{ color: isLow ? "#FFB340" : "#3D4F5E" }}>
+      <span className="font-mono text-[9px] uppercase tracking-[1px] leading-none" style={{ color: isLow ? "#ffb020" : "#33334a" }}>
         créditos
       </span>
       {isLow && (
-        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#FFB340", boxShadow: "0 0 6px rgba(255,179,64,0.6)" }} />
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#ffb020", boxShadow: "0 0 6px rgba(255,176,32,0.6)" }} />
       )}
     </button>
   );
@@ -375,16 +360,16 @@ function NotificationBell({
         className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
         style={{
           background: open
-            ? "rgba(0,194,255,0.08)"
-            : "rgba(255,255,255,0.04)",
-          border: `1px solid ${open ? "rgba(0,194,255,0.2)" : "rgba(255,255,255,0.06)"}`,
+            ? "rgba(0,229,191,0.08)"
+            : "rgba(255,255,255,0.03)",
+          border: `1px solid ${open ? "rgba(0,229,191,0.2)" : "rgba(255,255,255,0.06)"}`,
         }}
         aria-label="Notificaciones"
       >
         <span className="text-[15px] select-none">🔔</span>
         {unreadCount > 0 && (
           <span
-            className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-[#FF4D6A] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none"
+            className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-[#ff4d6a] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none"
             style={{ boxShadow: "0 0 8px rgba(255,77,106,0.5)" }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -397,9 +382,9 @@ function NotificationBell({
         <div
           className="absolute right-0 top-[calc(100%+10px)] w-[360px] rounded-2xl overflow-hidden"
           style={{
-            background: "#0D1218",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,194,255,0.05)",
+            background: "#0a0a0f",
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,229,191,0.04)",
           }}
         >
           {/* Header */}
@@ -408,13 +393,13 @@ function NotificationBell({
             style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
           >
             <div className="flex items-center gap-2">
-              <span className="font-syne font-bold text-[14px] text-[#E8EDF2]">
+              <span className="font-bold text-[14px]" style={{ fontFamily: 'var(--font-serif-family)', color: '#f0f0f5' }}>
                 Notificaciones
               </span>
               {unreadCount > 0 && (
                 <span
                   className="font-mono text-[9px] font-bold px-1.5 py-px rounded-full text-white"
-                  style={{ background: "#FF4D6A" }}
+                  style={{ background: "#ff4d6a" }}
                 >
                   {unreadCount}
                 </span>
@@ -424,7 +409,7 @@ function NotificationBell({
               <button
                 onClick={handleMarkAllRead}
                 className="text-[11px] font-semibold transition-colors"
-                style={{ color: "#00C2FF" }}
+                style={{ color: "#00e5bf" }}
               >
                 Marcar todas como leídas
               </button>
@@ -435,16 +420,16 @@ function NotificationBell({
           <div className="max-h-[400px] overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-6 h-6 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-[#00e5bf] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : alerts.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12 text-center px-6">
                 <span className="text-3xl">🛡</span>
                 <div>
-                  <div className="font-syne font-bold text-[15px] text-[#E8EDF2]">
+                  <div className="font-bold text-[15px]" style={{ fontFamily: 'var(--font-serif-family)', color: '#f0f0f5' }}>
                     Todo en orden
                   </div>
-                  <div className="text-[12px] text-[#5A6B7A] mt-0.5">
+                  <div className="text-[12px] mt-0.5" style={{ color: '#55556a' }}>
                     Sin alertas activas. Tu seguridad está vigilada.
                   </div>
                 </div>
@@ -471,7 +456,7 @@ function NotificationBell({
                 href="/dashboard/alerts"
                 onClick={() => setOpen(false)}
                 className="flex items-center justify-center gap-1 text-[12px] font-semibold transition-colors"
-                style={{ color: "#00C2FF" }}
+                style={{ color: "#00e5bf" }}
               >
                 Ver todas las alertas →
               </Link>
@@ -542,8 +527,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#080C10] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#00e5bf] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -553,7 +538,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     : "??";
 
   return (
-    <div className="flex min-h-screen font-sans">
+    <div className="flex min-h-screen" style={{ background: '#050507', fontFamily: 'var(--font-jakarta-family)' }}>
+      <div className="dash-ambient" />
 
       {/* ── Buy credits modal (global, z-50) ─────────────────────────── */}
       {showBuyModal && (
@@ -565,31 +551,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
       <aside
-        className="fixed left-0 top-0 bottom-0 w-[220px] flex flex-col z-20"
-        style={{
-          background: "#0D1218",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
-        }}
+        className="fixed left-0 top-0 bottom-0 w-[256px] flex flex-col"
+        style={{ background: '#0a0a0f', borderRight: '1px solid rgba(255,255,255,0.03)', zIndex: 20 }}
       >
-        {/* Logo */}
-        <div
-          className="flex flex-col items-center pt-7 pb-6 px-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-        >
-          <LogoIcon />
-          <div className="mt-3 text-center">
-            <div
-              className="uppercase leading-none tracking-[4px] text-[#9AACBA]"
-              style={{ fontFamily: "'DM Mono', 'Courier New', monospace", fontSize: "10px" }}
-            >
-              CHRONOSHIELD
-            </div>
-            <div
-              className="uppercase mt-1 leading-none tracking-[2.5px] text-[#3D4F5E]"
-              style={{ fontFamily: "'DM Mono', 'Courier New', monospace", fontSize: "8px" }}
-            >
-              SECURITY PLATFORM
-            </div>
+        {/* Brand */}
+        <div style={{ padding: '24px 20px 28px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+          <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #00e5bf, #6366f1)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(0,229,191,0.12)', flexShrink: 0 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-mono-family)', fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f0f0f5' }}>ChronoShield</div>
+            <div style={{ fontFamily: 'var(--font-mono-family)', fontSize: '0.6rem', color: '#33334a', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>Security Platform</div>
           </div>
         </div>
 
@@ -614,41 +588,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Footer */}
-        <div
-          className="px-6 py-4"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-        >
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-[#121A22] hover:border-white/10 transition-colors text-left"
+        <div style={{ marginTop: 'auto', padding: '12px 12px 0', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+          <button onClick={handleLogout}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '10px 12px', borderRadius: 12, cursor: 'pointer', transition: 'background 0.2s', background: 'transparent', border: 'none', textAlign: 'left' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center font-syne font-bold text-[11px] text-white shrink-0"
-              style={{ background: "linear-gradient(135deg, #1A3A5C, #0077FF)" }}
-            >
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #1a1a26, #0f0f16)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono-family)', fontSize: '0.65rem', fontWeight: 600, color: '#00e5bf', flexShrink: 0 }}>
               {initials}
             </div>
-            <div className="min-w-0">
-              <div className="text-[12px] font-medium text-[#E8EDF2] truncate">
-                {userEmail?.split("@")[0] ?? "Usuario"}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f0f0f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {userEmail?.split('@')[0] ?? 'Usuario'}
               </div>
-              <div className="text-[10px] text-[#5A6B7A]">Plan Starter</div>
+              <div style={{ fontFamily: 'var(--font-mono-family)', fontSize: '0.62rem', color: '#55556a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Plan Starter
+              </div>
             </div>
           </button>
         </div>
       </aside>
 
       {/* ── Main content ─────────────────────────────────────────────── */}
-      <main className="flex-1 ml-[220px] min-h-screen flex flex-col">
+      <main className="flex-1 ml-[256px] min-h-screen flex flex-col" style={{ background: '#050507' }}>
 
         {/* ── Topbar ── */}
         <div
           className="sticky top-0 z-10 flex items-center justify-end gap-2 h-[52px] px-6 shrink-0"
           style={{
-            background: "rgba(8,12,16,0.88)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: 'rgba(10,10,15,0.9)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(255,255,255,0.03)',
           }}
         >
           <CreditsPill credits={credits} onClick={() => setShowBuyModal(true)} />

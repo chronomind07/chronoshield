@@ -246,3 +246,117 @@ body {
 .fade-up:nth-child(3) { animation-delay: 0.19s; }
 .fade-up:nth-child(4) { animation-delay: 0.26s; }
 .fade-up:nth-child(5) { animation-delay: 0.33s; }
+
+/* ══════════════════════════════════════════════════════
+   DASHBOARD — AMBIENT + ANIMATIONS
+══════════════════════════════════════════════════════ */
+@keyframes ambFloat {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  50%       { transform: translate(40px,30px) scale(1.08); }
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+@keyframes ringDraw {
+  from { stroke-dashoffset: 345.6; }
+}
+@keyframes progressGrow {
+  from { width: 0; }
+}
+@keyframes dashFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+/* Dashboard ambient orbs */
+.dash-ambient {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+}
+.dash-ambient::before {
+  content: '';
+  position: absolute;
+  width: 700px; height: 700px;
+  top: -250px; right: -150px;
+  background: radial-gradient(circle, rgba(0,229,191,0.025) 0%, transparent 70%);
+  animation: ambFloat 20s ease-in-out infinite;
+}
+.dash-ambient::after {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  bottom: -100px; left: 30%;
+  background: radial-gradient(circle, rgba(99,102,241,0.02) 0%, transparent 70%);
+  animation: ambFloat 28s ease-in-out infinite reverse;
+}
+
+/* Score ring */
+.score-ring-bg  { fill: none; stroke: rgba(255,255,255,0.03); stroke-width: 7; }
+.score-ring-fill {
+  fill: none; stroke: url(#scoreGrad); stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 345.6;
+  stroke-dashoffset: 48.4;
+  animation: ringDraw 1.6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+/* Metric cards — NO ::after bottom border */
+.m-card {
+  background: #0f0f16;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+  animation: dashFadeIn 0.5s ease both;
+  cursor: default;
+}
+.m-card:hover {
+  border-color: rgba(255,255,255,0.10);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+}
+.m-card-progress {
+  height: 2px; border-radius: 2px;
+  background: rgba(255,255,255,0.03);
+  margin-top: 14px; overflow: hidden;
+}
+.m-card-progress-fill {
+  height: 100%; border-radius: 2px;
+  animation: progressGrow 1.2s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+/* Color variants */
+.m-card.v-green .m-card-icon { background: rgba(34,197,94,0.10); color: #22c55e; }
+.m-card.v-green .m-card-badge { background: rgba(34,197,94,0.10); color: #22c55e; }
+.m-card.v-green .m-card-progress-fill { background: #22c55e; }
+.m-card.v-accent .m-card-icon { background: rgba(0,229,191,0.12); color: #00e5bf; }
+.m-card.v-accent .m-card-badge { background: rgba(0,229,191,0.12); color: #00e5bf; }
+.m-card.v-accent .m-card-progress-fill { background: #00e5bf; }
+.m-card.v-red .m-card-icon { background: rgba(255,77,106,0.10); color: #ff4d6a; }
+.m-card.v-red .m-card-badge { background: rgba(255,77,106,0.10); color: #ff4d6a; }
+.m-card.v-red .m-card-progress-fill { background: #ff4d6a; }
+.m-card.v-amber .m-card-icon { background: rgba(255,176,32,0.10); color: #ffb020; }
+.m-card.v-amber .m-card-badge { background: rgba(255,176,32,0.10); color: #ffb020; }
+.m-card.v-amber .m-card-progress-fill { background: #ffb020; }
+.m-card.v-blue .m-card-icon { background: rgba(99,102,241,0.10); color: #6366f1; }
+.m-card.v-blue .m-card-badge { background: rgba(99,102,241,0.10); color: #6366f1; }
+.m-card.v-blue .m-card-progress-fill { background: #6366f1; }
+.m-card.v-cyan .m-card-icon { background: rgba(34,211,238,0.10); color: #22d3ee; }
+.m-card.v-cyan .m-card-badge { background: rgba(34,211,238,0.10); color: #22d3ee; }
+.m-card.v-cyan .m-card-progress-fill { background: #22d3ee; }
+
+/* Status dot pulse */
+.status-dot-pulse {
+  animation: dotPulse 2.5s ease-in-out infinite;
+}
+
+/* Dashboard panel */
+.dash-panel {
+  background: #0f0f16;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 16px;
+  padding: 22px;
+  transition: border-color 0.3s;
+  animation: dashFadeIn 0.6s ease 0.4s both;
+}
+.dash-panel:hover { border-color: rgba(255,255,255,0.06); }
