@@ -33,6 +33,7 @@ from urllib.parse import urlparse
 from app.core.security import get_current_user_id
 from app.db.supabase import get_db
 from app.services.credits_service import consume_credit
+from app.services import insecureweb_service
 from app.core.config import settings
 import structlog
 
@@ -529,20 +530,11 @@ async def analyze_email_deep(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(
-                f"{settings.INSECUREWEB_BASE_URL}/api/v1/breach/domain",
-                params={"domain": payload.sender_domain},
-                headers={"X-API-Key": settings.INSECUREWEB_API_KEY},
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                breaches = data.get("breaches", [])
-                result["breaches_found"] = len(breaches)
-                result["breach_data"] = breaches[:10]
-                result["dark_web"] = data
-            else:
-                result["error"] = f"InsecureWeb returned {resp.status_code}"
+        data = insecureweb_service.search_dark_web(domains=[payload.sender_domain])
+        breaches = data.get("results", [])
+        result["breaches_found"] = data.get("totalResults", len(breaches))
+        result["breach_data"] = breaches[:10]
+        result["dark_web"] = data
     except Exception as e:
         logger.error("InsecureWeb deep scan failed", error=str(e), domain=payload.sender_domain)
         result["error"] = "No se pudo contactar con el servicio de dark web"
