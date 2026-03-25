@@ -56,6 +56,19 @@ BRAND_KEYWORDS = [
     "telegram", "coinbase", "binance", "stripe",
 ]
 
+# ── Bulk / consumer email providers (no domain-level scan makes sense) ────────
+BULK_EMAIL_DOMAINS = frozenset({
+    "gmail.com", "googlemail.com",
+    "outlook.com", "hotmail.com", "hotmail.es", "live.com", "msn.com",
+    "yahoo.com", "yahoo.es",
+    "icloud.com", "me.com",
+    "aol.com",
+    "protonmail.com", "proton.me",
+    "zoho.com",
+    "gmx.com", "mail.com",
+    "yandex.com",
+})
+
 _IP_URL_RE = re.compile(r"https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
 
 
@@ -520,21 +533,44 @@ async def analyze_email_deep(
     # Consume 1 credit — raises HTTP 402 with NO_CREDITS if insufficient
     credits = consume_credit(user_id, db)
 
+    is_bulk = payload.sender_domain.lower() in BULK_EMAIL_DOMAINS
+
     result: dict = {
         "domain": payload.sender_domain,
         "credits_remaining": credits["credits_available"],
         "breaches_found": 0,
+        "email_breaches": 0,
+        "domain_breaches": 0,
         "breach_data": [],
-        "dark_web": None,
+        "scan_type": "email_only" if is_bulk else "full",
+        "scan_note": (
+            "Se analizó el email del remitente. "
+            "Los dominios de correo masivo (Gmail, Outlook, etc.) no se analizan a nivel dominio."
+            if is_bulk else
+            "Se analizó el email del remitente y el dominio de la empresa."
+        ),
         "error": None,
     }
 
     try:
-        data = insecureweb_service.search_dark_web(domains=[payload.sender_domain])
-        breaches = data.get("results", [])
-        result["breaches_found"] = data.get("totalResults", len(breaches))
-        result["breach_data"] = breaches[:10]
-        result["dark_web"] = data
+        combined: list = []
+
+        # Always scan the specific sender email
+        email_data = insecureweb_service.search_dark_web(emails=[payload.sender_email])
+        email_results = email_data.get("results", [])
+        result["email_breaches"] = email_data.get("totalResults", len(email_results))
+        combined.extend(email_results)
+
+        # Only scan domain for non-bulk (corporate) senders
+        if not is_bulk:
+            domain_data = insecureweb_service.search_dark_web(domains=[payload.sender_domain])
+            domain_results = domain_data.get("results", [])
+            result["domain_breaches"] = domain_data.get("totalResults", len(domain_results))
+            combined.extend(domain_results)
+
+        result["breaches_found"] = result["email_breaches"] + result["domain_breaches"]
+        result["breach_data"] = combined[:10]
+
     except Exception as e:
         logger.error("InsecureWeb deep scan failed", error=str(e), domain=payload.sender_domain)
         result["error"] = "No se pudo contactar con el servicio de dark web"
@@ -543,7 +579,9 @@ async def analyze_email_deep(
         "Extension level-2 analysis",
         user_id=user_id,
         domain=payload.sender_domain,
-        breaches=result["breaches_found"],
+        scan_type=result["scan_type"],
+        email_breaches=result["email_breaches"],
+        domain_breaches=result["domain_breaches"],
     )
 
     return result

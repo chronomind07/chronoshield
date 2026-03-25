@@ -248,24 +248,41 @@
             resultEl.innerHTML = `<div class="cs-deep-error">Error: ${deepData.error}</div>`;
           }
         } else {
-          const breachCount = deepData.breaches_found || 0;
-          const creditsLeft = deepData.credits_remaining ?? "?";
-          if (breachCount > 0) {
+          const emailBreaches  = deepData.email_breaches  || 0;
+          const domainBreaches = deepData.domain_breaches || 0;
+          const totalBreaches  = deepData.breaches_found  || 0;
+          const creditsLeft    = deepData.credits_remaining ?? "?";
+          const scanNote       = deepData.scan_note || "";
+
+          const noteHtml = scanNote
+            ? `<small class="cs-scan-note">${scanNote}</small>`
+            : "";
+
+          if (totalBreaches > 0) {
+            const lines = [];
+            if (emailBreaches > 0) {
+              lines.push(`⚠️ <strong>${emailBreaches}</strong> filtraci${emailBreaches === 1 ? "ón" : "ones"} del email <em>${senderInfo.email}</em>`);
+            }
+            if (domainBreaches > 0) {
+              lines.push(`⚠️ <strong>${domainBreaches}</strong> filtraci${domainBreaches === 1 ? "ón" : "ones"} del dominio <em>${senderInfo.domain}</em>`);
+            }
             const breachList = (deepData.breach_data || [])
               .slice(0, 5)
-              .map((b) => `<li>${b.name || b.domain || JSON.stringify(b)}</li>`)
+              .map((b) => `<li>${b.name || b.domain || b.email || JSON.stringify(b)}</li>`)
               .join("");
             resultEl.innerHTML = `
               <div class="cs-deep-result cs-deep-danger">
-                <strong>⚠️ ${breachCount} filtraciones en dark web</strong>
+                ${lines.map((l) => `<div>${l}</div>`).join("")}
                 <ul class="cs-breach-list">${breachList}</ul>
                 <small>Créditos restantes: ${creditsLeft}</small>
+                ${noteHtml}
               </div>`;
           } else {
             resultEl.innerHTML = `
               <div class="cs-deep-result cs-deep-safe">
                 <strong>✅ Sin filtraciones detectadas</strong>
                 <small>Créditos restantes: ${creditsLeft}</small>
+                ${noteHtml}
               </div>`;
           }
         }
