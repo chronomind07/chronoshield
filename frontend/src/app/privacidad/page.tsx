@@ -1,105 +1,14 @@
 import Link from "next/link";
+import { LegalPage, H2, P, Ul, InfoBox, AL, B } from "@/components/legal";
 
 export const metadata = {
   title: "Política de Privacidad – ChronoShield",
   description: "Información sobre el tratamiento de tus datos personales por ChronoShield.",
 };
 
-/* ── Shared nav ─────────────────────────────────────────────────────────────── */
-function LegalNav() {
-  return (
-    <header
-      className="fixed top-0 inset-x-0 z-50"
-      style={{ background: "rgba(8,12,16,0.97)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-    >
-      <div className="max-w-[900px] mx-auto px-6 h-[64px] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg overflow-hidden" style={{ background: "#080C10" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.jpeg" alt="ChronoShield" width={32} height={32} className="w-full h-full object-contain" />
-          </div>
-          <span className="font-syne font-bold text-[14px] text-[#E8EDF2]">ChronoShield</span>
-        </Link>
-        <Link href="/" className="text-[13px] text-[#5A6B7A] hover:text-[#9AACBA] transition-colors">
-          ← Volver al inicio
-        </Link>
-      </div>
-    </header>
-  );
-}
-
-/* ── Legal page shell ───────────────────────────────────────────────────────── */
-function LegalPage({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen" style={{ background: "#080C10" }}>
-      <LegalNav />
-      <main className="max-w-[900px] mx-auto px-6 pt-[96px] pb-24">
-        {/* Header */}
-        <div className="mb-10 pb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4"
-            style={{ background: "rgba(0,194,255,0.05)", border: "1px solid rgba(0,194,255,0.15)" }}>
-            <span className="font-mono text-[10px] tracking-[2px] text-[#00C2FF] uppercase">Legal · RGPD</span>
-          </div>
-          <h1 className="font-syne font-bold text-[36px] lg:text-[42px] text-[#E8EDF2] leading-[1.1] mb-3">{title}</h1>
-          <p className="text-[13px] text-[#5A6B7A] font-mono">Última actualización: {updated}</p>
-        </div>
-        {/* Content */}
-        <div className="prose-legal">
-          {children}
-        </div>
-        {/* Footer links */}
-        <div className="mt-16 pt-8 flex flex-wrap gap-4 text-[13px] text-[#5A6B7A]"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <Link href="/privacidad" className="hover:text-[#9AACBA] transition-colors">Política de privacidad</Link>
-          <Link href="/terminos" className="hover:text-[#9AACBA] transition-colors">Términos y condiciones</Link>
-          <Link href="/cookies" className="hover:text-[#9AACBA] transition-colors">Política de cookies</Link>
-          <Link href="/" className="hover:text-[#9AACBA] transition-colors ml-auto">← Inicio</Link>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ── Typography helpers ─────────────────────────────────────────────────────── */
-function H2({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="font-syne font-bold text-[20px] text-[#E8EDF2] mt-10 mb-3 pb-2"
-      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      {children}
-    </h2>
-  );
-}
-function P({ children }: { children: React.ReactNode }) {
-  return <p className="text-[15px] text-[#9AACBA] leading-[1.75] mb-4">{children}</p>;
-}
-function Ul({ items }: { items: string[] }) {
-  return (
-    <ul className="mb-4 space-y-2">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2.5 text-[15px] text-[#9AACBA] leading-[1.7]">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 mt-1">
-            <circle cx="7" cy="7" r="6" fill="rgba(0,194,255,0.08)" />
-            <path d="M4.5 7l2 2 3-3" stroke="#00C2FF" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {item}
-        </li>
-      ))}
-    </ul>
-  );
-}
-function InfoBox({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="my-5 p-4 rounded-xl text-[14px] text-[#9AACBA] leading-[1.7]"
-      style={{ background: "rgba(0,194,255,0.04)", border: "1px solid rgba(0,194,255,0.12)" }}>
-      {children}
-    </div>
-  );
-}
-
-/* ── PAGE ───────────────────────────────────────────────────────────────────── */
 export default function PrivacidadPage() {
   return (
-    <LegalPage title="Política de Privacidad" updated="15 de marzo de 2026">
+    <LegalPage title="Política de Privacidad" updated="15 de marzo de 2026" badge="Legal · RGPD">
 
       <P>
         En ChronoShield nos comprometemos a proteger la privacidad de nuestros usuarios y a tratar sus datos personales
@@ -109,10 +18,10 @@ export default function PrivacidadPage() {
 
       <H2>1. Responsable del tratamiento</H2>
       <InfoBox>
-        <strong className="text-[#E8EDF2]">ChronoShield</strong><br />
+        <B>ChronoShield</B><br />
         Servicio de ciberseguridad para empresas<br />
-        Email de contacto: <a href="mailto:hola@chronoshield.eu" className="text-[#00C2FF] hover:underline">hola@chronoshield.eu</a><br />
-        Delegado de Protección de Datos (DPD): <a href="mailto:hola@chronoshield.eu" className="text-[#00C2FF] hover:underline">hola@chronoshield.eu</a>
+        Email de contacto: <AL href="mailto:hola@chronoshield.eu">hola@chronoshield.eu</AL><br />
+        Delegado de Protección de Datos (DPD): <AL href="mailto:hola@chronoshield.eu">hola@chronoshield.eu</AL>
       </InfoBox>
 
       <H2>2. Datos personales que tratamos</H2>
@@ -148,7 +57,7 @@ export default function PrivacidadPage() {
       <H2>5. Conservación de datos</H2>
       <P>
         Sus datos se conservarán durante el tiempo que mantenga activa su cuenta en ChronoShield. Una vez cancelada
-        la suscripción, los datos se conservarán bloqueados durante un plazo de <strong className="text-[#E8EDF2]">3 años adicionales</strong> para
+        la suscripción, los datos se conservarán bloqueados durante un plazo de <B>3 años adicionales</B> para
         atender posibles reclamaciones legales o fiscales, transcurridos los cuales serán eliminados de forma segura.
       </P>
 
@@ -180,12 +89,10 @@ export default function PrivacidadPage() {
       ]} />
       <P>
         Para ejercer sus derechos, puede dirigirse a{" "}
-        <a href="mailto:hola@chronoshield.eu" className="text-[#00C2FF] hover:underline">hola@chronoshield.eu</a>.
+        <AL href="mailto:hola@chronoshield.eu">hola@chronoshield.eu</AL>.
         También tiene derecho a presentar una reclamación ante la{" "}
-        <strong className="text-[#E8EDF2]">Agencia Española de Protección de Datos (AEPD)</strong> en{" "}
-        <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer" className="text-[#00C2FF] hover:underline">
-          www.aepd.es
-        </a>.
+        <B>Agencia Española de Protección de Datos (AEPD)</B> en{" "}
+        <AL href="https://www.aepd.es" external>www.aepd.es</AL>.
       </P>
 
       <H2>8. Seguridad de los datos</H2>
@@ -199,7 +106,7 @@ export default function PrivacidadPage() {
       <P>
         ChronoShield utiliza únicamente cookies técnicas estrictamente necesarias para el funcionamiento del servicio.
         No utilizamos cookies de rastreo, publicidad ni analítica de terceros. Puede consultar nuestra{" "}
-        <Link href="/cookies" className="text-[#00C2FF] hover:underline">Política de Cookies</Link> para más información.
+        <Link href="/cookies" style={{ color: "#00e5bf", textDecoration: "none" }}>Política de Cookies</Link> para más información.
       </P>
 
       <H2>10. Modificaciones de esta política</H2>

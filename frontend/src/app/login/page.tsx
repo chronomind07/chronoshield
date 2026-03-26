@@ -324,7 +324,7 @@ function AuthPageInner() {
                     onChange={(e) => setTerms(e.target.checked)}
                   />
                   <span className="form-check-label">
-                    Acepto los <a href="/terms">términos de servicio</a> y la <a href="/privacy">política de privacidad</a>
+                    Acepto los <a href="/terminos">términos de servicio</a> y la <a href="/privacidad">política de privacidad</a>
                   </span>
                 </label>
               </>
@@ -378,7 +378,7 @@ function AuthPageInner() {
           {/* Footer */}
           <div className="auth-footer">
             <p>
-              Al continuar, aceptas nuestros <a href="/terms">Términos</a> y <a href="/privacy">Privacidad</a>
+              Al continuar, aceptas nuestros <a href="/terminos">Términos</a> y <a href="/privacidad">Privacidad</a>
               <br />© 2026 ChronoShield
             </p>
           </div>

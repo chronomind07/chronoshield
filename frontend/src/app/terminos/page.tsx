@@ -1,104 +1,13 @@
-import Link from "next/link";
+import { LegalPage, H2, P, Ul, InfoBox, WarnBox, AL, B } from "@/components/legal";
 
 export const metadata = {
   title: "Términos y Condiciones – ChronoShield",
   description: "Condiciones generales de uso del servicio ChronoShield.",
 };
 
-function LegalNav() {
-  return (
-    <header
-      className="fixed top-0 inset-x-0 z-50"
-      style={{ background: "rgba(8,12,16,0.97)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-    >
-      <div className="max-w-[900px] mx-auto px-6 h-[64px] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg overflow-hidden" style={{ background: "#080C10" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.jpeg" alt="ChronoShield" width={32} height={32} className="w-full h-full object-contain" />
-          </div>
-          <span className="font-syne font-bold text-[14px] text-[#E8EDF2]">ChronoShield</span>
-        </Link>
-        <Link href="/" className="text-[13px] text-[#5A6B7A] hover:text-[#9AACBA] transition-colors">
-          ← Volver al inicio
-        </Link>
-      </div>
-    </header>
-  );
-}
-
-function LegalPage({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen" style={{ background: "#080C10" }}>
-      <LegalNav />
-      <main className="max-w-[900px] mx-auto px-6 pt-[96px] pb-24">
-        <div className="mb-10 pb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4"
-            style={{ background: "rgba(0,194,255,0.05)", border: "1px solid rgba(0,194,255,0.15)" }}>
-            <span className="font-mono text-[10px] tracking-[2px] text-[#00C2FF] uppercase">Legal</span>
-          </div>
-          <h1 className="font-syne font-bold text-[36px] lg:text-[42px] text-[#E8EDF2] leading-[1.1] mb-3">{title}</h1>
-          <p className="text-[13px] text-[#5A6B7A] font-mono">Última actualización: {updated}</p>
-        </div>
-        {children}
-        <div className="mt-16 pt-8 flex flex-wrap gap-4 text-[13px] text-[#5A6B7A]"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <Link href="/privacidad" className="hover:text-[#9AACBA] transition-colors">Política de privacidad</Link>
-          <Link href="/terminos" className="hover:text-[#9AACBA] transition-colors">Términos y condiciones</Link>
-          <Link href="/cookies" className="hover:text-[#9AACBA] transition-colors">Política de cookies</Link>
-          <Link href="/" className="hover:text-[#9AACBA] transition-colors ml-auto">← Inicio</Link>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-function H2({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="font-syne font-bold text-[20px] text-[#E8EDF2] mt-10 mb-3 pb-2"
-      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      {children}
-    </h2>
-  );
-}
-function P({ children }: { children: React.ReactNode }) {
-  return <p className="text-[15px] text-[#9AACBA] leading-[1.75] mb-4">{children}</p>;
-}
-function Ul({ items }: { items: string[] }) {
-  return (
-    <ul className="mb-4 space-y-2">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2.5 text-[15px] text-[#9AACBA] leading-[1.7]">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 mt-1">
-            <circle cx="7" cy="7" r="6" fill="rgba(0,194,255,0.08)" />
-            <path d="M4.5 7l2 2 3-3" stroke="#00C2FF" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {item}
-        </li>
-      ))}
-    </ul>
-  );
-}
-function InfoBox({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="my-5 p-4 rounded-xl text-[14px] text-[#9AACBA] leading-[1.7]"
-      style={{ background: "rgba(0,194,255,0.04)", border: "1px solid rgba(0,194,255,0.12)" }}>
-      {children}
-    </div>
-  );
-}
-function WarnBox({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="my-5 p-4 rounded-xl text-[14px] text-[#9AACBA] leading-[1.7]"
-      style={{ background: "rgba(255,179,64,0.04)", border: "1px solid rgba(255,179,64,0.15)" }}>
-      {children}
-    </div>
-  );
-}
-
 export default function TerminosPage() {
   return (
-    <LegalPage title="Términos y Condiciones" updated="15 de marzo de 2026">
+    <LegalPage title="Términos y Condiciones" updated="15 de marzo de 2026" badge="Legal">
 
       <P>
         Los presentes Términos y Condiciones regulan el acceso y uso del servicio ChronoShield, plataforma de
@@ -135,27 +44,80 @@ export default function TerminosPage() {
       <H2>3. Planes y precios</H2>
       <P>ChronoShield ofrece los siguientes planes de suscripción:</P>
 
-      <div className="grid sm:grid-cols-2 gap-4 my-5">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: 16,
+          margin: "20px 0",
+        }}
+      >
         {[
           {
             name: "Starter",
             price: "29€ / mes",
-            features: ["1 dominio monitorizado", "10 emails vigilados", "5 créditos de escaneo / mes", "Todas las funcionalidades básicas"],
+            features: [
+              "1 dominio monitorizado",
+              "10 emails vigilados",
+              "5 créditos de escaneo / mes",
+              "Todas las funcionalidades básicas",
+            ],
           },
           {
             name: "Business",
             price: "59€ / mes",
-            features: ["3 dominios monitorizados", "30 emails vigilados", "20 créditos de escaneo / mes", "Detección de suplantación de empresa"],
+            features: [
+              "3 dominios monitorizados",
+              "30 emails vigilados",
+              "20 créditos de escaneo / mes",
+              "Detección de suplantación de empresa",
+            ],
           },
         ].map((plan) => (
-          <div key={plan.name} className="p-4 rounded-xl"
-            style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="font-syne font-bold text-[16px] text-[#E8EDF2] mb-1">{plan.name}</div>
-            <div className="font-mono text-[13px] text-[#00C2FF] mb-3">{plan.price}</div>
-            <ul className="space-y-1.5">
+          <div
+            key={plan.name}
+            style={{
+              padding: "20px",
+              borderRadius: 12,
+              background: "#0a0a0f",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-jakarta-family, 'Plus Jakarta Sans', system-ui, sans-serif)",
+                fontSize: "0.95rem",
+                fontWeight: 700,
+                color: "#f0f0f5",
+                marginBottom: 4,
+              }}
+            >
+              {plan.name}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-mono, 'Geist Mono', monospace)",
+                fontSize: "0.82rem",
+                color: "#00e5bf",
+                marginBottom: 14,
+              }}
+            >
+              {plan.price}
+            </div>
+            <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
               {plan.features.map((f, i) => (
-                <li key={i} className="text-[13px] text-[#9AACBA] flex items-start gap-2">
-                  <span className="text-[#00C2FF] shrink-0">·</span>{f}
+                <li
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                    fontSize: "0.82rem",
+                    color: "#9999ad",
+                  }}
+                >
+                  <span style={{ color: "#00e5bf", flexShrink: 0 }}>·</span>
+                  {f}
                 </li>
               ))}
             </ul>
@@ -197,7 +159,7 @@ export default function TerminosPage() {
 
       <H2>6. Cancelación</H2>
       <InfoBox>
-        <strong className="text-[#E8EDF2]">Sin permanencia.</strong> El usuario puede cancelar su suscripción en cualquier momento
+        <B>Sin permanencia.</B> El usuario puede cancelar su suscripción en cualquier momento
         desde el panel de control en Ajustes → Suscripción → Gestionar suscripción, sin coste adicional ni penalización.
         Tras la cancelación, el servicio permanece activo hasta el final del periodo mensual ya pagado.
       </InfoBox>
@@ -217,7 +179,7 @@ export default function TerminosPage() {
 
       <H2>8. Limitación de responsabilidad</H2>
       <WarnBox>
-        ChronoShield es un servicio de <strong className="text-[#E8EDF2]">monitorización y detección</strong>. La prestación del servicio
+        ChronoShield es un servicio de <B>monitorización y detección</B>. La prestación del servicio
         no garantiza la seguridad absoluta ni la prevención de todos los ataques o filtraciones. ChronoShield
         actúa como herramienta de vigilancia, facilitando la detección temprana de amenazas, pero la
         responsabilidad de implementar las medidas correctoras recae en el usuario.
@@ -249,17 +211,17 @@ export default function TerminosPage() {
 
       <H2>11. Ley aplicable y jurisdicción</H2>
       <P>
-        Los presentes Términos y Condiciones se rigen por la <strong className="text-[#E8EDF2]">legislación española</strong>.
+        Los presentes Términos y Condiciones se rigen por la <B>legislación española</B>.
         Para la resolución de cualquier controversia derivada de su interpretación o aplicación, las partes
         se someten expresamente a la jurisdicción de los{" "}
-        <strong className="text-[#E8EDF2]">Juzgados y Tribunales de Alicante</strong>,
+        <B>Juzgados y Tribunales de Alicante</B>,
         con renuncia a cualquier otro fuero que pudiera corresponderles.
       </P>
 
       <H2>12. Contacto</H2>
       <P>
         Para cualquier consulta relacionada con estos términos, puede contactar con nosotros en{" "}
-        <a href="mailto:hola@chronoshield.eu" className="text-[#00C2FF] hover:underline">hola@chronoshield.eu</a>.
+        <AL href="mailto:hola@chronoshield.eu">hola@chronoshield.eu</AL>.
       </P>
 
     </LegalPage>
