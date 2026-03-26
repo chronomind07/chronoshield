@@ -19,14 +19,7 @@ function useScrollReveal() {
   }, []);
 }
 
-// ── Shield icon SVG ───────────────────────────────────────────────────────────
-function ShieldIcon({ size = 18, color = "#000" }: { size?: number; color?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: size, height: size }}>
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
+import { LogoFull } from "@/components/logos";
 
 // ── Navbar ────────────────────────────────────────────────────────────────────
 function Navbar() {
@@ -52,13 +45,8 @@ function Navbar() {
         transition: "background 0.3s, border-color 0.3s",
       }}
     >
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", flexShrink: 0 }}>
-        <div style={{ width: 34, height: 34, background: "linear-gradient(135deg,#00e5bf,#6366f1)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 20px rgba(0,229,191,0.12)", flexShrink: 0 }}>
-          <ShieldIcon size={18} color="#000" />
-        </div>
-        <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.82rem", fontWeight: 600, letterSpacing: "0.08em", color: "#f0f0f5", textTransform: "uppercase" }}>
-          ChronoShield
-        </span>
+      <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}>
+        <LogoFull height={34} />
       </Link>
 
       {/* Desktop links */}

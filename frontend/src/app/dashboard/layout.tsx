@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { alertsApi, creditsApi } from "@/lib/api";
 import Link from "next/link";
+import { LogoFull } from "@/components/logos";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface AlertItem {
@@ -555,16 +556,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         style={{ background: '#0a0a0f', borderRight: '1px solid rgba(255,255,255,0.03)', zIndex: 20 }}
       >
         {/* Brand */}
-        <div style={{ padding: '24px 20px 28px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-          <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #00e5bf, #6366f1)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(0,229,191,0.12)', flexShrink: 0 }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-mono-family)', fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f0f0f5' }}>ChronoShield</div>
-            <div style={{ fontFamily: 'var(--font-mono-family)', fontSize: '0.6rem', color: '#33334a', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>Security Platform</div>
-          </div>
+        <div style={{ padding: '20px 20px 24px', display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+          <LogoFull height={34} />
         </div>
 
         {/* Nav */}

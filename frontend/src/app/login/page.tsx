@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
+import { LogoFull } from "@/components/logos";
 
 // ── Google colour SVG ────────────────────────────────────────────────────────
 function GoogleIcon() {
@@ -402,12 +403,7 @@ function BrandPanel() {
       <div className="brand-content">
         {/* Logo */}
         <div className="brand-logo">
-          <div className="brand-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22, color: "#000" }}>
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-          <span className="brand-wordmark">ChronoShield</span>
+          <LogoFull height={40} />
         </div>
 
         {/* Headline */}

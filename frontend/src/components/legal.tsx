@@ -8,6 +8,7 @@
  */
 
 import Link from "next/link";
+import { LogoFull } from "@/components/logos";
 
 // ── Nav ──────────────────────────────────────────────────────────────────────
 
@@ -27,33 +28,8 @@ export function LegalNav() {
         style={{ maxWidth: 720 }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group" style={{ textDecoration: "none" }}>
-          <div
-            style={{
-              width: 34, height: 34,
-              background: "linear-gradient(135deg, #00e5bf, #6366f1)",
-              borderRadius: 9,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 16px rgba(0,229,191,0.15)",
-              flexShrink: 0,
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-          <span
-            style={{
-              fontFamily: "var(--font-mono, 'Geist Mono', monospace)",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "#f0f0f5",
-            }}
-          >
-            ChronoShield
-          </span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          <LogoFull height={28} />
         </Link>
 
         {/* Back */}
