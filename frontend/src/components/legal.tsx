@@ -1,7 +1,10 @@
+"use client";
+
 /**
  * ChronoShield — Shared Legal Page Components
  * Used by: /privacidad, /terminos, /cookies, /contacto
  * Design system: Instrument Serif + Plus Jakarta Sans + Geist Mono, #050507 bg, #00e5bf accent
+ * "use client" required — LegalNav + FooterLink + AL use onMouseOver/onMouseOut handlers
  */
 
 import Link from "next/link";
