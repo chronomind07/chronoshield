@@ -142,16 +142,26 @@ function fmtDate(iso: string) {
 }
 
 function PlanBadge({ plan }: { plan: string }) {
-  const map: Record<string, { label: string; color: string; bg: string }> = {
-    business: { label: "Business", color: "#00C2FF", bg: "rgba(0,194,255,0.12)" },
-    starter:  { label: "Starter",  color: "#00E5A0", bg: "rgba(0,229,160,0.1)" },
-    trial:    { label: "Trial",    color: "#5A6B7A", bg: "rgba(90,107,122,0.1)" },
+  const map: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    business: { label: "Business", color: "#22d3ee", bg: "rgba(34,211,238,0.08)", border: "rgba(34,211,238,0.18)" },
+    starter:  { label: "Starter",  color: "#00e5bf", bg: "rgba(0,229,191,0.08)", border: "rgba(0,229,191,0.18)" },
+    trial:    { label: "Trial",    color: "#55556a", bg: "rgba(85,85,106,0.10)", border: "rgba(85,85,106,0.18)" },
   };
   const s = map[plan] ?? map.trial;
   return (
     <span
-      className="font-mono text-[10px] uppercase tracking-[1.5px] px-2.5 py-1 rounded-full font-bold"
-      style={{ color: s.color, background: s.bg }}
+      style={{
+        fontFamily: "var(--font-mono-family)",
+        fontSize: "0.6rem",
+        textTransform: "uppercase" as const,
+        letterSpacing: "0.14em",
+        padding: "3px 10px",
+        borderRadius: 20,
+        fontWeight: 700,
+        color: s.color,
+        background: s.bg,
+        border: `1px solid ${s.border}`,
+      }}
     >
       {s.label}
     </span>
@@ -165,41 +175,54 @@ function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean; onCha
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="relative w-10 h-5 rounded-full transition-all duration-200 shrink-0 disabled:opacity-40"
-      style={{ background: checked ? "#00C2FF" : "rgba(255,255,255,0.1)", boxShadow: checked ? "0 0 10px rgba(0,194,255,0.3)" : "none" }}
+      style={{
+        width: 44, height: 24, borderRadius: 12,
+        background: checked ? "#00e5bf" : "rgba(255,255,255,0.08)",
+        border: "none", cursor: "pointer", position: "relative", transition: "background 0.25s",
+        flexShrink: 0, opacity: disabled ? 0.4 : 1,
+      }}
     >
-      <span
-        className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-200 shadow"
-        style={{ left: checked ? "calc(100% - 18px)" : "2px" }}
-      />
+      <span style={{
+        position: "absolute", top: 3, left: checked ? 23 : 3,
+        width: 18, height: 18, borderRadius: "50%",
+        background: checked ? "#000" : "#55556a",
+        transition: "left 0.25s", display: "block",
+      }} />
     </button>
   );
 }
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionCard({ label, title, children }: { label?: string; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-6" style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.06)" }}>
-      <h3 className="font-syne font-bold text-[14px] text-[#E8EDF2] mb-5 pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, help, children }: { label: string; help?: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-start justify-between gap-6 py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-      <div className="min-w-0">
-        <div className="text-[13px] font-medium text-[#E8EDF2]">{label}</div>
-        {help && <div className="text-[11px] text-[#5A6B7A] mt-0.5 leading-relaxed">{help}</div>}
+    <div style={{ background: "#0f0f16", border: "1px solid rgba(255,255,255,0.03)", borderRadius: 16, marginBottom: 16, overflow: "hidden" }}>
+      <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+        {label && (
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", textTransform: "uppercase" as const, letterSpacing: "0.16em", color: "#33334a", marginBottom: 2 }}>
+            {label}
+          </div>
+        )}
+        <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f0f0f5", letterSpacing: "-0.01em" }}>{title}</div>
       </div>
-      <div className="shrink-0">{children}</div>
+      <div style={{ padding: "0 24px" }}>
+        {children}
+      </div>
     </div>
   );
 }
 
-function Input({ value, onChange, placeholder, readOnly, type = "text" }: {
+function SettingRow({ label, help, children, last }: { label: string; help?: string; children: React.ReactNode; last?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.03)" }}>
+      <div>
+        <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f5" }}>{label}</div>
+        {help && <div style={{ fontSize: "0.78rem", color: "#55556a", marginTop: 2 }}>{help}</div>}
+      </div>
+      <div style={{ flexShrink: 0 }}>{children}</div>
+    </div>
+  );
+}
+
+function StyledInput({ value, onChange, placeholder, readOnly, type = "text" }: {
   value: string; onChange?: (v: string) => void; placeholder?: string; readOnly?: boolean; type?: string;
 }) {
   return (
@@ -209,12 +232,20 @@ function Input({ value, onChange, placeholder, readOnly, type = "text" }: {
       onChange={onChange ? (e) => onChange(e.target.value) : undefined}
       readOnly={readOnly}
       placeholder={placeholder}
-      className="w-64 px-3 py-2 rounded-lg text-[13px] outline-none transition-all"
       style={{
-        background: readOnly ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.04)",
-        border: readOnly ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(255,255,255,0.1)",
-        color: readOnly ? "#5A6B7A" : "#E8EDF2",
+        padding: "9px 14px",
+        background: readOnly ? "rgba(255,255,255,0.02)" : "#0a0a0f",
+        border: `1px solid ${readOnly ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.06)"}`,
+        borderRadius: 8,
+        color: readOnly ? "#55556a" : "#f0f0f5",
+        fontFamily: "var(--font-jakarta-family)",
+        fontSize: "0.85rem",
+        outline: "none",
+        transition: "border-color 0.2s",
+        width: 240,
       }}
+      onFocus={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(0,229,191,0.3)"; }}
+      onBlur={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
     />
   );
 }
@@ -232,28 +263,42 @@ function DeleteModal({ lang, onConfirm, onClose }: { lang: "es" | "en"; onConfir
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(8,12,16,0.92)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl p-7" style={{ background: "#0D1218", border: "1px solid rgba(255,77,106,0.3)" }} onClick={(e) => e.stopPropagation()}>
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-5" style={{ background: "rgba(255,77,106,0.1)" }}>⚠️</div>
-        <h2 className="font-syne font-bold text-[17px] text-[#FF4D6A] mb-2">{t.deleteModal}</h2>
-        <p className="text-[12px] text-[#5A6B7A] mb-5 leading-relaxed">
-          {t.deleteModalDesc} <span className="font-mono font-bold text-[#E8EDF2]">ELIMINAR</span> {t.deleteModalConfirm}
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(5,5,7,0.92)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <div
+        style={{ width: "100%", maxWidth: 380, borderRadius: 16, padding: 28, background: "#0f0f16", border: "1px solid rgba(255,77,106,0.25)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ width: 48, height: 48, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, background: "rgba(255,77,106,0.08)", marginBottom: 20 }}>⚠️</div>
+        <h2 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.1rem", fontWeight: 400, color: "#ff4d6a", marginBottom: 8 }}>{t.deleteModal}</h2>
+        <p style={{ fontSize: "0.8rem", color: "#55556a", marginBottom: 20, lineHeight: 1.6 }}>
+          {t.deleteModalDesc} <span style={{ fontFamily: "var(--font-mono-family)", fontWeight: 700, color: "#f0f0f5" }}>ELIMINAR</span> {t.deleteModalConfirm}
         </p>
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="ELIMINAR"
-          className="w-full px-3 py-2.5 rounded-xl text-[13px] font-mono outline-none mb-4"
-          style={{ background: "#121A22", border: `1px solid ${text === "ELIMINAR" ? "rgba(255,77,106,0.4)" : "rgba(255,255,255,0.08)"}`, color: "#E8EDF2" }}
+          style={{
+            width: "100%", padding: "10px 14px", borderRadius: 8, fontSize: "0.85rem",
+            fontFamily: "var(--font-mono-family)", outline: "none", marginBottom: 16, boxSizing: "border-box",
+            background: "#0a0a0f", border: `1px solid ${text === "ELIMINAR" ? "rgba(255,77,106,0.4)" : "rgba(255,255,255,0.06)"}`,
+            color: "#f0f0f5",
+          }}
         />
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-[#5A6B7A]" style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.06)" }}>Cancelar</button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#55556a", background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }}
+          >
+            Cancelar
+          </button>
           <button
             onClick={handleDelete}
             disabled={text !== "ELIMINAR" || deleting}
-            className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg, #C0392B, #FF4D6A)" }}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#fff", background: "rgba(255,77,106,0.10)", border: "1px solid rgba(255,77,106,0.2)", cursor: "pointer", opacity: (text !== "ELIMINAR" || deleting) ? 0.4 : 1 }}
           >
             {deleting ? "Eliminando…" : t.deleteModalBtn}
           </button>
@@ -269,47 +314,57 @@ function TabGeneral({ profile, lang, onChange, onSave, saving }: {
 }) {
   const t = T[lang];
   return (
-    <div className="space-y-5">
-      <SectionCard title={t.tabs.general}>
-        <Field label={t.fullName}>
-          <Input value={profile.full_name} onChange={(v) => onChange({ full_name: v })} placeholder="Tu nombre" />
-        </Field>
-        <Field label={t.email}>
-          <Input value={profile.email} readOnly />
-        </Field>
-        <Field label={t.language}>
-          <div className="flex items-center rounded-xl overflow-hidden" style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.08)" }}>
+    <div>
+      <SectionCard label="Perfil" title={t.tabs.general}>
+        <SettingRow label={t.fullName}>
+          <StyledInput value={profile.full_name} onChange={(v) => onChange({ full_name: v })} placeholder="Tu nombre" />
+        </SettingRow>
+        <SettingRow label={t.email}>
+          <StyledInput value={profile.email} readOnly />
+        </SettingRow>
+        <SettingRow label={t.language}>
+          <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", background: "#0a0a0f" }}>
             {(["es", "en"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => onChange({ language: l })}
-                className="px-4 py-2 text-[12px] font-semibold transition-all"
-                style={lang === l ? { color: "#00C2FF", background: "rgba(0,194,255,0.1)" } : { color: "#5A6B7A" }}
+                style={{
+                  padding: "8px 16px", fontSize: "0.82rem", fontWeight: 600, border: "none", cursor: "pointer", transition: "all 0.15s",
+                  color: lang === l ? "#00e5bf" : "#55556a",
+                  background: lang === l ? "rgba(0,229,191,0.08)" : "transparent",
+                  fontFamily: "var(--font-jakarta-family)",
+                }}
               >
                 {l === "es" ? "🇪🇸 " + t.langEs : "🇬🇧 " + t.langEn}
               </button>
             ))}
           </div>
-        </Field>
-        <Field label={t.timezone}>
+        </SettingRow>
+        <SettingRow label={t.timezone} last>
           <select
             value={profile.timezone}
             onChange={(e) => onChange({ timezone: e.target.value })}
-            className="w-64 px-3 py-2 rounded-lg text-[13px] outline-none"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E8EDF2" }}
+            style={{
+              padding: "9px 14px", background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
+              color: "#f0f0f5", fontFamily: "var(--font-jakarta-family)", fontSize: "0.85rem", outline: "none", width: 240,
+            }}
           >
             {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz} style={{ background: "#0D1218" }}>{tz}</option>
+              <option key={tz} value={tz} style={{ background: "#0f0f16" }}>{tz}</option>
             ))}
           </select>
-        </Field>
+        </SettingRow>
       </SectionCard>
-      <div className="flex justify-end">
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
           onClick={onSave}
           disabled={saving}
-          className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-white disabled:opacity-60 transition-all"
-          style={{ background: "linear-gradient(135deg, #0077FF, #00C2FF)", boxShadow: "0 0 20px rgba(0,194,255,0.2)" }}
+          style={{
+            padding: "10px 24px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, color: "#000",
+            background: saving ? "rgba(0,229,191,0.5)" : "#00e5bf", border: "none", cursor: "pointer",
+            opacity: saving ? 0.7 : 1, transition: "opacity 0.2s",
+            fontFamily: "var(--font-jakarta-family)",
+          }}
         >
           {saving ? t.saving : t.save}
         </button>
@@ -353,95 +408,124 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: {
   };
 
   return (
-    <div className="space-y-5">
+    <div>
       {/* Org ID */}
-      <SectionCard title={t.orgId}>
-        <div className="flex items-center gap-3">
-          <code className="flex-1 font-mono text-[11px] text-[#5A6B7A] px-3 py-2 rounded-lg truncate"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            {profile.org_id}
-          </code>
-          <button
-            onClick={() => { navigator.clipboard.writeText(profile.org_id); toast.success("Copiado"); }}
-            className="px-3 py-2 rounded-lg text-[11px] font-semibold text-[#5A6B7A] transition-all"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            Copiar
-          </button>
+      <SectionCard label="Organización" title={t.orgId}>
+        <div style={{ padding: "16px 0", borderBottom: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <code style={{
+              flex: 1, fontFamily: "var(--font-mono-family)", fontSize: "0.78rem", color: "#9999ad",
+              padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)",
+            }}>
+              {profile.org_id}
+            </code>
+            <button
+              onClick={() => { navigator.clipboard.writeText(profile.org_id); toast.success("Copiado"); }}
+              style={{
+                padding: "8px 14px", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600, color: "#9999ad",
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", flexShrink: 0,
+                fontFamily: "var(--font-jakarta-family)",
+              }}
+            >
+              Copiar
+            </button>
+          </div>
+          <p style={{ fontSize: "0.75rem", color: "#55556a" }}>{t.orgIdHelp}</p>
         </div>
-        <p className="text-[11px] text-[#5A6B7A] mt-2">{t.orgIdHelp}</p>
       </SectionCard>
 
       {/* Sessions */}
-      <SectionCard title={t.activeSessions}>
-        <div className="flex items-center gap-3 p-3 rounded-xl mb-4" style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: "rgba(0,194,255,0.08)" }}>💻</div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold text-[#E8EDF2]">{t.currentDevice}</div>
-            <div className="text-[10px] text-[#5A6B7A] mt-px">{new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</div>
-          </div>
-          <span className="font-mono text-[9px] px-2 py-px rounded-full" style={{ background: "rgba(0,229,160,0.1)", color: "#00E5A0" }}>ACTIVA</span>
-        </div>
-        <button
-          onClick={handleSignOutOthers}
-          disabled={soLoading}
-          className="flex items-center gap-2 text-[12px] font-semibold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
-          style={{ color: "#FFB340", background: "rgba(255,179,64,0.06)", border: "1px solid rgba(255,179,64,0.15)" }}
-        >
-          {soLoading ? "⟳ " : "⊘ "}{t.signOutOthers}
-        </button>
-      </SectionCard>
-
-      {/* Change password */}
-      <SectionCard title={t.changePassword}>
-        <div className="space-y-3">
-          {[
-            { key: "current", label: t.currentPw },
-            { key: "new",     label: t.newPw },
-            { key: "confirm", label: t.confirmPw },
-          ].map((f) => (
-            <div key={f.key}>
-              <label className="text-[11px] text-[#5A6B7A] mb-1 block">{f.label}</label>
-              <input
-                type="password"
-                value={pw[f.key as keyof typeof pw]}
-                onChange={(e) => setPw((p) => ({ ...p, [f.key]: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl text-[13px] outline-none"
-                style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.08)", color: "#E8EDF2" }}
-              />
+      <SectionCard label="Seguridad" title={t.activeSessions}>
+        <div style={{ padding: "16px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, marginBottom: 14, background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.04)" }}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, background: "rgba(0,229,191,0.06)", flexShrink: 0 }}>💻</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f0f0f5" }}>{t.currentDevice}</div>
+              <div style={{ fontSize: "0.72rem", color: "#55556a", marginTop: 2 }}>{new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</div>
             </div>
-          ))}
+            <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 20, background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.15)" }}>ACTIVA</span>
+          </div>
           <button
-            onClick={handleChangePw}
-            disabled={pwSaving || !pw.current || !pw.new || !pw.confirm}
-            className="mt-1 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white disabled:opacity-50 transition-all"
-            style={{ background: "linear-gradient(135deg, #0077FF, #00C2FF)" }}
+            onClick={handleSignOutOthers}
+            disabled={soLoading}
+            style={{
+              display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", fontWeight: 600,
+              padding: "9px 16px", borderRadius: 8, transition: "all 0.15s", cursor: "pointer",
+              color: "#ffb020", background: "rgba(255,176,32,0.06)", border: "1px solid rgba(255,176,32,0.15)",
+              opacity: soLoading ? 0.5 : 1, fontFamily: "var(--font-jakarta-family)",
+            }}
           >
-            {pwSaving ? "Actualizando…" : t.updatePw}
+            {soLoading ? "⟳ " : "⊘ "}{t.signOutOthers}
           </button>
+        </div>
+
+        {/* Change password */}
+        <div style={{ padding: "16px 0 20px" }}>
+          <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f5", marginBottom: 14 }}>{t.changePassword}</div>
+          <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+            {[
+              { key: "current", label: t.currentPw },
+              { key: "new",     label: t.newPw },
+              { key: "confirm", label: t.confirmPw },
+            ].map((f) => (
+              <div key={f.key}>
+                <label style={{ fontSize: "0.75rem", color: "#55556a", display: "block", marginBottom: 5 }}>{f.label}</label>
+                <input
+                  type="password"
+                  value={pw[f.key as keyof typeof pw]}
+                  onChange={(e) => setPw((p) => ({ ...p, [f.key]: e.target.value }))}
+                  style={{
+                    width: "100%", padding: "9px 14px", borderRadius: 8, fontSize: "0.85rem",
+                    outline: "none", boxSizing: "border-box",
+                    background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", color: "#f0f0f5",
+                    fontFamily: "var(--font-jakarta-family)",
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,229,191,0.3)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+                />
+              </div>
+            ))}
+            <button
+              onClick={handleChangePw}
+              disabled={pwSaving || !pw.current || !pw.new || !pw.confirm}
+              style={{
+                alignSelf: "flex-start", marginTop: 4, padding: "9px 20px", borderRadius: 8, fontSize: "0.82rem",
+                fontWeight: 600, color: "#000", background: "#00e5bf", border: "none", cursor: "pointer",
+                opacity: (pwSaving || !pw.current || !pw.new || !pw.confirm) ? 0.4 : 1,
+                fontFamily: "var(--font-jakarta-family)",
+              }}
+            >
+              {pwSaving ? "Actualizando…" : t.updatePw}
+            </button>
+          </div>
         </div>
       </SectionCard>
 
       {/* Sign out */}
-      <SectionCard title={t.signOut}>
-        <p className="text-[12px] text-[#5A6B7A] mb-4">{t.signOutDesc}</p>
-        <button
-          onClick={onSignOut}
-          className="px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-          style={{ color: "#5A6B7A", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-        >
-          Cerrar sesión
-        </button>
+      <SectionCard label="Sesión" title={t.signOut}>
+        <div style={{ padding: "16px 0" }}>
+          <p style={{ fontSize: "0.8rem", color: "#55556a", marginBottom: 14 }}>{t.signOutDesc}</p>
+          <button
+            onClick={onSignOut}
+            style={{
+              padding: "9px 18px", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer",
+              color: "#9999ad", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
+              fontFamily: "var(--font-jakarta-family)",
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </SectionCard>
 
       {/* Danger zone */}
-      <div className="rounded-2xl p-6" style={{ background: "rgba(255,77,106,0.04)", border: "1px solid rgba(255,77,106,0.2)" }}>
-        <h3 className="font-syne font-bold text-[14px] text-[#FF4D6A] mb-2">{t.dangerZone}</h3>
-        <p className="text-[12px] text-[#5A6B7A] mb-4 leading-relaxed max-w-lg">{t.deleteDesc}</p>
+      <div style={{ background: "rgba(255,77,106,0.04)", border: "1px solid rgba(255,77,106,0.12)", borderRadius: 16, padding: "24px 28px", marginTop: 4 }}>
+        <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#ff4d6a", marginBottom: 6 }}>{t.dangerZone}</div>
+        <div style={{ fontSize: "0.82rem", color: "#55556a", marginBottom: 16, lineHeight: 1.6, maxWidth: 480 }}>{t.deleteDesc}</div>
         <button
           onClick={onDelete}
-          className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all"
-          style={{ background: "linear-gradient(135deg, #C0392B, #FF4D6A)", boxShadow: "0 0 16px rgba(255,77,106,0.2)" }}
+          style={{ padding: "9px 18px", background: "rgba(255,77,106,0.10)", border: "1px solid rgba(255,77,106,0.2)", borderRadius: 8, color: "#ff4d6a", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
         >
           {t.deleteBtn}
         </button>
@@ -473,91 +557,114 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
 
   const totalCredits = info.credits_available + info.credits_used;
   const creditPct = totalCredits > 0 ? info.credits_available / totalCredits : 1;
-  const creditColor = info.credits_available > 2 ? "#00E5A0" : info.credits_available > 0 ? "#FFB340" : "#FF4D6A";
+  const creditColor = info.credits_available > 2 ? "#00e5bf" : info.credits_available > 0 ? "#ffb020" : "#ff4d6a";
 
   return (
-    <div className="space-y-5">
-      {/* Plan info */}
-      <SectionCard title={t.currentPlan}>
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <PlanBadge plan={info.plan} />
-            <span className="text-[12px] text-[#5A6B7A] capitalize">{info.status}</span>
-            {info.cancel_at_period_end && (
-              <span className="font-mono text-[9px] px-2 py-px rounded-full" style={{ color: "#FFB340", background: "rgba(255,179,64,0.1)" }}>
-                {t.cancelNote}
+    <div>
+      {/* Plan card */}
+      <div style={{ background: "linear-gradient(135deg, rgba(0,229,191,0.04), rgba(99,102,241,0.04))", border: "1px solid rgba(0,229,191,0.12)", borderRadius: 16, padding: "24px 28px", marginBottom: 16 }}>
+        <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", textTransform: "uppercase" as const, letterSpacing: "0.15em", color: "#33334a", marginBottom: 8 }}>{t.currentPlan}</div>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.6rem", fontWeight: 400, color: "#f0f0f5" }}>
+                {info.plan.charAt(0).toUpperCase() + info.plan.slice(1)}
               </span>
+              <PlanBadge plan={info.plan} />
+              {info.cancel_at_period_end && (
+                <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 20, color: "#ffb020", background: "rgba(255,176,32,0.08)", border: "1px solid rgba(255,176,32,0.15)" }}>
+                  {t.cancelNote}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#9999ad" }}>
+              {info.plan === "business" ? "59€/mes" : info.plan === "starter" ? "29€/mes" : "—"}
+            </div>
+            {info.current_period_end && (
+              <div style={{ fontSize: "0.78rem", color: "#55556a", marginTop: 6 }}>
+                {t.renewal}: <span style={{ color: "#9999ad" }}>{fmtDate(info.current_period_end)}</span>
+              </div>
             )}
           </div>
-          <div className="flex gap-2">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
             {info.plan !== "business" && (
-              <button onClick={handleUpgrade} className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white" style={{ background: "linear-gradient(135deg, #0077FF, #00C2FF)" }}>
+              <button
+                onClick={handleUpgrade}
+                style={{ padding: "9px 18px", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#000", background: "#00e5bf", border: "none", cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
+              >
                 {t.upgradeBtn}
               </button>
             )}
             {info.has_stripe && (
-              <button onClick={handlePortal} disabled={portalLoading} className="px-4 py-2 rounded-xl text-[12px] font-semibold disabled:opacity-60" style={{ color: "#5A6B7A", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <button
+                onClick={handlePortal}
+                disabled={portalLoading}
+                style={{ padding: "9px 18px", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#9999ad", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", opacity: portalLoading ? 0.6 : 1, fontFamily: "var(--font-jakarta-family)" }}
+              >
                 {portalLoading ? "⟳" : t.manageBtn}
               </button>
             )}
           </div>
         </div>
-
-        {info.current_period_end && (
-          <div className="flex items-center gap-2 text-[12px]">
-            <span className="text-[#5A6B7A]">{t.renewal}:</span>
-            <span className="text-[#E8EDF2] font-semibold">{fmtDate(info.current_period_end)}</span>
-          </div>
-        )}
-      </SectionCard>
+      </div>
 
       {/* Credits */}
-      <SectionCard title={t.creditsAvail}>
-        <div className="flex items-center gap-6">
-          <div className="flex-1">
-            <div className="flex items-baseline gap-1.5 mb-2">
-              <span className="font-syne font-bold text-[32px] leading-none" style={{ color: creditColor }}>{info.credits_available}</span>
-              <span className="text-[12px] text-[#5A6B7A]">/ {totalCredits}</span>
+      <SectionCard label="Uso" title={t.creditsAvail}>
+        <div style={{ padding: "16px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 8 }}>
+                <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "2.2rem", fontWeight: 400, color: creditColor, lineHeight: 1 }}>{info.credits_available}</span>
+                <span style={{ fontSize: "0.82rem", color: "#55556a" }}>/ {totalCredits}</span>
+              </div>
+              <div style={{ height: 4, borderRadius: 4, overflow: "hidden", background: "rgba(255,255,255,0.05)" }}>
+                <div style={{ height: "100%", borderRadius: 4, transition: "width 0.7s", width: `${creditPct * 100}%`, background: creditColor }} />
+              </div>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${creditPct * 100}%`, background: creditColor }} />
+            <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
+              <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.14em", color: "#33334a" }}>{t.creditsReset}</div>
+              <div style={{ fontSize: "0.82rem", color: "#9999ad", marginTop: 4 }}>{info.credits_reset_date || "—"}</div>
             </div>
-          </div>
-          <div className="text-right">
-            <div className="font-mono text-[9px] uppercase tracking-[1.5px] text-[#5A6B7A]">{t.creditsReset}</div>
-            <div className="text-[12px] text-[#E8EDF2] mt-0.5">{info.credits_reset_date || "—"}</div>
           </div>
         </div>
       </SectionCard>
 
       {/* Billing history */}
-      <SectionCard title={t.billingHistory}>
-        {info.billing_history.length === 0 ? (
-          <p className="text-[12px] text-[#5A6B7A] py-2">{t.noBilling}</p>
-        ) : (
-          <div className="space-y-2">
-            {info.billing_history.map((inv, i) => (
-              <div key={i} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.04)" }}>
-                <div>
-                  <div className="text-[12px] font-medium text-[#E8EDF2]">{inv.description}</div>
-                  <div className="text-[10px] text-[#5A6B7A] mt-0.5">{fmtDate(inv.date)}</div>
+      <SectionCard label="Facturación" title={t.billingHistory}>
+        <div style={{ padding: "8px 0" }}>
+          {info.billing_history.length === 0 ? (
+            <p style={{ fontSize: "0.82rem", color: "#55556a", padding: "10px 0" }}>{t.noBilling}</p>
+          ) : (
+            <div>
+              {info.billing_history.map((inv, i) => (
+                <div
+                  key={i}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: i < info.billing_history.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}
+                >
+                  <div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#f0f0f5" }}>{inv.description}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#55556a", marginTop: 2 }}>{fmtDate(inv.date)}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "1rem", fontWeight: 400, color: "#00e5bf" }}>
+                      {inv.amount.toFixed(2)} {inv.currency}
+                    </span>
+                    {inv.invoice_url && (
+                      <a
+                        href={inv.invoice_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "0.72rem", fontWeight: 600, padding: "3px 10px", borderRadius: 6, color: "#6366f1", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", textDecoration: "none" }}
+                      >
+                        PDF
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-syne font-bold text-[14px] text-[#00E5A0]">
-                    {inv.amount.toFixed(2)} {inv.currency}
-                  </span>
-                  {inv.invoice_url && (
-                    <a href={inv.invoice_url} target="_blank" rel="noopener noreferrer"
-                      className="text-[10px] font-semibold px-2 py-1 rounded-lg"
-                      style={{ color: "#00C2FF", background: "rgba(0,194,255,0.08)" }}>
-                      PDF
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </SectionCard>
     </div>
   );
@@ -576,37 +683,40 @@ function TabNotifications({ prefs, lang, onChange, onSave, saving }: {
   ];
 
   return (
-    <div className="space-y-5">
-      <SectionCard title={t.notifTitle}>
-        <div className="space-y-1">
-          {mainToggles.map((item) => (
-            <div key={item.key} className="flex items-start justify-between gap-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold text-[#E8EDF2]">{item.label}</span>
-                  {item.alwaysOn && (
-                    <span className="font-mono text-[8px] px-1.5 py-px rounded" style={{ background: "rgba(0,229,160,0.1)", color: "#00E5A0" }}>
-                      RECOMENDADO
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-[#5A6B7A] mt-0.5 leading-relaxed">{item.desc}</p>
+    <div>
+      <SectionCard label="Email" title={t.notifTitle}>
+        {mainToggles.map((item, idx) => (
+          <div
+            key={item.key}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: idx < mainToggles.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f5" }}>{item.label}</span>
+                {item.alwaysOn && (
+                  <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", padding: "2px 7px", borderRadius: 4, background: "rgba(0,229,191,0.08)", color: "#00e5bf", border: "1px solid rgba(0,229,191,0.15)" }}>
+                    RECOMENDADO
+                  </span>
+                )}
               </div>
-              <ToggleSwitch
-                checked={prefs[item.key as keyof NotifPrefs]}
-                onChange={(v) => onChange({ [item.key]: v })}
-              />
+              <p style={{ fontSize: "0.78rem", color: "#55556a", marginTop: 3, lineHeight: 1.5 }}>{item.desc}</p>
             </div>
-          ))}
-        </div>
+            <ToggleSwitch
+              checked={prefs[item.key as keyof NotifPrefs]}
+              onChange={(v) => onChange({ [item.key]: v })}
+            />
+          </div>
+        ))}
       </SectionCard>
-
-      <div className="flex justify-end">
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
           onClick={onSave}
           disabled={saving}
-          className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-white disabled:opacity-60 transition-all"
-          style={{ background: "linear-gradient(135deg, #0077FF, #00C2FF)", boxShadow: "0 0 20px rgba(0,194,255,0.2)" }}
+          style={{
+            padding: "10px 24px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, color: "#000",
+            background: saving ? "rgba(0,229,191,0.5)" : "#00e5bf", border: "none", cursor: "pointer",
+            opacity: saving ? 0.7 : 1, transition: "opacity 0.2s", fontFamily: "var(--font-jakarta-family)",
+          }}
         >
           {saving ? T[lang].saving : t.savePrefs}
         </button>
@@ -693,8 +803,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="p-10 flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+      <div style={{ padding: 40, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 256, background: "#050507" }}>
+        <div style={{ width: 28, height: 28, border: "2px solid #00e5bf", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       </div>
     );
   }
@@ -709,39 +819,43 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="p-9 max-w-[1200px] mx-auto">
+    <div style={{ padding: "32px 36px 60px", background: "#050507", minHeight: "100vh", position: "relative", zIndex: 1, fontFamily: "var(--font-jakarta-family)", maxWidth: 860, margin: "0 auto" }}>
       {showDelete && (
         <DeleteModal lang={lang} onConfirm={handleDeleteAccount} onClose={() => setShowDelete(false)} />
       )}
 
       {/* Header */}
-      <div className="mb-7 fade-up">
-        <h1 className="font-syne font-bold text-[22px] text-[#E8EDF2]">{t.title}</h1>
-        <p className="text-[12px] text-[#5A6B7A] mt-0.5">
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.75rem", fontWeight: 400, letterSpacing: "-0.02em", color: "#f0f0f5" }}>{t.title}</h1>
+        <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4 }}>
           {profile.email}
           {profile.company_name ? ` · ${profile.company_name}` : ""}
         </p>
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 mb-8 fade-up" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: 0 }}>
         {TABS.map((tb) => (
           <button
             key={tb.key}
             onClick={() => setTab(tb.key)}
-            className="relative px-4 py-2.5 text-[13px] font-semibold transition-all"
-            style={{ color: tab === tb.key ? "#00C2FF" : "#5A6B7A" }}
+            style={{
+              position: "relative", padding: "10px 16px", fontSize: "0.82rem", fontWeight: 600,
+              background: "none", border: "none", cursor: "pointer", transition: "color 0.15s",
+              color: tab === tb.key ? "#00e5bf" : "#55556a",
+              fontFamily: "var(--font-jakarta-family)",
+            }}
           >
             {tb.label}
             {tab === tb.key && (
-              <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full" style={{ background: "#00C2FF", boxShadow: "0 0 8px rgba(0,194,255,0.5)" }} />
+              <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, borderRadius: "2px 2px 0 0", background: "#00e5bf", boxShadow: "0 0 8px rgba(0,229,191,0.4)" }} />
             )}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div className="fade-up">
+      <div>
         {tab === "general" && (
           <TabGeneral
             profile={profile}

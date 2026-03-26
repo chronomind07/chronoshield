@@ -48,30 +48,34 @@ function relTime(iso: string) {
 }
 
 // ── Severity config ────────────────────────────────────────────────────────────
-const SEV_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string }> = {
+const SEV_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string; glow: string }> = {
   critical: {
-    color: "#FF4D6A",
-    bg: "rgba(255,77,106,0.06)",
-    border: "rgba(255,77,106,0.2)",
-    dot: "#FF4D6A",
+    color: "#ff4d6a",
+    bg: "rgba(255,77,106,0.05)",
+    border: "rgba(255,77,106,0.14)",
+    dot: "#ff4d6a",
+    glow: "rgba(255,77,106,0.3)",
   },
   high: {
-    color: "#FF8C42",
-    bg: "rgba(255,140,66,0.06)",
-    border: "rgba(255,140,66,0.2)",
-    dot: "#FF8C42",
+    color: "#ff4d6a",
+    bg: "rgba(255,77,106,0.05)",
+    border: "rgba(255,77,106,0.14)",
+    dot: "#ff4d6a",
+    glow: "rgba(255,77,106,0.3)",
   },
   medium: {
-    color: "#FFB340",
-    bg: "rgba(255,179,64,0.06)",
-    border: "rgba(255,179,64,0.2)",
-    dot: "#FFB340",
+    color: "#ffb020",
+    bg: "rgba(255,176,32,0.05)",
+    border: "rgba(255,176,32,0.14)",
+    dot: "#ffb020",
+    glow: "rgba(255,176,32,0.3)",
   },
   low: {
-    color: "#00C2FF",
-    bg: "rgba(0,194,255,0.04)",
-    border: "rgba(0,194,255,0.12)",
-    dot: "#00C2FF",
+    color: "#22d3ee",
+    bg: "rgba(34,211,238,0.04)",
+    border: "rgba(34,211,238,0.12)",
+    dot: "#22d3ee",
+    glow: "rgba(34,211,238,0.3)",
   },
 };
 
@@ -97,130 +101,226 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
 
   return (
     <div
-      className="rounded-2xl overflow-hidden transition-all duration-200"
       style={{
-        background: alert.is_unread ? sev.bg : "#0A0F14",
-        border: `1px solid ${alert.is_unread ? sev.border : "rgba(255,255,255,0.05)"}`,
+        background: alert.is_unread ? sev.bg : "#0f0f16",
+        border: `1px solid ${alert.is_unread ? sev.border : "rgba(255,255,255,0.03)"}`,
+        borderRadius: 12,
+        marginBottom: 8,
+        overflow: "hidden",
+        transition: "border-color 0.2s",
+        animation: "dashFadeIn 0.4s ease both",
       }}
     >
-      {/* ── Header row ── */}
+      {/* Header row */}
       <button
-        className="w-full flex items-start gap-4 px-5 py-4 text-left"
         onClick={() => setExpanded(!expanded)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 14,
+          padding: "16px 20px",
+          textAlign: "left",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+        }}
       >
         {/* Severity dot */}
-        <div className="mt-1 flex flex-col items-center gap-1.5 shrink-0">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0, marginTop: 3 }}>
           <div
-            className="w-2.5 h-2.5 rounded-full"
             style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
               background: sev.dot,
-              boxShadow: alert.is_unread ? `0 0 8px ${sev.dot}88` : "none",
+              boxShadow: alert.is_unread ? `0 0 6px ${sev.glow}` : "none",
             }}
           />
           {alert.is_unread && (
-            <div className="w-[1px] flex-1 min-h-[16px]" style={{ background: `${sev.dot}33` }} />
+            <div style={{ width: 1, flexGrow: 1, minHeight: 16, background: `${sev.dot}22` }} />
           )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2 flex-wrap">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span
-                className="font-mono text-[9px] uppercase tracking-[1.5px] px-2 py-px rounded-full shrink-0 font-bold"
-                style={{ color: sev.color, background: `${sev.color}18` }}
+                style={{
+                  fontFamily: "var(--font-mono-family)",
+                  fontSize: "0.6rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  padding: "2px 8px",
+                  borderRadius: 20,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                  color: sev.color,
+                  background: `${sev.color}18`,
+                }}
               >
                 {alert.severity_label}
               </span>
-              <h3
-                className="font-syne font-bold text-[14px] leading-tight"
-                style={{ color: alert.is_unread ? "#E8EDF2" : "#9AACBA" }}
+              <span
+                style={{
+                  fontFamily: "var(--font-serif-family)",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  color: alert.is_unread ? "#f0f0f5" : "#9999ad",
+                  lineHeight: 1.3,
+                }}
               >
                 {alert.title}
-              </h3>
+              </span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] text-[#5A6B7A] whitespace-nowrap">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono-family)",
+                  fontSize: "0.65rem",
+                  color: "#33334a",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {relTime(alert.sent_at)}
               </span>
-              <span className="text-[#5A6B7A] text-xs">{expanded ? "▲" : "▼"}</span>
+              <span style={{ color: "#33334a", fontSize: "0.7rem" }}>{expanded ? "▲" : "▼"}</span>
             </div>
           </div>
 
-          <p className="text-[12px] text-[#5A6B7A] mt-1 leading-relaxed line-clamp-2">
+          <p
+            style={{
+              fontSize: "0.78rem",
+              color: "#9999ad",
+              marginTop: 5,
+              lineHeight: 1.55,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
             {alert.message}
           </p>
         </div>
       </button>
 
-      {/* ── Expanded detail ── */}
+      {/* Expanded detail */}
       {expanded && (
-        <div
-          className="px-5 pb-5"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
-        >
+        <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
           {/* Human impact */}
           <div
-            className="mt-4 rounded-xl p-4"
-            style={{ background: `${sev.color}0D`, border: `1px solid ${sev.color}22` }}
+            style={{
+              marginTop: 16,
+              borderRadius: 10,
+              padding: 16,
+              background: `${sev.color}0d`,
+              border: `1px solid ${sev.color}22`,
+            }}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-base">⚠️</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: "0.9rem" }}>⚠️</span>
               <span
-                className="font-mono text-[9px] uppercase tracking-[1.5px] font-bold"
-                style={{ color: sev.color }}
+                style={{
+                  fontFamily: "var(--font-mono-family)",
+                  fontSize: "0.6rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  fontWeight: 700,
+                  color: sev.color,
+                }}
               >
                 Impacto en tu negocio
               </span>
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: "#D0DCE8" }}>
-              {alert.human_impact}
-            </p>
+            <p style={{ fontSize: "0.78rem", lineHeight: 1.6, color: "#9999ad" }}>{alert.human_impact}</p>
           </div>
 
           {/* Fix steps */}
           <div
-            className="mt-3 rounded-xl p-4"
-            style={{ background: "rgba(0,229,160,0.04)", border: "1px solid rgba(0,229,160,0.12)" }}
+            style={{
+              marginTop: 10,
+              borderRadius: 10,
+              padding: 16,
+              background: "rgba(0,229,191,0.04)",
+              border: "1px solid rgba(0,229,191,0.12)",
+            }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-base">🔧</span>
-              <span className="font-mono text-[9px] uppercase tracking-[1.5px] font-bold text-[#00E5A0]">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: "0.9rem" }}>🔧</span>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono-family)",
+                  fontSize: "0.6rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  fontWeight: 700,
+                  color: "#00e5bf",
+                }}
+              >
                 Cómo solucionarlo
               </span>
             </div>
-            <ol className="space-y-2">
+            <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
               {alert.fix_steps.map((step, i) => (
-                <li key={i} className="flex items-start gap-3">
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                   <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center font-mono text-[9px] font-bold shrink-0 mt-px"
-                    style={{ background: "rgba(0,229,160,0.15)", color: "#00E5A0" }}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "var(--font-mono-family)",
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      flexShrink: 0,
+                      marginTop: 1,
+                      background: "rgba(0,229,191,0.15)",
+                      color: "#00e5bf",
+                    }}
                   >
                     {i + 1}
                   </span>
-                  <span className="text-[12px] text-[#9AACBA] leading-relaxed">{step}</span>
+                  <span style={{ fontSize: "0.78rem", color: "#9999ad", lineHeight: 1.6 }}>{step}</span>
                 </li>
               ))}
             </ol>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between mt-4">
-            <span className="text-[10px] text-[#5A6B7A]">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
+            <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", color: "#33334a" }}>
               {fmtDate(alert.sent_at)}
             </span>
             {alert.is_unread ? (
               <button
                 onClick={handleMarkRead}
                 disabled={marking}
-                className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50"
-                style={{ background: "rgba(255,255,255,0.04)", color: "#5A6B7A", border: "1px solid rgba(255,255,255,0.06)" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  transition: "all 0.2s",
+                  opacity: marking ? 0.5 : 1,
+                  cursor: marking ? "not-allowed" : "pointer",
+                  background: "rgba(255,255,255,0.04)",
+                  color: "#9999ad",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  fontFamily: "var(--font-jakarta-family)",
+                }}
               >
                 <span>{marking ? "…" : "✓"}</span>
                 Marcar como leída
               </button>
             ) : (
-              <span className="text-[10px] text-[#5A6B7A] flex items-center gap-1">
-                <span className="text-[#00E5A0]">✓</span> Leída{" "}
+              <span style={{ fontSize: "0.65rem", color: "#33334a", display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ color: "#00e5bf" }}>✓</span> Leída{" "}
                 {alert.read_at ? relTime(alert.read_at) : ""}
               </span>
             )}
@@ -243,20 +343,34 @@ function AlertGroup({
   if (alerts.length === 0) return null;
   return (
     <div>
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
-        <h2 className="font-mono text-[10px] uppercase tracking-[2px]" style={{ color }}>
-          {label}
-        </h2>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", flexShrink: 0, background: color }} />
         <span
-          className="font-mono text-[9px] px-1.5 py-px rounded-full"
-          style={{ color, background: `${color}18` }}
+          style={{
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.65rem",
+            textTransform: "uppercase",
+            letterSpacing: "2px",
+            color,
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.6rem",
+            padding: "1px 6px",
+            borderRadius: 10,
+            color,
+            background: `${color}18`,
+          }}
         >
           {alerts.length}
         </span>
-        <div className="flex-1 h-px" style={{ background: `${color}20` }} />
+        <div style={{ flex: 1, height: 1, background: `${color}20` }} />
       </div>
-      <div className="space-y-2">
+      <div>
         {alerts.map((a) => (
           <AlertCard key={a.id} alert={a} onMarkRead={onMarkRead} />
         ))}
@@ -268,29 +382,61 @@ function AlertGroup({
 // ── Empty state ────────────────────────────────────────────────────────────────
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-24 gap-5">
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "80px 0", textAlign: "center" }}>
       <div
-        className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
-        style={{ background: "rgba(0,229,160,0.08)", border: "1px solid rgba(0,229,160,0.15)" }}
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          background: "rgba(0,229,191,0.06)",
+          border: "1px solid rgba(0,229,191,0.10)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 24,
+        }}
       >
         🛡
       </div>
-      <div className="text-center">
-        <h3 className="font-syne font-bold text-[18px] text-[#E8EDF2] mb-2">
+      <div>
+        <div
+          style={{
+            fontFamily: "var(--font-serif-family)",
+            fontSize: "1.1rem",
+            fontWeight: 400,
+            color: "#f0f0f5",
+            marginBottom: 6,
+          }}
+        >
           Todo está en orden
-        </h3>
-        <p className="text-[13px] text-[#5A6B7A] max-w-xs leading-relaxed">
+        </div>
+        <div style={{ fontSize: "0.85rem", color: "#55556a", maxWidth: 280, lineHeight: 1.6 }}>
           No tienes alertas activas. Tus sistemas de seguridad están monitorizados
           y te avisaremos si se detecta cualquier problema.
-        </p>
+        </div>
       </div>
       <div
-        className="flex items-center gap-2 px-4 py-2 rounded-full"
-        style={{ background: "rgba(0,229,160,0.06)", border: "1px solid rgba(0,229,160,0.12)" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "6px 16px",
+          borderRadius: 20,
+          background: "rgba(0,229,191,0.06)",
+          border: "1px solid rgba(0,229,191,0.12)",
+        }}
       >
-        <div className="w-1.5 h-1.5 rounded-full bg-[#00E5A0] pulse-dot" />
-        <span className="font-mono text-[10px] text-[#00E5A0] tracking-[1px]">
-          MONITOREO ACTIVO
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#00e5bf" }} />
+        <span
+          style={{
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.62rem",
+            color: "#00e5bf",
+            letterSpacing: "1px",
+            textTransform: "uppercase",
+          }}
+        >
+          Monitoreo activo
         </span>
       </div>
     </div>
@@ -308,7 +454,7 @@ function FilterBar({
   counts: { all: number; critical: number; medium: number; low: number; unread: number };
 }) {
   const filters = [
-    { key: "all",      label: "Todas",    count: counts.all },
+    { key: "all",      label: "Todas",     count: counts.all },
     { key: "unread",   label: "No leídas", count: counts.unread },
     { key: "critical", label: "Críticas",  count: counts.critical },
     { key: "medium",   label: "Medias",    count: counts.medium },
@@ -316,23 +462,49 @@ function FilterBar({
   ];
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div
+      style={{
+        display: "flex",
+        gap: 4,
+        padding: 4,
+        background: "#0f0f16",
+        border: "1px solid rgba(255,255,255,0.03)",
+        borderRadius: 10,
+        marginBottom: 20,
+        width: "fit-content",
+        flexWrap: "wrap",
+      }}
+    >
       {filters.map((f) => (
         <button
           key={f.key}
           onClick={() => onChange(f.key)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
-          style={
-            activeFilter === f.key
-              ? { background: "rgba(0,194,255,0.1)", color: "#00C2FF", border: "1px solid rgba(0,194,255,0.2)" }
-              : { background: "rgba(255,255,255,0.03)", color: "#5A6B7A", border: "1px solid rgba(255,255,255,0.06)" }
-          }
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "7px 14px",
+            borderRadius: 7,
+            fontSize: "0.8rem",
+            fontWeight: 600,
+            transition: "all 0.2s",
+            cursor: "pointer",
+            border: "none",
+            fontFamily: "var(--font-jakarta-family)",
+            background: activeFilter === f.key ? "#1a1a26" : "transparent",
+            color: activeFilter === f.key ? "#f0f0f5" : "#55556a",
+          }}
         >
           {f.label}
           {f.count > 0 && (
             <span
-              className="font-mono text-[9px] px-1 rounded"
-              style={{ background: activeFilter === f.key ? "rgba(0,194,255,0.15)" : "rgba(255,255,255,0.06)" }}
+              style={{
+                fontFamily: "var(--font-mono-family)",
+                fontSize: "0.6rem",
+                padding: "1px 5px",
+                borderRadius: 4,
+                background: activeFilter === f.key ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
+              }}
             >
               {f.count}
             </span>
@@ -345,9 +517,9 @@ function FilterBar({
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function AlertsPage() {
-  const [data, setData]         = useState<AlertsData | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [filter, setFilter]     = useState("all");
+  const [data, setData]             = useState<AlertsData | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [filter, setFilter]         = useState("all");
   const [markingAll, setMarkingAll] = useState(false);
 
   const load = useCallback(async () => {
@@ -402,8 +574,17 @@ export default function AlertsPage() {
 
   if (loading) {
     return (
-      <div className="p-10 flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+      <div style={{ padding: "40px", display: "flex", alignItems: "center", justifyContent: "center", height: 256, background: "#050507" }}>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            border: "2px solid #00e5bf",
+            borderTopColor: "transparent",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
       </div>
     );
   }
@@ -432,12 +613,32 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="p-9">
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between mb-7 fade-up">
+    <div
+      style={{
+        padding: "32px 36px 60px",
+        background: "#050507",
+        minHeight: "100vh",
+        position: "relative",
+        zIndex: 1,
+        fontFamily: "var(--font-jakarta-family)",
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <h1 className="font-syne font-bold text-[22px] text-[#E8EDF2]">Alertas de seguridad</h1>
-          <p className="text-[12px] text-[#5A6B7A] mt-0.5">
+          <h1
+            style={{
+              fontFamily: "var(--font-serif-family)",
+              fontSize: "1.75rem",
+              fontWeight: 400,
+              letterSpacing: "-0.02em",
+              color: "#f0f0f5",
+              margin: 0,
+            }}
+          >
+            Alertas de seguridad
+          </h1>
+          <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4, margin: "4px 0 0" }}>
             {data.unread_count > 0
               ? `${data.unread_count} alerta${data.unread_count !== 1 ? "s" : ""} sin leer · ${data.total} total`
               : `${data.total} alerta${data.total !== 1 ? "s" : ""} · todo al día`}
@@ -447,11 +648,21 @@ export default function AlertsPage() {
           <button
             onClick={handleMarkAllRead}
             disabled={markingAll}
-            className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-lg transition-all disabled:opacity-50"
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              padding: "8px 16px",
+              borderRadius: 9,
+              transition: "all 0.2s",
+              opacity: markingAll ? 0.5 : 1,
+              cursor: markingAll ? "not-allowed" : "pointer",
               background: "rgba(255,255,255,0.04)",
-              color: "#5A6B7A",
-              border: "1px solid rgba(255,255,255,0.08)",
+              color: "#9999ad",
+              border: "1px solid rgba(255,255,255,0.06)",
+              fontFamily: "var(--font-jakarta-family)",
             }}
           >
             {markingAll ? "⟳" : "✓"} Marcar todas como leídas
@@ -459,33 +670,31 @@ export default function AlertsPage() {
         )}
       </div>
 
-      {/* ── Filters ── */}
+      {/* Filters */}
       {data.total > 0 && (
-        <div className="mb-6 fade-up">
-          <FilterBar activeFilter={filter} onChange={setFilter} counts={counts} />
-        </div>
+        <FilterBar activeFilter={filter} onChange={setFilter} counts={counts} />
       )}
 
-      {/* ── Alert groups or empty ── */}
+      {/* Alert groups or empty */}
       {filteredAlerts.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-8 fade-up">
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
           <AlertGroup
             label="Críticas"
-            color="#FF4D6A"
+            color="#ff4d6a"
             alerts={criticals}
             onMarkRead={handleMarkRead}
           />
           <AlertGroup
             label="Medias"
-            color="#FFB340"
+            color="#ffb020"
             alerts={mediums}
             onMarkRead={handleMarkRead}
           />
           <AlertGroup
             label="Bajas"
-            color="#00C2FF"
+            color="#22d3ee"
             alerts={lows}
             onMarkRead={handleMarkRead}
           />

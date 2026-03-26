@@ -103,32 +103,30 @@ function CreditBadge({ credits }: { credits: Credits }) {
   const total = credits.credits_available + credits.credits_used;
   const pct = total > 0 ? credits.credits_available / total : 1;
   const color =
-    credits.credits_available > 2 ? "#00E5A0" :
-    credits.credits_available > 0 ? "#FFB340" : "#FF4D6A";
+    credits.credits_available > 2 ? "#00e5bf" :
+    credits.credits_available > 0 ? "#ffb020" : "#ff4d6a";
 
   return (
-    <div
-      className="flex items-center gap-4 px-5 py-3.5 rounded-xl"
-      style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.06)" }}
-    >
-      <div className="flex-1">
-        <div className="font-mono text-[9px] uppercase tracking-[2px] text-[#5A6B7A] mb-1">Créditos</div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-syne font-bold text-[26px] leading-none" style={{ color }}>
-            {credits.credits_available}
-          </span>
-          <span className="text-[11px] text-[#5A6B7A]">/ {total}</span>
+    <div style={{ background: "#0f0f16", border: "1px solid rgba(255,255,255,0.03)", borderRadius: 12, padding: "16px 20px" }}>
+      <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.16em", color: "#33334a", marginBottom: 8 }}>Créditos</div>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 8 }}>
+            <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "2rem", fontWeight: 400, color, lineHeight: 1 }}>
+              {credits.credits_available}
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "#55556a" }}>/ {total}</span>
+          </div>
+          <div style={{ height: 3, borderRadius: 3, overflow: "hidden", background: "rgba(255,255,255,0.05)" }}>
+            <div
+              style={{ height: "100%", borderRadius: 3, transition: "width 0.7s", width: `${pct * 100}%`, background: color }}
+            />
+          </div>
         </div>
-        <div className="h-1 rounded-full mt-2 overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct * 100}%`, background: color }}
-          />
+        <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.14em", color: "#33334a" }}>Reset</div>
+          <div style={{ fontSize: "0.75rem", color: "#9999ad", marginTop: 3 }}>{fmtDate(credits.reset_date)}</div>
         </div>
-      </div>
-      <div className="text-right shrink-0">
-        <div className="font-mono text-[9px] uppercase tracking-[2px] text-[#5A6B7A]">Reset</div>
-        <div className="text-[12px] text-[#E8EDF2] mt-0.5">{fmtDate(credits.reset_date)}</div>
       </div>
     </div>
   );
@@ -138,18 +136,21 @@ function CreditBadge({ credits }: { credits: Credits }) {
 type ItemStatus = "breached" | "found" | "threatened" | "clean" | "never_scanned";
 
 function StatusPill({ status }: { status: ItemStatus }) {
-  const map: Record<ItemStatus, { label: string; color: string; bg: string }> = {
-    breached:      { label: "FILTRADO",      color: "#FF4D6A", bg: "rgba(255,77,106,0.1)" },
-    found:         { label: "DETECTADO",     color: "#FF4D6A", bg: "rgba(255,77,106,0.1)" },
-    threatened:    { label: "AMENAZA",       color: "#FFB340", bg: "rgba(255,179,64,0.1)" },
-    clean:         { label: "LIMPIO",        color: "#00E5A0", bg: "rgba(0,229,160,0.1)" },
-    never_scanned: { label: "SIN ESCANEAR", color: "#5A6B7A", bg: "rgba(90,107,122,0.1)" },
+  const map: Record<ItemStatus, { label: string; color: string; bg: string; border: string }> = {
+    breached:      { label: "FILTRADO",      color: "#ff4d6a", bg: "rgba(255,77,106,0.08)",  border: "rgba(255,77,106,0.15)" },
+    found:         { label: "DETECTADO",     color: "#ff4d6a", bg: "rgba(255,77,106,0.08)",  border: "rgba(255,77,106,0.15)" },
+    threatened:    { label: "AMENAZA",       color: "#ffb020", bg: "rgba(255,176,32,0.08)",  border: "rgba(255,176,32,0.15)" },
+    clean:         { label: "LIMPIO",        color: "#00e5bf", bg: "rgba(0,229,191,0.08)",   border: "rgba(0,229,191,0.15)" },
+    never_scanned: { label: "SIN ESCANEAR", color: "#55556a", bg: "rgba(85,85,106,0.08)",   border: "rgba(85,85,106,0.15)" },
   };
   const s = map[status];
   return (
     <span
-      className="font-mono text-[9px] uppercase tracking-[1px] px-2 py-px rounded-full shrink-0"
-      style={{ color: s.color, background: s.bg }}
+      style={{
+        fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const,
+        letterSpacing: "0.1em", padding: "3px 8px", borderRadius: 20, flexShrink: 0,
+        color: s.color, background: s.bg, border: `1px solid ${s.border}`,
+      }}
     >
       {s.label}
     </span>
@@ -168,16 +169,18 @@ function ScanBtn({
     <button
       onClick={onClick}
       disabled={scanning}
-      className={`flex items-center gap-1 font-semibold rounded-lg transition-all shrink-0 disabled:opacity-50 ${
-        small ? "text-[11px] px-3 py-1.5" : "text-[12px] px-4 py-2"
-      }`}
       style={{
-        background: scanning ? "rgba(0,194,255,0.06)" : "rgba(0,194,255,0.08)",
-        border: "1px solid rgba(0,194,255,0.2)",
-        color: "#00C2FF",
+        display: "flex", alignItems: "center", gap: 5, fontWeight: 600, borderRadius: 7, transition: "all 0.15s",
+        flexShrink: 0, cursor: "pointer", opacity: scanning ? 0.5 : 1,
+        fontSize: small ? "0.72rem" : "0.78rem",
+        padding: small ? "5px 10px" : "7px 14px",
+        background: "rgba(0,229,191,0.06)",
+        border: "1px solid rgba(0,229,191,0.18)",
+        color: "#00e5bf",
+        fontFamily: "var(--font-jakarta-family)",
       }}
     >
-      <span className={scanning ? "animate-spin" : ""}>⟳</span>
+      <span style={{ display: "inline-block", animation: scanning ? "spin 0.8s linear infinite" : "none" }}>⟳</span>
       {scanning ? "Escaneando" : "Escanear"}
     </button>
   );
@@ -188,8 +191,7 @@ function BreachDetail({ record }: { record: BreachRecord }) {
   const hasPassword = !!(record.password || record.hashedPassword);
   return (
     <div
-      className="rounded-lg px-3 py-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5"
-      style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.04)" }}
+      style={{ borderRadius: 8, padding: "10px 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.04)" }}
     >
       {[
         { label: "Fuente",     val: record.breachName || record.source },
@@ -201,10 +203,12 @@ function BreachDetail({ record }: { record: BreachRecord }) {
         { label: "Fecha",      val: record.timestamp ? fmtDate(record.timestamp) : null },
       ].filter((f) => f.val).map((f) => (
         <div key={f.label}>
-          <div className="font-mono text-[9px] uppercase tracking-[1px] text-[#5A6B7A]">{f.label}</div>
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#55556a" }}>{f.label}</div>
           <div
-            className="font-mono text-[11px] mt-px break-all"
-            style={{ color: f.label === "Contraseña" && hasPassword ? "#FF4D6A" : "#E8EDF2" }}
+            style={{
+              fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", marginTop: 2, wordBreak: "break-all" as const,
+              color: f.label === "Contraseña" && hasPassword ? "#ff4d6a" : "#f0f0f5",
+            }}
           >
             {f.val}
           </div>
@@ -243,71 +247,71 @@ function EmailRow({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
       style={{
-        background: "#0A0F14",
-        border: `1px solid ${danger ? "rgba(255,77,106,0.15)" : "rgba(255,255,255,0.05)"}`,
+        borderRadius: 10, overflow: "hidden",
+        background: "#0a0a0f",
+        border: `1px solid ${danger ? "rgba(255,77,106,0.15)" : "rgba(255,255,255,0.04)"}`,
+        marginBottom: 8,
       }}
     >
       <button
-        className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", textAlign: "left" as const, background: "none", border: "none", cursor: "pointer" }}
         onClick={() => setExpanded(!expanded)}
       >
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
           style={{
-            background: danger ? "rgba(255,77,106,0.1)" : "rgba(0,229,160,0.08)",
+            width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0,
+            background: danger ? "rgba(255,77,106,0.08)" : "rgba(0,229,191,0.06)",
           }}
         >
           {danger ? "⚠" : "✉"}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="font-mono text-[13px] text-[#E8EDF2] truncate">{item.email}</div>
-          <div className="text-[10px] text-[#5A6B7A] mt-0.5">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.82rem", color: "#f0f0f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.email}</div>
+          <div style={{ fontSize: "0.72rem", color: "#55556a", marginTop: 3 }}>
             {item.last_scan_at ? relTime(item.last_scan_at) : "Nunca escaneado"}
             {item.breach_count > 0 && (
-              <span className="text-[#FF4D6A] ml-2">{item.breach_count} filtración{item.breach_count !== 1 ? "es" : ""}</span>
+              <span style={{ color: "#ff4d6a", marginLeft: 8 }}>{item.breach_count} filtración{item.breach_count !== 1 ? "es" : ""}</span>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <StatusPill status={item.status} />
           <ScanBtn scanning={scanning} onClick={handleScan} small />
-          <span className="text-[#5A6B7A] text-[11px] ml-1">{expanded ? "▲" : "▼"}</span>
+          <span style={{ color: "#55556a", fontSize: "0.72rem", marginLeft: 4 }}>{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
 
       {expanded && item.latest_breaches.length > 0 && (
         <div
-          className="px-4 pb-4 pt-2 space-y-2"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+          style={{ padding: "8px 16px 16px", borderTop: "1px solid rgba(255,255,255,0.04)" }}
         >
-          <div className="font-mono text-[9px] uppercase tracking-[1px] text-[#5A6B7A] mb-2">
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#55556a", marginBottom: 8 }}>
             Filtraciones encontradas
           </div>
-          {item.latest_breaches.map((r, i) => (
-            <BreachDetail key={r.id || i} record={r} />
-          ))}
+          <div style={{ display: "flex", flexDirection: "column" as const, gap: 6 }}>
+            {item.latest_breaches.map((r, i) => (
+              <BreachDetail key={r.id || i} record={r} />
+            ))}
+          </div>
         </div>
       )}
 
       {expanded && item.latest_breaches.length === 0 && item.status !== "never_scanned" && (
         <div
-          className="px-4 pb-4 pt-3 text-center"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+          style={{ padding: "12px 16px 16px", borderTop: "1px solid rgba(255,255,255,0.04)", textAlign: "center" as const }}
         >
-          <span className="font-mono text-[12px] text-[#00E5A0]">✓ Sin filtraciones detectadas</span>
+          <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.78rem", color: "#00e5bf" }}>✓ Sin filtraciones detectadas</span>
         </div>
       )}
 
       {expanded && item.status === "never_scanned" && (
         <div
-          className="px-4 pb-4 pt-3 text-center"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+          style={{ padding: "12px 16px 16px", borderTop: "1px solid rgba(255,255,255,0.04)", textAlign: "center" as const }}
         >
-          <span className="text-[12px] text-[#5A6B7A]">Este email aún no ha sido escaneado</span>
+          <span style={{ fontSize: "0.78rem", color: "#55556a" }}>Este email aún no ha sido escaneado</span>
         </div>
       )}
     </div>
@@ -354,64 +358,65 @@ function DomainRow({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
       style={{
-        background: "#0A0F14",
-        border: `1px solid ${danger ? "rgba(255,77,106,0.15)" : "rgba(255,255,255,0.05)"}`,
+        borderRadius: 10, overflow: "hidden",
+        background: "#0a0a0f",
+        border: `1px solid ${danger ? "rgba(255,77,106,0.15)" : "rgba(255,255,255,0.04)"}`,
+        marginBottom: 8,
       }}
     >
       <button
-        className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", textAlign: "left" as const, background: "none", border: "none", cursor: "pointer" }}
         onClick={() => setExpanded(!expanded)}
       >
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
           style={{
-            background: danger ? "rgba(255,77,106,0.1)" : "rgba(0,229,160,0.08)",
+            width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0,
+            background: danger ? "rgba(255,77,106,0.08)" : "rgba(0,229,191,0.06)",
           }}
         >
           {isImpersonation ? "🕸" : "◎"}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="font-mono text-[13px] text-[#E8EDF2] truncate">{item.domain}</div>
-          <div className="text-[10px] text-[#5A6B7A] mt-0.5">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.82rem", color: "#f0f0f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.domain}</div>
+          <div style={{ fontSize: "0.72rem", color: "#55556a", marginTop: 3 }}>
             {item.last_scan_at ? relTime(item.last_scan_at) : "Nunca escaneado"}
             {count > 0 && (
-              <span className="text-[#FF4D6A] ml-2">
+              <span style={{ color: "#ff4d6a", marginLeft: 8 }}>
                 {count} {isImpersonation ? `amenaza${count !== 1 ? "s" : ""}` : `hallazgo${count !== 1 ? "s" : ""}`}
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <StatusPill status={status} />
           <ScanBtn scanning={scanning} onClick={handleScan} small />
-          <span className="text-[#5A6B7A] text-[11px] ml-1">{expanded ? "▲" : "▼"}</span>
+          <span style={{ color: "#55556a", fontSize: "0.72rem", marginLeft: 4 }}>{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
 
       {expanded && results.length > 0 && (
         <div
-          className="px-4 pb-4 pt-2 space-y-2"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+          style={{ padding: "8px 16px 16px", borderTop: "1px solid rgba(255,255,255,0.04)" }}
         >
-          <div className="font-mono text-[9px] uppercase tracking-[1px] text-[#5A6B7A] mb-2">
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#55556a", marginBottom: 8 }}>
             {isImpersonation ? "Dominios suplantadores detectados" : "Resultados en dark web"}
           </div>
-          {results.map((r, i) => (
-            <BreachDetail key={(r as BreachRecord).id || i} record={r as BreachRecord} />
-          ))}
+          <div style={{ display: "flex", flexDirection: "column" as const, gap: 6 }}>
+            {results.map((r, i) => (
+              <BreachDetail key={(r as BreachRecord).id || i} record={r as BreachRecord} />
+            ))}
+          </div>
         </div>
       )}
 
       {expanded && results.length === 0 && status !== "never_scanned" && (
         <div
-          className="px-4 pb-4 pt-3 text-center"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+          style={{ padding: "12px 16px 16px", borderTop: "1px solid rgba(255,255,255,0.04)", textAlign: "center" as const }}
         >
-          <span className="font-mono text-[12px] text-[#00E5A0]">
+          <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.78rem", color: "#00e5bf" }}>
             ✓ {isImpersonation ? "Sin suplantaciones detectadas" : "Sin hallazgos en dark web"}
           </span>
         </div>
@@ -419,10 +424,9 @@ function DomainRow({
 
       {expanded && status === "never_scanned" && (
         <div
-          className="px-4 pb-4 pt-3 text-center"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+          style={{ padding: "12px 16px 16px", borderTop: "1px solid rgba(255,255,255,0.04)", textAlign: "center" as const }}
         >
-          <span className="text-[12px] text-[#5A6B7A]">Este dominio aún no ha sido escaneado</span>
+          <span style={{ fontSize: "0.78rem", color: "#55556a" }}>Este dominio aún no ha sido escaneado</span>
         </div>
       )}
     </div>
@@ -440,45 +444,42 @@ function Section({
   children: React.ReactNode;
 }) {
   const borderColor = locked
-    ? "rgba(255,255,255,0.06)"
+    ? "rgba(255,255,255,0.04)"
     : totalDanger > 0
-    ? "rgba(255,77,106,0.2)"
-    : "rgba(255,255,255,0.06)";
+    ? "rgba(255,77,106,0.15)"
+    : "rgba(255,255,255,0.04)";
 
-  const barColor = locked ? "#5A6B7A" : totalDanger > 0 ? "#FF4D6A" : "#00E5A0";
+  const accentColor = locked ? "#55556a" : totalDanger > 0 ? "#ff4d6a" : "#00e5bf";
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl p-6"
-      style={{ background: "#0D1218", border: `1px solid ${borderColor}` }}
+      style={{ position: "relative", overflow: "hidden", borderRadius: 16, padding: 24, background: "#0f0f16", border: `1px solid ${borderColor}`, marginBottom: 16 }}
     >
       <div
-        className="absolute bottom-0 left-0 right-0 h-[2px]"
-        style={{ background: barColor, boxShadow: `0 0 10px ${barColor}44` }}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: accentColor, boxShadow: `0 0 10px ${accentColor}44` }}
       />
 
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[18px]">{icon}</span>
-          <h3 className="font-syne font-bold text-[15px] text-[#E8EDF2]">{title}</h3>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 18 }}>{icon}</span>
+          <h3 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1rem", fontWeight: 400, color: "#f0f0f5", letterSpacing: "-0.01em" }}>{title}</h3>
         </div>
-        <div className="flex items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {locked && (
             <span
-              className="font-mono text-[9px] uppercase tracking-[1px] px-2 py-px rounded-full border"
-              style={{ color: "#FFB340", background: "rgba(255,179,64,0.08)", borderColor: "rgba(255,179,64,0.2)" }}
+              style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.1em", padding: "3px 8px", borderRadius: 20, color: "#ffb020", background: "rgba(255,176,32,0.06)", border: "1px solid rgba(255,176,32,0.15)" }}
             >
               Solo Business
             </span>
           )}
           {!locked && (
             <span
-              className="font-mono text-[9px] uppercase tracking-[1px] px-2 py-px rounded-full"
-              style={
-                totalDanger > 0
-                  ? { background: "rgba(255,77,106,0.1)", color: "#FF4D6A" }
-                  : { background: "rgba(0,229,160,0.1)", color: "#00E5A0" }
-              }
+              style={{
+                fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.1em", padding: "3px 8px", borderRadius: 20,
+                ...(totalDanger > 0
+                  ? { background: "rgba(255,77,106,0.08)", color: "#ff4d6a", border: "1px solid rgba(255,77,106,0.15)" }
+                  : { background: "rgba(0,229,191,0.08)", color: "#00e5bf", border: "1px solid rgba(0,229,191,0.15)" })
+              }}
             >
               {totalDanger > 0 ? `${totalDanger} hallazgos` : "Sin amenazas"}
             </span>
@@ -487,16 +488,15 @@ function Section({
       </div>
 
       {locked ? (
-        <div className="py-8 flex flex-col items-center gap-3 text-center">
+        <div style={{ paddingTop: 24, paddingBottom: 24, display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 12, textAlign: "center" as const }}>
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-            style={{ background: "rgba(255,255,255,0.04)" }}
+            style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: "rgba(255,255,255,0.03)" }}
           >
             🔒
           </div>
-          <p className="text-[13px] text-[#5A6B7A]">
+          <p style={{ fontSize: "0.82rem", color: "#55556a" }}>
             Disponible en el plan{" "}
-            <span className="text-[#E8EDF2] font-semibold">Business</span>
+            <span style={{ color: "#f0f0f5", fontWeight: 600 }}>Business</span>
           </p>
         </div>
       ) : (
@@ -521,81 +521,73 @@ function ScanAllModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(8,12,16,0.9)", backdropFilter: "blur(4px)" }}
+      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(5,5,7,0.9)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl p-7"
-        style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.08)" }}
+        style={{ width: "100%", maxWidth: 380, borderRadius: 16, padding: 28, background: "#0f0f16", border: "1px solid rgba(255,255,255,0.06)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-5"
-          style={{ background: canAfford ? "rgba(0,194,255,0.08)" : "rgba(255,77,106,0.08)" }}
+          style={{ width: 48, height: 48, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 20, background: canAfford ? "rgba(0,229,191,0.06)" : "rgba(255,77,106,0.06)" }}
         >
           {canAfford ? "🔍" : "⚠️"}
         </div>
 
-        <h2 className="font-syne font-bold text-[17px] text-[#E8EDF2] mb-1">
+        <h2 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.1rem", fontWeight: 400, color: "#f0f0f5", marginBottom: 6 }}>
           {canAfford ? "Escaneo general" : "Créditos insuficientes"}
         </h2>
 
         {canAfford ? (
           <>
-            <p className="text-[12px] text-[#5A6B7A] mb-5 leading-relaxed">
+            <p style={{ fontSize: "0.8rem", color: "#55556a", marginBottom: 20, lineHeight: 1.6 }}>
               Este escaneo analizará todos tus activos y consumirá{" "}
-              <span className="text-[#E8EDF2] font-semibold">{cost} créditos</span>.
+              <span style={{ color: "#f0f0f5", fontWeight: 600 }}>{cost} créditos</span>.
             </p>
 
-            {/* Desglose */}
             <div
-              className="rounded-xl p-4 mb-5 space-y-2"
-              style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ borderRadius: 10, padding: "14px 16px", marginBottom: 20, background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.05)" }}
             >
               {[
                 { label: "Emails", count: breakdown.emails, icon: "✉" },
                 { label: "Dominios", count: breakdown.domains, icon: "◎" },
                 { label: "Suplantación", count: breakdown.impersonation, icon: "🕸" },
               ].filter((r) => r.count > 0).map((row) => (
-                <div key={row.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-[12px] text-[#5A6B7A]">
+                <div key={row.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#55556a" }}>
                     <span>{row.icon}</span>
                     <span>{row.label}</span>
-                    <span className="text-[#E8EDF2]">× {row.count}</span>
+                    <span style={{ color: "#f0f0f5" }}>× {row.count}</span>
                   </div>
-                  <span className="font-mono text-[11px] text-[#5A6B7A]">{row.count} créd.</span>
+                  <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", color: "#55556a" }}>{row.count} créd.</span>
                 </div>
               ))}
               <div
-                className="flex items-center justify-between pt-2"
-                style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: 4 }}
               >
-                <span className="text-[12px] font-semibold text-[#E8EDF2]">Total</span>
-                <span className="font-syne font-bold text-[14px] text-[#00C2FF]">{cost} créditos</span>
+                <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f0f0f5" }}>Total</span>
+                <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.85rem", fontWeight: 700, color: "#00e5bf" }}>{cost} créditos</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-[#5A6B7A] mb-5">
+            <p style={{ fontSize: "0.75rem", color: "#55556a", marginBottom: 20 }}>
               Te quedarán{" "}
-              <span className="text-[#E8EDF2] font-semibold">
+              <span style={{ color: "#f0f0f5", fontWeight: 600 }}>
                 {credits.credits_available - cost}
               </span>{" "}
               créditos.
             </p>
 
-            <div className="flex gap-3">
+            <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-[#5A6B7A]"
-                style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#55556a", background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
               >
                 Cancelar
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white"
-                style={{ background: "linear-gradient(135deg, #0077FF, #00C2FF)" }}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#000", background: "#00e5bf", border: "none", cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
               >
                 Confirmar
               </button>
@@ -603,24 +595,22 @@ function ScanAllModal({
           </>
         ) : (
           <>
-            <p className="text-[12px] text-[#5A6B7A] mb-5 leading-relaxed">
+            <p style={{ fontSize: "0.8rem", color: "#55556a", marginBottom: 20, lineHeight: 1.6 }}>
               Necesitas{" "}
-              <span className="text-[#E8EDF2] font-semibold">{cost} créditos</span> pero solo tienes{" "}
-              <span className="text-[#FF4D6A] font-semibold">{credits.credits_available}</span>.
+              <span style={{ color: "#f0f0f5", fontWeight: 600 }}>{cost} créditos</span> pero solo tienes{" "}
+              <span style={{ color: "#ff4d6a", fontWeight: 600 }}>{credits.credits_available}</span>.
               Compra un pack para continuar.
             </p>
-            <div className="flex gap-3">
+            <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-[#5A6B7A]"
-                style={{ background: "#121A22", border: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#55556a", background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
               >
                 Cancelar
               </button>
               <button
                 onClick={onBuyCredits}
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white"
-                style={{ background: "linear-gradient(135deg, #0077FF, #00C2FF)" }}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#000", background: "#00e5bf", border: "none", cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
               >
                 Comprar créditos
               </button>
@@ -648,65 +638,63 @@ function CreditPackModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(8,12,16,0.9)", backdropFilter: "blur(4px)" }}
+      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(5,5,7,0.9)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl p-7"
-        style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.08)" }}
+        style={{ width: "100%", maxWidth: 420, borderRadius: 16, padding: 28, background: "#0f0f16", border: "1px solid rgba(255,255,255,0.06)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between mb-5">
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h2 className="font-syne font-bold text-[18px] text-[#E8EDF2]">Comprar créditos</h2>
-            <p className="text-[12px] text-[#5A6B7A] mt-0.5">
+            <h2 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.15rem", fontWeight: 400, color: "#f0f0f5", marginBottom: 4 }}>Comprar créditos</h2>
+            <p style={{ fontSize: "0.78rem", color: "#55556a" }}>
               Tienes {credits.credits_available} crédito{credits.credits_available !== 1 ? "s" : ""} disponible{credits.credits_available !== 1 ? "s" : ""}
             </p>
           </div>
-          <button onClick={onClose} className="text-[#5A6B7A] hover:text-[#E8EDF2] text-xl leading-none">×</button>
+          <button onClick={onClose} style={{ color: "#55556a", fontSize: 20, lineHeight: 1, background: "none", border: "none", cursor: "pointer", padding: 4 }}>×</button>
         </div>
 
-        <div className="space-y-3 mb-5">
+        <div style={{ display: "flex", flexDirection: "column" as const, gap: 10, marginBottom: 20 }}>
           {packs.map((pack) => (
             <button
               key={pack.key}
               onClick={() => onBuy(pack.key)}
-              className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-all"
               style={{
-                background: pack.popular ? "rgba(0,119,255,0.06)" : "#121A22",
-                border: pack.popular ? "1px solid rgba(0,194,255,0.2)" : "1px solid rgba(255,255,255,0.06)",
+                display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 10, textAlign: "left" as const, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-jakarta-family)",
+                background: pack.popular ? "rgba(0,229,191,0.04)" : "#0a0a0f",
+                border: pack.popular ? "1px solid rgba(0,229,191,0.18)" : "1px solid rgba(255,255,255,0.05)",
               }}
             >
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center font-syne font-bold text-[13px] shrink-0"
                 style={{
-                  background: pack.popular ? "rgba(0,194,255,0.12)" : "rgba(255,255,255,0.04)",
-                  color: pack.popular ? "#00C2FF" : "#5A6B7A",
+                  width: 38, height: 38, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.85rem", flexShrink: 0,
+                  background: pack.popular ? "rgba(0,229,191,0.10)" : "rgba(255,255,255,0.04)",
+                  color: pack.popular ? "#00e5bf" : "#55556a",
+                  fontFamily: "var(--font-mono-family)",
                 }}
               >
                 {pack.credits}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-syne font-semibold text-[14px] text-[#E8EDF2]">{pack.label}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                  <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f5" }}>{pack.label}</span>
                   {pack.popular && (
                     <span
-                      className="font-mono text-[9px] px-1.5 py-px rounded"
-                      style={{ background: "rgba(0,194,255,0.1)", color: "#00C2FF" }}
+                      style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", padding: "2px 7px", borderRadius: 4, background: "rgba(0,229,191,0.08)", color: "#00e5bf", border: "1px solid rgba(0,229,191,0.15)" }}
                     >
                       POPULAR
                     </span>
                   )}
                 </div>
-                <div className="text-[12px] text-[#5A6B7A]">{pack.credits} créditos · {pack.per}</div>
+                <div style={{ fontSize: "0.75rem", color: "#55556a" }}>{pack.credits} créditos · {pack.per}</div>
               </div>
-              <div className="font-syne font-bold text-[16px] text-[#E8EDF2] shrink-0">{pack.price}</div>
+              <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f0f0f5", flexShrink: 0 }}>{pack.price}</div>
             </button>
           ))}
         </div>
 
-        <p className="text-[11px] text-[#5A6B7A] text-center">
+        <p style={{ fontSize: "0.72rem", color: "#33334a", textAlign: "center" as const }}>
           1 crédito = 1 escaneo (email, dominio o suplantación). Los créditos no caducan.
         </p>
       </div>
@@ -767,8 +755,8 @@ export default function DarkWebPage() {
 
   if (loading) {
     return (
-      <div className="p-10 flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+      <div style={{ padding: 40, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 256, background: "#050507" }}>
+        <div style={{ width: 28, height: 28, border: "2px solid #00e5bf", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       </div>
     );
   }
@@ -781,7 +769,7 @@ export default function DarkWebPage() {
   const overallDanger = totalEmailDanger + totalDomainDanger + totalImpoDanger;
 
   return (
-    <div className="p-9">
+    <div style={{ padding: "32px 36px 60px", background: "#050507", minHeight: "100vh", position: "relative", zIndex: 1, fontFamily: "var(--font-jakarta-family)" }}>
       {/* Modals */}
       {showScanAll && summary && (
         <ScanAllModal
@@ -801,29 +789,28 @@ export default function DarkWebPage() {
         />
       )}
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-7 fade-up">
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <h1 className="font-syne font-bold text-[22px] text-[#E8EDF2]">Dark Web Monitoring</h1>
-          <p className="text-[12px] text-[#5A6B7A] mt-0.5">
+          <h1 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.75rem", fontWeight: 400, letterSpacing: "-0.02em", color: "#f0f0f5" }}>Dark Web Monitoring</h1>
+          <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4 }}>
             Vigilancia de filtraciones · emails · dominios · suplantación de empresa
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={() => setShowPacks(true)}
-            className="flex items-center gap-1.5 font-semibold text-[12px] px-[14px] py-[9px] rounded-lg border transition-all"
-            style={{ color: "#00C2FF", background: "rgba(0,194,255,0.06)", borderColor: "rgba(0,194,255,0.15)" }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: "0.82rem", padding: "9px 16px", borderRadius: 8, border: "1px solid rgba(0,229,191,0.18)", background: "rgba(0,229,191,0.06)", color: "#00e5bf", cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
           >
             💳 {summary.credits.credits_available} crédito{summary.credits.credits_available !== 1 ? "s" : ""}
           </button>
           <button
             onClick={() => setShowScanAll(true)}
             disabled={scanningAll}
-            className="flex items-center gap-1.5 font-semibold text-[12px] text-white px-[18px] py-[9px] rounded-lg disabled:opacity-60 transition-all"
             style={{
-              background: "linear-gradient(135deg, #0077FF, #00C2FF)",
-              boxShadow: "0 0 20px rgba(0,194,255,0.2)",
+              display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: "0.82rem", color: "#000",
+              padding: "9px 20px", borderRadius: 8, border: "none", cursor: "pointer", transition: "all 0.15s",
+              background: "#00e5bf", opacity: scanningAll ? 0.6 : 1, fontFamily: "var(--font-jakarta-family)",
             }}
           >
             {scanningAll ? "⟳ Escaneando…" : `⟳ Escaneo general (${summary.scan_all_cost} créd.)`}
@@ -831,44 +818,42 @@ export default function DarkWebPage() {
         </div>
       </div>
 
-      {/* ── Status bar ──────────────────────────────────────────── */}
+      {/* Status bar */}
       <div
-        className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 fade-up"
-        style={{ background: "rgba(0,194,255,0.04)", border: "1px solid rgba(0,194,255,0.12)" }}
+        style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderRadius: 10, marginBottom: 20, background: "rgba(0,229,191,0.03)", border: "1px solid rgba(0,229,191,0.10)" }}
       >
-        <div className="w-2 h-2 rounded-full shrink-0 pulse-dot" style={{ background: "#00C2FF" }} />
-        <span className="font-mono text-[10px] tracking-[0.5px] text-[#00C2FF]">MONITOREO ACTIVO</span>
-        <div className="flex items-center gap-4 ml-auto text-[11px] text-[#5A6B7A]">
+        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#00e5bf", flexShrink: 0 }} />
+        <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", letterSpacing: "0.12em", color: "#00e5bf", textTransform: "uppercase" as const }}>MONITOREO ACTIVO</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, marginLeft: "auto", fontSize: "0.75rem", color: "#55556a" }}>
           {summary.last_scan_at && (
             <span>
-              Último escaneo: <span className="text-[#E8EDF2]">{relTime(summary.last_scan_at)}</span>
+              Último escaneo: <span style={{ color: "#9999ad" }}>{relTime(summary.last_scan_at)}</span>
             </span>
           )}
           <span>
-            Próximo auto: <span className="text-[#E8EDF2]">{summary.next_auto_scan}</span>
+            Próximo auto: <span style={{ color: "#9999ad" }}>{summary.next_auto_scan}</span>
           </span>
-          <span className="text-[10px] text-[#5A6B7A]">Los escaneos automáticos no consumen créditos</span>
+          <span style={{ fontSize: "0.7rem", color: "#33334a" }}>Los escaneos automáticos no consumen créditos</span>
         </div>
       </div>
 
-      {/* ── Alert banner ────────────────────────────────────────── */}
+      {/* Alert banner */}
       {overallDanger > 0 && (
         <div
-          className="flex items-center gap-3 px-4 py-3.5 rounded-xl mb-6 fade-up"
-          style={{ background: "rgba(255,77,106,0.06)", border: "1px solid rgba(255,77,106,0.2)" }}
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", borderRadius: 10, marginBottom: 20, background: "rgba(255,77,106,0.05)", border: "1px solid rgba(255,77,106,0.15)" }}
         >
-          <span className="text-[18px]">🚨</span>
+          <span style={{ fontSize: 18 }}>🚨</span>
           <div>
-            <div className="font-syne font-bold text-[14px] text-[#FF4D6A]">Filtraciones detectadas</div>
-            <div className="text-[12px] text-[#5A6B7A]">
+            <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "#ff4d6a" }}>Filtraciones detectadas</div>
+            <div style={{ fontSize: "0.78rem", color: "#55556a", marginTop: 2 }}>
               {overallDanger} activo{overallDanger !== 1 ? "s" : ""} con datos expuestos en la dark web. Revisa los detalles y actúa.
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Stats + credits ──────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4 mb-6 fade-up">
+      {/* Stats grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
         <CreditBadge credits={summary.credits} />
         {[
           {
@@ -895,41 +880,37 @@ export default function DarkWebPage() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="relative overflow-hidden rounded-xl p-4"
-            style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ position: "relative", overflow: "hidden", borderRadius: 12, padding: "16px 20px", background: "#0f0f16", border: "1px solid rgba(255,255,255,0.03)" }}
           >
-            <div className="text-[18px] mb-2">{stat.icon}</div>
-            <div
-              className="font-syne font-bold text-[24px] leading-none"
-              style={{ color: !stat.danger ? "#00E5A0" : "#FF4D6A" }}
-            >
+            <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.16em", color: "#33334a", marginBottom: 8 }}>{stat.label}</div>
+            <div style={{ fontFamily: "var(--font-serif-family)", fontSize: "2rem", fontWeight: 400, color: !stat.danger ? "#00e5bf" : "#ff4d6a", lineHeight: 1 }}>
               {stat.value}
             </div>
-            <div className="text-[10px] text-[#5A6B7A] mt-1">{stat.label}</div>
+            <div style={{ fontSize: "0.7rem", color: "#55556a", marginTop: 4 }}>de {stat.total}</div>
             <div
-              className="absolute bottom-0 left-0 right-0 h-[2px]"
               style={{
-                background: !stat.danger ? "#00E5A0" : "#FF4D6A",
-                boxShadow: `0 0 8px ${!stat.danger ? "#00E5A066" : "#FF4D6A66"}`,
+                position: "absolute", bottom: 0, left: 0, right: 0, height: 2,
+                background: !stat.danger ? "#00e5bf" : "#ff4d6a",
+                boxShadow: `0 0 8px ${!stat.danger ? "#00e5bf66" : "#ff4d6a66"}`,
               }}
             />
           </div>
         ))}
       </div>
 
-      {/* ── Email section ────────────────────────────────────────── */}
-      <div className="space-y-5">
+      {/* Sections */}
+      <div>
         <Section
           title="Filtraciones de emails"
           icon="✉"
           totalDanger={totalEmailDanger}
         >
           {summary.emails.length === 0 ? (
-            <div className="py-6 text-center text-[13px] text-[#5A6B7A]">
+            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#55556a" }}>
               No tienes emails monitorizados. Añade emails desde el dashboard.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div>
               {summary.emails.map((item) => (
                 <EmailRow
                   key={item.id}
@@ -942,18 +923,17 @@ export default function DarkWebPage() {
           )}
         </Section>
 
-        {/* ── Domain section ──────────────────────────────────────── */}
         <Section
           title="Dominios en dark web"
           icon="◎"
           totalDanger={totalDomainDanger}
         >
           {summary.domains.length === 0 ? (
-            <div className="py-6 text-center text-[13px] text-[#5A6B7A]">
+            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#55556a" }}>
               No tienes dominios registrados. Añade un dominio desde el dashboard.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div>
               {summary.domains.map((item) => (
                 <DomainRow
                   key={item.id}
@@ -967,7 +947,6 @@ export default function DarkWebPage() {
           )}
         </Section>
 
-        {/* ── Impersonation section ───────────────────────────────── */}
         <Section
           title="Company Impersonation (Typosquatting)"
           icon="🕸"
@@ -975,11 +954,11 @@ export default function DarkWebPage() {
           locked={!summary.impersonation_available}
         >
           {summary.impersonation.length === 0 ? (
-            <div className="py-6 text-center text-[13px] text-[#5A6B7A]">
+            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#55556a" }}>
               No hay dominios configurados para monitorización de suplantación.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div>
               {summary.impersonation.map((item) => (
                 <DomainRow
                   key={item.id}

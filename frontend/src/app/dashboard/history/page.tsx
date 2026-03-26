@@ -35,11 +35,9 @@ function fmtDate(iso: string) {
   const time = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
   if (isToday) return `Hoy, ${time}`;
   if (isYesterday) return `Ayer, ${time}`;
-  return d.toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }) + `, ${time}`;
+  return (
+    d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) + `, ${time}`
+  );
 }
 
 function groupByDay(entries: HistoryEntry[]): { dayLabel: string; items: HistoryEntry[] }[] {
@@ -65,18 +63,28 @@ function groupByDay(entries: HistoryEntry[]): { dayLabel: string; items: History
 
 // ── Result badge ───────────────────────────────────────────────────────────────
 const RESULT_STYLE: Record<string, { color: string; bg: string }> = {
-  clean:    { color: "#00E5A0", bg: "rgba(0,229,160,0.1)" },
-  findings: { color: "#FF4D6A", bg: "rgba(255,77,106,0.1)" },
-  ok:       { color: "#00C2FF", bg: "rgba(0,194,255,0.1)" },
-  info:     { color: "#5A6B7A", bg: "rgba(90,107,122,0.1)" },
+  clean:    { color: "#22c55e", bg: "rgba(34,197,94,0.10)" },
+  findings: { color: "#ff4d6a", bg: "rgba(255,77,106,0.10)" },
+  ok:       { color: "#22d3ee", bg: "rgba(34,211,238,0.10)" },
+  info:     { color: "#55556a", bg: "rgba(85,85,106,0.10)" },
 };
 
 function ResultBadge({ result, label }: { result: string; label: string }) {
   const s = RESULT_STYLE[result] ?? RESULT_STYLE.info;
   return (
     <span
-      className="font-mono text-[9px] uppercase tracking-[1px] px-2 py-px rounded-full shrink-0"
-      style={{ color: s.color, background: s.bg }}
+      style={{
+        fontFamily: "var(--font-mono-family)",
+        fontSize: "0.58rem",
+        textTransform: "uppercase" as const,
+        letterSpacing: "1px",
+        padding: "3px 8px",
+        borderRadius: 6,
+        fontWeight: 600,
+        flexShrink: 0,
+        color: s.color,
+        background: s.bg,
+      }}
     >
       {label}
     </span>
@@ -85,17 +93,28 @@ function ResultBadge({ result, label }: { result: string; label: string }) {
 
 // ── Origin badge ───────────────────────────────────────────────────────────────
 const ORIGIN_STYLE: Record<string, { color: string; bg: string }> = {
-  automatic: { color: "#5A6B7A", bg: "rgba(90,107,122,0.08)" },
-  manual:    { color: "#00C2FF", bg: "rgba(0,194,255,0.08)" },
-  system:    { color: "#9B6DFF", bg: "rgba(155,109,255,0.08)" },
+  automatic: { color: "#55556a", bg: "rgba(85,85,106,0.08)" },
+  manual:    { color: "#22d3ee", bg: "rgba(34,211,238,0.08)" },
+  system:    { color: "#6366f1", bg: "rgba(99,102,241,0.08)" },
 };
 
 function OriginBadge({ origin, label }: { origin: string; label: string }) {
   const s = ORIGIN_STYLE[origin] ?? ORIGIN_STYLE.system;
   return (
     <span
-      className="font-mono text-[9px] uppercase tracking-[1px] px-2 py-px rounded-full shrink-0 border"
-      style={{ color: s.color, background: s.bg, borderColor: `${s.color}30` }}
+      style={{
+        fontFamily: "var(--font-mono-family)",
+        fontSize: "0.58rem",
+        textTransform: "uppercase" as const,
+        letterSpacing: "1px",
+        padding: "3px 8px",
+        borderRadius: 6,
+        fontWeight: 600,
+        flexShrink: 0,
+        color: s.color,
+        background: s.bg,
+        border: `1px solid ${s.color}30`,
+      }}
     >
       {label}
     </span>
@@ -106,39 +125,86 @@ function OriginBadge({ origin, label }: { origin: string; label: string }) {
 function EntryRow({ entry }: { entry: HistoryEntry }) {
   const isFindings = entry.result === "findings";
 
+  // Type icon background color based on result
+  const iconBg = isFindings
+    ? "rgba(255,77,106,0.10)"
+    : "rgba(255,255,255,0.04)";
+
   return (
     <div
-      className="flex items-start gap-4 px-4 py-3.5 rounded-xl transition-colors"
       style={{
-        background: "#0A0F14",
-        border: `1px solid ${isFindings ? "rgba(255,77,106,0.1)" : "rgba(255,255,255,0.04)"}`,
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "13px 20px",
+        background: "#0f0f16",
+        border: `1px solid ${isFindings ? "rgba(255,77,106,0.10)" : "rgba(255,255,255,0.03)"}`,
+        borderRadius: 10,
+        marginBottom: 6,
+        transition: "border-color 0.15s",
       }}
     >
-      {/* Icon */}
+      {/* Type icon in colored circle */}
       <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-[16px] shrink-0 mt-0.5"
         style={{
-          background: isFindings ? "rgba(255,77,106,0.08)" : "rgba(255,255,255,0.04)",
+          width: 34,
+          height: 34,
+          borderRadius: 9,
+          background: iconBg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "1rem",
+          flexShrink: 0,
         }}
       >
         {entry.icon}
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap mb-1">
-          <span className="font-syne font-semibold text-[13px] text-[#E8EDF2]">{entry.title}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+          <span
+            style={{
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: "#f0f0f5",
+              fontFamily: "var(--font-jakarta-family)",
+            }}
+          >
+            {entry.title}
+          </span>
           <ResultBadge result={entry.result} label={entry.result_label} />
           <OriginBadge origin={entry.origin} label={entry.origin_label} />
         </div>
-        <p className="text-[11px] text-[#5A6B7A] leading-relaxed line-clamp-2">
+        <p
+          style={{
+            fontSize: "0.75rem",
+            color: "#55556a",
+            marginTop: 2,
+            lineHeight: 1.5,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {entry.description}
         </p>
       </div>
 
-      {/* Time */}
-      <div className="text-right shrink-0">
-        <div className="text-[10px] text-[#5A6B7A] whitespace-nowrap">{fmtDate(entry.occurred_at)}</div>
+      {/* Timestamp */}
+      <div
+        style={{
+          fontFamily: "var(--font-mono-family)",
+          fontSize: "0.7rem",
+          color: "#33334a",
+          textAlign: "right",
+          flexShrink: 0,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {fmtDate(entry.occurred_at)}
       </div>
     </div>
   );
@@ -148,13 +214,22 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
 function DayGroup({ dayLabel, items }: { dayLabel: string; items: HistoryEntry[] }) {
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="font-mono text-[10px] uppercase tracking-[2px] text-[#5A6B7A]">
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+        <span
+          style={{
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.65rem",
+            textTransform: "uppercase",
+            letterSpacing: "2px",
+            color: "#55556a",
+            whiteSpace: "nowrap",
+          }}
+        >
           {dayLabel}
         </span>
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
       </div>
-      <div className="space-y-2">
+      <div>
         {items.map((e) => (
           <EntryRow key={e.id} entry={e} />
         ))}
@@ -171,12 +246,12 @@ const DATE_FILTERS = [
 ];
 
 const EVENT_FILTERS = [
-  { key: "",              label: "Todos los eventos" },
+  { key: "",                label: "Todos los eventos" },
   { key: "alert_generated", label: "⚡ Alertas" },
-  { key: "darkweb_scan",  label: "🕸 Escaneos Dark Web" },
-  { key: "auto_scan",     label: "⟳ Escaneos automáticos" },
-  { key: "domain_added",  label: "◎ Dominios añadidos" },
-  { key: "email_added",   label: "✉ Emails añadidos" },
+  { key: "darkweb_scan",    label: "🕸 Escaneos Dark Web" },
+  { key: "auto_scan",       label: "⟳ Escaneos automáticos" },
+  { key: "domain_added",    label: "◎ Dominios añadidos" },
+  { key: "email_added",     label: "✉ Emails añadidos" },
 ];
 
 // ── Empty state ────────────────────────────────────────────────────────────────
@@ -189,19 +264,38 @@ function EmptyState({ dateFilter }: { dateFilter: string }) {
       : "aún";
 
   return (
-    <div className="flex flex-col items-center justify-center py-24 gap-5">
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "80px 0", textAlign: "center" }}>
       <div
-        className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
-        style={{ background: "rgba(0,194,255,0.06)", border: "1px solid rgba(0,194,255,0.12)" }}
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          background: "rgba(34,211,238,0.06)",
+          border: "1px solid rgba(34,211,238,0.10)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 24,
+        }}
       >
         ≡
       </div>
-      <div className="text-center">
-        <h3 className="font-syne font-bold text-[18px] text-[#E8EDF2] mb-2">Sin actividad</h3>
-        <p className="text-[13px] text-[#5A6B7A] max-w-xs leading-relaxed">
+      <div>
+        <div
+          style={{
+            fontFamily: "var(--font-serif-family)",
+            fontSize: "1.1rem",
+            fontWeight: 400,
+            color: "#f0f0f5",
+            marginBottom: 6,
+          }}
+        >
+          Sin actividad
+        </div>
+        <div style={{ fontSize: "0.85rem", color: "#55556a", maxWidth: 280, lineHeight: 1.6 }}>
           Tu historial de actividad {msg} aparecerá aquí. Los escaneos automáticos y eventos de
           seguridad quedarán registrados.
-        </p>
+        </div>
       </div>
     </div>
   );
@@ -219,18 +313,47 @@ function Pagination({
   const totalPages = Math.ceil(total / perPage);
   if (totalPages <= 1) return null;
 
-  return (
-    <div className="flex items-center justify-center gap-2 mt-8">
-      <button
-        onClick={() => onPage(page - 1)}
-        disabled={page <= 1}
-        className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-30"
-        style={{ background: "rgba(255,255,255,0.04)", color: "#5A6B7A", border: "1px solid rgba(255,255,255,0.06)" }}
-      >
-        ← Anterior
-      </button>
+  const showing = Math.min(page * perPage, total);
 
-      <div className="flex items-center gap-1">
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: 20,
+        paddingTop: 16,
+        borderTop: "1px solid rgba(255,255,255,0.03)",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-mono-family)",
+          fontSize: "0.72rem",
+          color: "#33334a",
+        }}
+      >
+        {showing} de {total} eventos
+      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <button
+          onClick={() => onPage(page - 1)}
+          disabled={page <= 1}
+          style={{
+            padding: "6px 14px",
+            borderRadius: 7,
+            background: "#0f0f16",
+            border: "1px solid rgba(255,255,255,0.06)",
+            color: "#9999ad",
+            fontSize: "0.8rem",
+            cursor: page <= 1 ? "not-allowed" : "pointer",
+            opacity: page <= 1 ? 0.3 : 1,
+            fontFamily: "var(--font-jakarta-family)",
+          }}
+        >
+          ← Anterior
+        </button>
+
         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
           const p = page <= 3 ? i + 1 : page + i - 2;
           if (p < 1 || p > totalPages) return null;
@@ -238,42 +361,62 @@ function Pagination({
             <button
               key={p}
               onClick={() => onPage(p)}
-              className="w-8 h-8 rounded-lg text-[11px] font-mono font-semibold transition-all"
-              style={
-                p === page
-                  ? { background: "rgba(0,194,255,0.1)", color: "#00C2FF", border: "1px solid rgba(0,194,255,0.2)" }
-                  : { background: "rgba(255,255,255,0.03)", color: "#5A6B7A", border: "1px solid rgba(255,255,255,0.05)" }
-              }
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 7,
+                fontFamily: "var(--font-mono-family)",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                transition: "all 0.2s",
+                cursor: "pointer",
+                ...(p === page
+                  ? {
+                      background: "rgba(0,229,191,0.10)",
+                      color: "#00e5bf",
+                      border: "1px solid rgba(0,229,191,0.20)",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.03)",
+                      color: "#55556a",
+                      border: "1px solid rgba(255,255,255,0.05)",
+                    }),
+              }}
             >
               {p}
             </button>
           );
         })}
+
+        <button
+          onClick={() => onPage(page + 1)}
+          disabled={page >= totalPages}
+          style={{
+            padding: "6px 14px",
+            borderRadius: 7,
+            background: "#0f0f16",
+            border: "1px solid rgba(255,255,255,0.06)",
+            color: "#9999ad",
+            fontSize: "0.8rem",
+            cursor: page >= totalPages ? "not-allowed" : "pointer",
+            opacity: page >= totalPages ? 0.3 : 1,
+            fontFamily: "var(--font-jakarta-family)",
+          }}
+        >
+          Siguiente →
+        </button>
       </div>
-
-      <button
-        onClick={() => onPage(page + 1)}
-        disabled={page >= totalPages}
-        className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-30"
-        style={{ background: "rgba(255,255,255,0.04)", color: "#5A6B7A", border: "1px solid rgba(255,255,255,0.06)" }}
-      >
-        Siguiente →
-      </button>
-
-      <span className="text-[10px] text-[#5A6B7A] ml-2">
-        Pág. {page} de {totalPages} · {total} eventos
-      </span>
     </div>
   );
 }
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function HistoryPage() {
-  const [data, setData]           = useState<HistoryData | null>(null);
-  const [loading, setLoading]     = useState(true);
-  const [dateFilter, setDateFilter] = useState("month");
+  const [data, setData]               = useState<HistoryData | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [dateFilter, setDateFilter]   = useState("month");
   const [eventFilter, setEventFilter] = useState("");
-  const [page, setPage]           = useState(1);
+  const [page, setPage]               = useState(1);
 
   const load = useCallback(async (p = 1) => {
     setLoading(true);
@@ -304,79 +447,132 @@ export default function HistoryPage() {
   const groups = data ? groupByDay(data.entries) : [];
 
   return (
-    <div className="p-9">
-      {/* ── Header ── */}
-      <div className="mb-7 fade-up">
-        <h1 className="font-syne font-bold text-[22px] text-[#E8EDF2]">Historial de actividad</h1>
-        <p className="text-[12px] text-[#5A6B7A] mt-0.5">
-          Registro cronológico de todos los eventos de seguridad de tu cuenta
-        </p>
+    <div
+      style={{
+        padding: "32px 36px 60px",
+        background: "#050507",
+        minHeight: "100vh",
+        position: "relative",
+        zIndex: 1,
+        fontFamily: "var(--font-jakarta-family)",
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+        <div>
+          <h1
+            style={{
+              fontFamily: "var(--font-serif-family)",
+              fontSize: "1.75rem",
+              fontWeight: 400,
+              letterSpacing: "-0.02em",
+              color: "#f0f0f5",
+              margin: 0,
+            }}
+          >
+            Historial de actividad
+          </h1>
+          <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4, margin: "4px 0 0" }}>
+            Registro cronológico de todos los eventos de seguridad de tu cuenta
+          </p>
+        </div>
+        {data && (
+          <span
+            style={{
+              fontFamily: "var(--font-mono-family)",
+              fontSize: "0.72rem",
+              color: "#33334a",
+            }}
+          >
+            {data.total} evento{data.total !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
-      {/* ── Filters ── */}
-      <div className="flex items-center gap-3 flex-wrap mb-6 fade-up">
-        {/* Date filter */}
+      {/* Filters */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
+        {/* Date filter tabs */}
         <div
-          className="flex items-center rounded-xl overflow-hidden"
-          style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.06)" }}
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: 4,
+            background: "#0f0f16",
+            border: "1px solid rgba(255,255,255,0.03)",
+            borderRadius: 10,
+          }}
         >
           {DATE_FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setDateFilter(f.key)}
-              className="px-3.5 py-2 text-[11px] font-semibold transition-all"
-              style={
-                dateFilter === f.key
-                  ? { color: "#00C2FF", background: "rgba(0,194,255,0.08)" }
-                  : { color: "#5A6B7A" }
-              }
+              style={{
+                padding: "7px 14px",
+                borderRadius: 7,
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                transition: "all 0.2s",
+                cursor: "pointer",
+                border: "none",
+                fontFamily: "var(--font-jakarta-family)",
+                background: dateFilter === f.key ? "#1a1a26" : "transparent",
+                color: dateFilter === f.key ? "#f0f0f5" : "#55556a",
+              }}
             >
               {f.label}
             </button>
           ))}
         </div>
 
-        {/* Event type filter */}
+        {/* Event type select */}
         <select
           value={eventFilter}
           onChange={(e) => setEventFilter(e.target.value)}
-          className="px-3 py-2 text-[11px] rounded-xl outline-none cursor-pointer"
           style={{
-            background: "#0D1218",
+            padding: "8px 12px",
+            borderRadius: 9,
+            fontSize: "0.8rem",
+            outline: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-jakarta-family)",
+            background: "#0f0f16",
             border: "1px solid rgba(255,255,255,0.06)",
-            color: eventFilter ? "#00C2FF" : "#5A6B7A",
+            color: eventFilter ? "#00e5bf" : "#55556a",
           }}
         >
           {EVENT_FILTERS.map((f) => (
-            <option key={f.key} value={f.key} style={{ background: "#0D1218" }}>
+            <option key={f.key} value={f.key} style={{ background: "#0f0f16" }}>
               {f.label}
             </option>
           ))}
         </select>
-
-        {data && (
-          <span className="text-[11px] text-[#5A6B7A] ml-auto">
-            {data.total} evento{data.total !== 1 ? "s" : ""}
-          </span>
-        )}
       </div>
 
-      {/* ── Content ── */}
+      {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 192 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              border: "2px solid #00e5bf",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
         </div>
       ) : !data || data.entries.length === 0 ? (
         <EmptyState dateFilter={dateFilter} />
       ) : (
-        <div className="space-y-7 fade-up">
+        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           {groups.map((g) => (
             <DayGroup key={g.dayLabel} dayLabel={g.dayLabel} items={g.items} />
           ))}
         </div>
       )}
 
-      {/* ── Pagination ── */}
+      {/* Pagination */}
       {data && (
         <Pagination
           page={page}

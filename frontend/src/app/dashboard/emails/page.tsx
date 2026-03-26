@@ -25,8 +25,8 @@ interface MonitoredEmail {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function emailBarColor(e: MonitoredEmail): string {
   if (!e.latest_breach) return "rgba(255,255,255,0.08)";
-  if (e.total_breaches === 0) return "#00E5A0";
-  return "#FF4757";
+  if (e.total_breaches === 0) return "#00e5bf";
+  return "#ff4d6a";
 }
 
 /** Extract a readable list of breaches from InsecureWeb breach_data payload */
@@ -53,68 +53,130 @@ function BreachDetailPanel({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      style={{ background: "rgba(8,12,16,0.85)", backdropFilter: "blur(6px)" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(5,5,7,0.85)",
+        backdropFilter: "blur(8px)",
+        zIndex: 50,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-full max-w-lg rounded-2xl overflow-hidden"
-        style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.08)" }}
+        style={{
+          background: "#0a0a0f",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 20,
+          width: "100%",
+          maxWidth: 480,
+          boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+          overflow: "hidden",
+        }}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "20px 24px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}
         >
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#5A6B7A] mb-0.5">
+            <span
+              style={{
+                fontFamily: "var(--font-mono-family)",
+                fontSize: "0.7rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.18em",
+                color: "#00e5bf",
+                fontWeight: 500,
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
               Breach Report
-            </p>
-            <h2 className="font-syne font-bold text-[15px] text-[#E8EDF2] truncate max-w-[280px]">
+            </span>
+            <h2
+              style={{
+                fontFamily: "var(--font-serif-family)",
+                fontSize: "1.3rem",
+                fontWeight: 400,
+                letterSpacing: "-0.02em",
+                color: "#f0f0f5",
+                maxWidth: 300,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {email.email}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-[#5A6B7A] hover:text-[#E8EDF2] transition-colors"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#55556a",
+              padding: 4,
+              transition: "color 0.2s",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#f0f0f5")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#55556a")}
           >
-            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+            <svg viewBox="0 0 16 16" fill="none" style={{ width: 16, height: 16 }}>
               <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
 
-        <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16, maxHeight: "65vh", overflowY: "auto" }}>
 
           {/* Last scan */}
           {email.latest_breach && (
-            <p className="font-mono text-[11px] text-[#5A6B7A]">
+            <p style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", color: "#55556a" }}>
               Último escaneo: {new Date(email.latest_breach.scanned_at).toLocaleString("es-ES")}
             </p>
           )}
 
           {/* Summary */}
           <div
-            className="rounded-xl p-4 flex items-center gap-4"
             style={{
+              borderRadius: 12,
+              padding: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
               background: email.total_breaches === 0
-                ? "rgba(0,229,160,0.05)" : "rgba(255,71,87,0.05)",
+                ? "rgba(34,197,94,0.05)" : "rgba(255,77,106,0.05)",
               border: email.total_breaches === 0
-                ? "1px solid rgba(0,229,160,0.12)" : "1px solid rgba(255,71,87,0.12)",
+                ? "1px solid rgba(34,197,94,0.12)" : "1px solid rgba(255,77,106,0.12)",
             }}
           >
-            <span className="text-2xl">{email.total_breaches === 0 ? "✅" : "🚨"}</span>
+            <span style={{ fontSize: "1.4rem" }}>{email.total_breaches === 0 ? "✅" : "🚨"}</span>
             <div>
               <p
-                className="font-syne font-bold text-[15px]"
-                style={{ color: email.total_breaches === 0 ? "#00E5A0" : "#FF4757" }}
+                style={{
+                  fontFamily: "var(--font-jakarta-family)",
+                  fontSize: "0.92rem",
+                  fontWeight: 600,
+                  color: email.total_breaches === 0 ? "#22c55e" : "#ff4d6a",
+                  marginBottom: 2,
+                }}
               >
                 {email.total_breaches === 0
                   ? "Sin brechas detectadas"
                   : `${email.total_breaches} brecha${email.total_breaches !== 1 ? "s" : ""} detectada${email.total_breaches !== 1 ? "s" : ""}`}
               </p>
               {email.total_breaches > 0 && (
-                <p className="text-[12px] text-[#A8B8C8] mt-0.5">
+                <p style={{ fontSize: "0.78rem", color: "#9999ad" }}>
                   Cambia las contraseñas asociadas a este email inmediatamente.
                 </p>
               )}
@@ -123,32 +185,61 @@ function BreachDetailPanel({
 
           {/* Breach list */}
           {breaches.length > 0 ? (
-            <div className="space-y-2">
-              <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#5A6B7A]">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono-family)",
+                  fontSize: "0.7rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.18em",
+                  color: "#00e5bf",
+                  fontWeight: 500,
+                }}
+              >
                 Detalle de brechas
-              </p>
+              </span>
               {breaches.map((b, i) => (
                 <div
                   key={i}
-                  className="rounded-xl px-4 py-3 flex items-center justify-between gap-3"
-                  style={{ background: "#121A22", border: "1px solid rgba(255,71,87,0.08)" }}
+                  style={{
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    background: "#0f0f16",
+                    border: "1px solid rgba(255,77,106,0.08)",
+                  }}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center font-syne font-bold text-[11px] shrink-0"
-                      style={{ background: "rgba(255,71,87,0.1)", color: "#FF4757" }}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "var(--font-mono-family)",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        flexShrink: 0,
+                        background: "rgba(255,77,106,0.10)",
+                        color: "#ff4d6a",
+                      }}
                     >
                       {b.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-[13px] font-medium text-[#E8EDF2]">{b.name}</p>
+                      <p style={{ fontSize: "0.85rem", fontWeight: 500, color: "#f0f0f5", marginBottom: 1 }}>{b.name}</p>
                       {b.date && (
-                        <p className="font-mono text-[10px] text-[#5A6B7A]">{b.date}</p>
+                        <p style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.68rem", color: "#55556a" }}>{b.date}</p>
                       )}
                     </div>
                   </div>
                   {b.count !== undefined && (
-                    <span className="font-mono text-[11px] text-[#5A6B7A] shrink-0">
+                    <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", color: "#55556a", flexShrink: 0 }}>
                       {b.count.toLocaleString()} reg.
                     </span>
                   )}
@@ -156,8 +247,8 @@ function BreachDetailPanel({
               ))}
             </div>
           ) : email.total_breaches > 0 ? (
-            <div className="rounded-xl p-4 text-center" style={{ background: "#121A22" }}>
-              <p className="text-[12px] text-[#5A6B7A]">
+            <div style={{ borderRadius: 10, padding: 16, textAlign: "center", background: "#0f0f16" }}>
+              <p style={{ fontSize: "0.78rem", color: "#55556a" }}>
                 Detalles de las brechas no disponibles en este escaneo.
               </p>
             </div>
@@ -165,19 +256,30 @@ function BreachDetailPanel({
 
           {/* Recommendations if breached */}
           {email.total_breaches > 0 && (
-            <div className="rounded-xl p-4" style={{ background: "#121A22" }}>
-              <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#5A6B7A] mb-3">
-                ⚡ Acciones recomendadas
-              </p>
-              <ul className="space-y-2">
+            <div style={{ borderRadius: 10, padding: 16, background: "#0f0f16" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono-family)",
+                  fontSize: "0.7rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.18em",
+                  color: "#00e5bf",
+                  fontWeight: 500,
+                  display: "block",
+                  marginBottom: 12,
+                }}
+              >
+                Acciones recomendadas
+              </span>
+              <ul style={{ display: "flex", flexDirection: "column", gap: 8, listStyle: "none", padding: 0, margin: 0 }}>
                 {[
                   "Cambia la contraseña de esta dirección de email inmediatamente.",
                   "Activa la verificación en dos pasos (2FA) en todos los servicios donde uses este email.",
                   "Revisa si usabas la misma contraseña en otros servicios y cámbiala también.",
                   "Considera usar un gestor de contraseñas para crear contraseñas únicas.",
                 ].map((tip, i) => (
-                  <li key={i} className="flex gap-2 text-[12px] text-[#A8B8C8]">
-                    <span className="text-[#00C2FF] shrink-0 font-mono">{i + 1}.</span>
+                  <li key={i} style={{ display: "flex", gap: 8, fontSize: "0.78rem", color: "#9999ad" }}>
+                    <span style={{ color: "#6366f1", flexShrink: 0, fontFamily: "var(--font-mono-family)" }}>{i + 1}.</span>
                     {tip}
                   </li>
                 ))}
@@ -271,38 +373,122 @@ export default function EmailsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-9 space-y-6 min-h-screen">
+    <div style={{ padding: "32px 36px 60px", background: "#050507", minHeight: "100vh", position: "relative", zIndex: 1 }}>
 
       {/* Modals */}
       {showCredits && <BuyCreditsModal onClose={() => setShowCredits(false)} />}
       {selected    && <BreachDetailPanel email={selected} onClose={() => setSelected(null)} />}
 
       {/* Header */}
-      <div>
-        <h1 className="font-syne text-2xl font-bold text-white">Email Breach Monitor</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Continuous monitoring against known breach databases
-        </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+        <div>
+          <h1
+            style={{
+              fontFamily: "var(--font-serif-family)",
+              fontSize: "1.75rem",
+              fontWeight: 400,
+              letterSpacing: "-0.02em",
+              color: "#f0f0f5",
+            }}
+          >
+            Email Breach Monitor
+          </h1>
+          <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4 }}>
+            Monitorización continua contra bases de datos de brechas conocidas
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCredits(true)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            padding: "8px 16px",
+            borderRadius: 8,
+            background: "#0f0f16",
+            color: "#9999ad",
+            fontFamily: "var(--font-jakarta-family)",
+            fontSize: "0.8rem",
+            fontWeight: 600,
+            border: "1px solid rgba(255,255,255,0.06)",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#00e5bf"; e.currentTarget.style.borderColor = "rgba(0,229,191,0.2)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "#9999ad"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+        >
+          Comprar créditos
+        </button>
       </div>
 
       {/* Add email */}
-      <div className="bg-[#0D1117] border border-white/[0.06] rounded-xl p-5">
-        <p className="text-xs text-slate-500 mb-3">Add email address to monitor</p>
-        <form onSubmit={handleAdd} className="flex gap-3">
+      <div
+        style={{
+          background: "#0f0f16",
+          border: "1px solid rgba(255,255,255,0.03)",
+          borderRadius: 16,
+          padding: "22px 24px",
+          marginBottom: 12,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.7rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.18em",
+            color: "#00e5bf",
+            fontWeight: 500,
+            display: "block",
+            marginBottom: 14,
+          }}
+        >
+          Añadir email
+        </span>
+        <form onSubmit={handleAdd} style={{ display: "flex", gap: 10 }}>
           <input
             type="email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             placeholder="usuario@empresa.com"
-            className="flex-1 bg-[#080C10] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#00C2FF]/50 transition-colors font-mono"
             disabled={adding}
+            style={{
+              flex: 1,
+              padding: "10px 14px",
+              background: "#0a0a0f",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 8,
+              color: "#f0f0f5",
+              fontFamily: "var(--font-jakarta-family)",
+              fontSize: "0.88rem",
+              outline: "none",
+              transition: "border-color 0.2s",
+            }}
+            onFocus={e => (e.currentTarget.style.borderColor = "rgba(0,229,191,0.3)")}
+            onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
           />
           <button
             type="submit"
             disabled={adding || !newEmail.trim()}
-            className="flex items-center gap-2 bg-[#00C2FF] text-[#080C10] text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#00C2FF]/90 disabled:opacity-40 transition-all"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "9px 20px",
+              borderRadius: 100,
+              background: "#00e5bf",
+              color: "#000",
+              fontFamily: "var(--font-jakarta-family)",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              border: "none",
+              cursor: adding || !newEmail.trim() ? "not-allowed" : "pointer",
+              opacity: adding || !newEmail.trim() ? 0.45 : 1,
+              boxShadow: "0 0 24px rgba(0,229,191,0.12)",
+              transition: "all 0.25s",
+            }}
           >
-            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+            <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14 }}>
               <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
             {adding ? "Añadiendo..." : "Añadir"}
@@ -311,73 +497,172 @@ export default function EmailsPage() {
       </div>
 
       {/* Credits hint */}
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] text-[#5A6B7A]">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <p style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", color: "#33334a" }}>
           Los escaneos manuales consumen 1 crédito por email · Haz clic en un email para ver el detalle
         </p>
-        <button
-          onClick={() => setShowCredits(true)}
-          className="font-mono text-[11px] text-[#00C2FF] hover:underline"
-        >
-          Comprar créditos →
-        </button>
       </div>
 
       {/* Email list */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-[#00C2FF] border-t-transparent rounded-full animate-spin" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0" }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              border: "2px solid rgba(0,229,191,0.15)",
+              borderTopColor: "#00e5bf",
+              borderRadius: "50%",
+            }}
+            className="animate-spin"
+          />
         </div>
       ) : emails.length === 0 ? (
-        <div className="bg-[#0D1117] border border-white/[0.06] rounded-xl p-12 flex flex-col items-center gap-3 text-center">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-slate-600">
-              <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M2 8 L12 14 L22 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+        <div
+          style={{
+            background: "#0f0f16",
+            border: "1px solid rgba(255,255,255,0.03)",
+            borderRadius: 16,
+            padding: "22px 24px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "64px 0", textAlign: "center" }}>
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: "rgba(0,229,191,0.06)",
+                border: "1px solid rgba(0,229,191,0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 24,
+              }}
+            >
+              ✉
+            </div>
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-serif-family)",
+                  fontSize: "1.1rem",
+                  fontWeight: 400,
+                  color: "#f0f0f5",
+                  marginBottom: 6,
+                }}
+              >
+                Sin emails monitorizados
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "#55556a", maxWidth: 320 }}>
+                Añade direcciones de email para escanearlas contra bases de datos de brechas.
+              </div>
+            </div>
           </div>
-          <p className="text-sm font-medium text-slate-400">No monitored emails</p>
-          <p className="text-xs text-slate-600">
-            Add email addresses to scan against breach databases.
-          </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {emails.map((e) => {
             const barColor   = emailBarColor(e);
             const isBreached = e.total_breaches > 0;
             const isScanned  = !!e.latest_breach;
             const lastCheck  = e.latest_breach?.scanned_at;
+            const initials   = e.email.slice(0, 2).toUpperCase();
 
             return (
               <div
                 key={e.id}
-                className="relative bg-[#0D1117] border border-white/[0.06] rounded-xl p-5 overflow-hidden cursor-pointer hover:border-white/[0.12] transition-colors"
+                style={{
+                  position: "relative",
+                  background: "#0f0f16",
+                  border: "1px solid rgba(255,255,255,0.03)",
+                  borderRadius: 16,
+                  padding: "16px 20px",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "border-color 0.2s, transform 0.2s",
+                }}
                 onClick={() => setSelected(e)}
+                onMouseEnter={e2 => {
+                  e2.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                  e2.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={e2 => {
+                  e2.currentTarget.style.borderColor = "rgba(255,255,255,0.03)";
+                  e2.currentTarget.style.transform = "";
+                }}
               >
+                {/* Bottom color bar */}
                 <div
-                  className="absolute bottom-0 left-0 right-0 h-[3px]"
-                  style={{ backgroundColor: barColor }}
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    backgroundColor: barColor,
+                  }}
                 />
 
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="font-mono text-sm font-semibold text-white truncate">{e.email}</p>
-                    <p className="text-[11px] text-slate-600 mt-0.5">
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  {/* Avatar */}
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: "#1a1a26",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "var(--font-mono-family)",
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                      color: "#9999ad",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {initials}
+                  </div>
+
+                  {/* Email + date */}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-mono-family)",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                        color: "#f0f0f5",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {e.email}
+                    </p>
+                    <p style={{ fontSize: "0.72rem", color: "#33334a", marginTop: 2 }}>
                       {lastCheck
-                        ? `Last checked: ${new Date(lastCheck).toLocaleString("es-ES")}`
-                        : "Pending first scan"}
+                        ? `Revisado: ${new Date(lastCheck).toLocaleString("es-ES")}`
+                        : "Pendiente primer escaneo"}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  {/* Right: badge + actions */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                     {/* Breach badge */}
                     {isScanned && (
                       <span
-                        className="text-[11px] font-medium px-2.5 py-1 rounded-full"
                         style={{
-                          color: isBreached ? "#FF4757" : "#00E5A0",
-                          backgroundColor: isBreached ? "rgba(255,71,87,0.1)" : "rgba(0,229,160,0.1)",
+                          fontFamily: "var(--font-mono-family)",
+                          fontSize: "0.58rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          padding: "3px 8px",
+                          borderRadius: 6,
+                          background: isBreached ? "rgba(255,77,106,0.10)" : "rgba(34,197,94,0.10)",
+                          color: isBreached ? "#ff4d6a" : "#22c55e",
                         }}
                       >
                         {isBreached
@@ -386,17 +671,53 @@ export default function EmailsPage() {
                       </span>
                     )}
 
+                    {!isScanned && (
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono-family)",
+                          fontSize: "0.58rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          padding: "3px 8px",
+                          borderRadius: 6,
+                          background: "rgba(255,255,255,0.05)",
+                          color: "#55556a",
+                        }}
+                      >
+                        Pending
+                      </span>
+                    )}
+
                     {/* Scan button */}
                     <button
                       onClick={(ev) => handleScan(ev, e)}
                       disabled={scanning === e.id}
                       title="Escanear (1 crédito)"
-                      className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-[#00C2FF] disabled:opacity-40 transition-colors"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        background: "#0f0f16",
+                        color: scanning === e.id ? "#00e5bf" : "#9999ad",
+                        fontFamily: "var(--font-jakarta-family)",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        cursor: scanning === e.id ? "not-allowed" : "pointer",
+                        opacity: scanning === e.id ? 0.6 : 1,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={e2 => { if (scanning !== e.id) { e2.currentTarget.style.color = "#00e5bf"; e2.currentTarget.style.borderColor = "rgba(0,229,191,0.2)"; } }}
+                      onMouseLeave={e2 => { e2.currentTarget.style.color = "#9999ad"; e2.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
                     >
                       <svg
                         viewBox="0 0 16 16"
                         fill="none"
-                        className={`w-3.5 h-3.5 ${scanning === e.id ? "animate-spin" : ""}`}
+                        style={{ width: 12, height: 12 }}
+                        className={scanning === e.id ? "animate-spin" : ""}
                       >
                         <path
                           d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
@@ -412,9 +733,23 @@ export default function EmailsPage() {
                     {/* Delete button */}
                     <button
                       onClick={(ev) => { ev.stopPropagation(); handleRemove(e.id, e.email); }}
-                      className="text-slate-700 hover:text-[#FF4757] transition-colors"
+                      style={{
+                        padding: "6px 8px",
+                        borderRadius: 8,
+                        background: "rgba(255,77,106,0.08)",
+                        color: "#ff4d6a",
+                        border: "1px solid rgba(255,77,106,0.15)",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(255,77,106,0.15)"; }}
+                      onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(255,77,106,0.08)"; }}
                     >
-                      <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+                      <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14 }}>
                         <path
                           d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
                           stroke="currentColor"
