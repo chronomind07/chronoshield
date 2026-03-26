@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Shield as ShieldIcon } from "lucide-react";
 
 // ── Scroll reveal setup ───────────────────────────────────────────────────────
 function useScrollReveal() {
