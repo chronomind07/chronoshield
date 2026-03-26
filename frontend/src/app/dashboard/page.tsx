@@ -104,40 +104,37 @@ function ScoreRing({ score }: { score: number }) {
     <div style={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
       <svg width="110" height="110" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
         <defs>
-          <linearGradient id="scoreGradNew" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="scoreGradNew" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#00e5bf" />
-            <stop offset="100%" stopColor="#00ffd5" />
+            <stop offset="100%" stopColor="#22c55e" />
           </linearGradient>
         </defs>
-        <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+        {/* Track */}
+        <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="5" />
+        {/* Progress */}
         <circle
           cx="50" cy="50" r="45"
           fill="none"
           stroke="url(#scoreGradNew)"
-          strokeWidth="7"
+          strokeWidth="5"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           style={{
-            filter: "drop-shadow(0 0 8px rgba(0,229,191,0.5))",
+            filter: "drop-shadow(0 0 3px rgba(0,229,191,0.15))",
             transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)",
           }}
         />
       </svg>
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{
           fontFamily: "var(--font-serif-family)",
-          fontSize: "1.6rem",
+          fontSize: "1.65rem",
           fontWeight: 400,
           letterSpacing: "-0.02em",
-          background: "linear-gradient(135deg, #00e5bf, #00ffd5)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          color: "#00e5bf",
           lineHeight: 1,
         }}>{score}</span>
-        <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.58rem", color: "#55556a", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-          {scoreGrade(score)}
-        </span>
       </div>
     </div>
   );
