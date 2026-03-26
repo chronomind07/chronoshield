@@ -131,6 +131,7 @@ export default function ResetPasswordPage() {
     try {
       const { error: err } = await supabase.auth.updateUser({ password });
       if (err) throw err;
+      await supabase.auth.signOut();
       setDone(true);
       setTimeout(() => router.push("/login"), 3000);
     } catch (err: unknown) {
