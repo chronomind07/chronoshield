@@ -115,5 +115,15 @@ export const contactApi = {
     api.post("/contact", data),
 };
 
+// Mitigation AI assistant endpoints
+export const mitigationApi = {
+  chat: (data: {
+    alert_id: string;
+    message: string;
+    conversation_history: { role: string; content: string }[];
+  }) => api.post("/mitigation/chat", data),
+  usage: () => api.get("/mitigation/usage"),
+};
+
 export { supabase };
 export default api;

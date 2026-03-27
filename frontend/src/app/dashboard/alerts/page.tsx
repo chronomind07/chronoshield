@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { alertsApi } from "@/lib/api";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { alertsApi, mitigationApi } from "@/lib/api";
 import toast from "react-hot-toast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -24,6 +24,11 @@ interface AlertsData {
   total: number;
   unread_count: number;
   alerts: Alert[];
+}
+
+interface ChatMsg {
+  role: "user" | "assistant";
+  content: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -49,40 +54,285 @@ function relTime(iso: string) {
 
 // ── Severity config ────────────────────────────────────────────────────────────
 const SEV_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string; glow: string }> = {
-  critical: {
-    color: "#ff4d6a",
-    bg: "rgba(255,77,106,0.05)",
-    border: "rgba(255,77,106,0.14)",
-    dot: "#ff4d6a",
-    glow: "rgba(255,77,106,0.3)",
-  },
-  high: {
-    color: "#ff4d6a",
-    bg: "rgba(255,77,106,0.05)",
-    border: "rgba(255,77,106,0.14)",
-    dot: "#ff4d6a",
-    glow: "rgba(255,77,106,0.3)",
-  },
-  medium: {
-    color: "#ffb020",
-    bg: "rgba(255,176,32,0.05)",
-    border: "rgba(255,176,32,0.14)",
-    dot: "#ffb020",
-    glow: "rgba(255,176,32,0.3)",
-  },
-  low: {
-    color: "#22d3ee",
-    bg: "rgba(34,211,238,0.04)",
-    border: "rgba(34,211,238,0.12)",
-    dot: "#22d3ee",
-    glow: "rgba(34,211,238,0.3)",
-  },
+  critical: { color: "#ff4d6a", bg: "rgba(255,77,106,0.05)", border: "rgba(255,77,106,0.14)", dot: "#ff4d6a", glow: "rgba(255,77,106,0.3)" },
+  high:     { color: "#ff4d6a", bg: "rgba(255,77,106,0.05)", border: "rgba(255,77,106,0.14)", dot: "#ff4d6a", glow: "rgba(255,77,106,0.3)" },
+  medium:   { color: "#ffb020", bg: "rgba(255,176,32,0.05)",  border: "rgba(255,176,32,0.14)",  dot: "#ffb020", glow: "rgba(255,176,32,0.3)" },
+  low:      { color: "#22d3ee", bg: "rgba(34,211,238,0.04)", border: "rgba(34,211,238,0.12)", dot: "#22d3ee", glow: "rgba(34,211,238,0.3)" },
 };
+
+// ── Mitigation chat ────────────────────────────────────────────────────────────
+function MitigationChat({ alertId }: { alertId: string }) {
+  const [messages, setMessages]       = useState<ChatMsg[]>([]);
+  const [input, setInput]             = useState("");
+  const [sending, setSending]         = useState(false);
+  const [usageCount, setUsageCount]   = useState(0);
+  const [usageLimit, setUsageLimit]   = useState(3);
+  const [initialized, setInitialized] = useState(false);
+  const bottomRef                     = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom whenever messages change
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, sending]);
+
+  // Fire initial message automatically
+  useEffect(() => {
+    if (initialized) return;
+    setInitialized(true);
+    doSend("Analiza esta alerta y dime cómo puedo solucionarlo", []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function doSend(text: string, history: ChatMsg[]) {
+    const userMsg: ChatMsg = { role: "user", content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    setSending(true);
+    try {
+      const res = await mitigationApi.chat({
+        alert_id: alertId,
+        message: text,
+        conversation_history: history,
+      });
+      const assistantMsg: ChatMsg = { role: "assistant", content: res.data.response };
+      setMessages((prev) => [...prev, assistantMsg]);
+      setUsageCount(res.data.usage_count);
+      setUsageLimit(res.data.usage_limit);
+    } catch (err: unknown) {
+      const detail =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "Error al contactar el asistente";
+      setMessages((prev) => [...prev, { role: "assistant", content: `⚠️ ${detail}` }]);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || sending) return;
+    setInput("");
+    // Pass current messages (without the new user msg) as history
+    doSend(text, messages);
+  };
+
+  const limitReached = usageCount >= usageLimit && usageLimit > 0;
+
+  return (
+    <div
+      style={{
+        marginTop: 12,
+        borderRadius: 10,
+        background: "#0c0c14",
+        border: "1px solid rgba(0,229,191,0.14)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 16px",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          background: "rgba(0,229,191,0.04)",
+        }}
+      >
+        <span style={{ fontSize: "0.85rem" }}>🤖</span>
+        <span
+          style={{
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.6rem",
+            textTransform: "uppercase",
+            letterSpacing: "1.5px",
+            fontWeight: 700,
+            color: "#00e5bf",
+          }}
+        >
+          Asistente de mitigación
+        </span>
+        <span
+          style={{
+            padding: "1px 6px",
+            borderRadius: 4,
+            background: "rgba(0,229,191,0.15)",
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.52rem",
+            fontWeight: 700,
+            letterSpacing: "1px",
+            color: "#00e5bf",
+          }}
+        >
+          IA
+        </span>
+        <span
+          style={{
+            marginLeft: "auto",
+            fontFamily: "var(--font-mono-family)",
+            fontSize: "0.6rem",
+            color: limitReached ? "#ff4d6a" : "#55556a",
+          }}
+        >
+          {usageCount}/{usageLimit} consultas este mes
+        </span>
+      </div>
+
+      {/* Messages */}
+      <div
+        style={{
+          maxHeight: 320,
+          overflowY: "auto",
+          padding: "14px 16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+            }}
+          >
+            <div
+              style={{
+                maxWidth: "84%",
+                padding: "9px 14px",
+                borderRadius:
+                  msg.role === "user"
+                    ? "12px 12px 4px 12px"
+                    : "12px 12px 12px 4px",
+                fontSize: "0.78rem",
+                lineHeight: 1.65,
+                whiteSpace: "pre-wrap",
+                color: "#f0f0f5",
+                background:
+                  msg.role === "user"
+                    ? "rgba(255,255,255,0.06)"
+                    : "rgba(0,229,191,0.06)",
+                border:
+                  msg.role === "user"
+                    ? "1px solid rgba(255,255,255,0.08)"
+                    : "1px solid rgba(0,229,191,0.15)",
+                fontFamily: "var(--font-jakarta-family)",
+              }}
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {/* Typing indicator */}
+        {sending && (
+          <div style={{ display: "flex", justifyContent: "flex-start" }}>
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "12px 12px 12px 4px",
+                background: "rgba(0,229,191,0.06)",
+                border: "1px solid rgba(0,229,191,0.15)",
+                display: "flex",
+                gap: 5,
+                alignItems: "center",
+              }}
+            >
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: "#00e5bf",
+                    animation: `dotPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input or limit message */}
+      {limitReached ? (
+        <div
+          style={{
+            padding: "12px 16px",
+            borderTop: "1px solid rgba(255,255,255,0.04)",
+            fontSize: "0.75rem",
+            color: "#ff4d6a",
+            textAlign: "center",
+            fontFamily: "var(--font-jakarta-family)",
+          }}
+        >
+          {usageLimit <= 3
+            ? "Has alcanzado el límite mensual. Actualiza a Business para más consultas."
+            : "Has alcanzado el límite mensual."}
+        </div>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            gap: 8,
+            padding: "10px 12px",
+            borderTop: "1px solid rgba(255,255,255,0.04)",
+          }}
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Escribe tu respuesta o pregunta…"
+            disabled={sending}
+            style={{
+              flex: 1,
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 8,
+              padding: "7px 12px",
+              fontSize: "0.78rem",
+              color: "#f0f0f5",
+              outline: "none",
+              fontFamily: "var(--font-jakarta-family)",
+              transition: "border-color 0.2s",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,191,0.35)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+          />
+          <button
+            type="submit"
+            disabled={sending || !input.trim()}
+            style={{
+              padding: "7px 16px",
+              borderRadius: 8,
+              background: "rgba(0,229,191,0.12)",
+              border: "1px solid rgba(0,229,191,0.3)",
+              color: "#00e5bf",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              cursor: sending || !input.trim() ? "not-allowed" : "pointer",
+              opacity: sending || !input.trim() ? 0.45 : 1,
+              fontFamily: "var(--font-jakarta-family)",
+              transition: "opacity 0.2s",
+            }}
+          >
+            Enviar
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
 
 // ── Alert card ─────────────────────────────────────────────────────────────────
 function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
-  const [marking, setMarking] = useState(false);
+  const [marking, setMarking]   = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const sev = SEV_CONFIG[alert.severity] ?? SEV_CONFIG.low;
 
   const handleMarkRead = async (e: React.MouseEvent) => {
@@ -174,14 +424,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-mono-family)",
-                  fontSize: "0.65rem",
-                  color: "#33334a",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", color: "#33334a", whiteSpace: "nowrap" }}>
                 {relTime(alert.sent_at)}
               </span>
               <span style={{ color: "#33334a", fontSize: "0.7rem" }}>{expanded ? "▲" : "▼"}</span>
@@ -288,6 +531,47 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               ))}
             </ol>
           </div>
+
+          {/* AI Mitigation button */}
+          <div style={{ marginTop: 10 }}>
+            <button
+              onClick={() => setShowChat(!showChat)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                borderRadius: 9,
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                background: showChat ? "rgba(0,229,191,0.12)" : "rgba(0,229,191,0.06)",
+                border: `1px solid rgba(0,229,191,${showChat ? "0.28" : "0.15"})`,
+                color: "#00e5bf",
+                cursor: "pointer",
+                fontFamily: "var(--font-jakarta-family)",
+                transition: "all 0.2s",
+              }}
+            >
+              🤖 Asistente de mitigación
+              <span
+                style={{
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                  background: "rgba(0,229,191,0.15)",
+                  fontFamily: "var(--font-mono-family)",
+                  fontSize: "0.52rem",
+                  fontWeight: 700,
+                  letterSpacing: "1px",
+                  color: "#00e5bf",
+                }}
+              >
+                IA
+              </span>
+            </button>
+          </div>
+
+          {/* Inline chat panel */}
+          {showChat && <MitigationChat alertId={alert.id} />}
 
           {/* Footer */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
@@ -591,13 +875,12 @@ export default function AlertsPage() {
 
   if (!data) return null;
 
-  // Filter alerts
   const filteredAlerts = data.alerts.filter((a) => {
-    if (filter === "unread") return a.is_unread;
+    if (filter === "unread")   return a.is_unread;
     if (filter === "critical") return a.severity === "critical" || a.severity === "high";
-    if (filter === "medium") return a.severity === "medium";
-    if (filter === "low") return a.severity === "low";
-    return true; // all
+    if (filter === "medium")   return a.severity === "medium";
+    if (filter === "low")      return a.severity === "low";
+    return true;
   });
 
   const criticals = filteredAlerts.filter((a) => a.severity === "critical" || a.severity === "high");
@@ -680,24 +963,9 @@ export default function AlertsPage() {
         <EmptyState />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          <AlertGroup
-            label="Críticas"
-            color="#ff4d6a"
-            alerts={criticals}
-            onMarkRead={handleMarkRead}
-          />
-          <AlertGroup
-            label="Medias"
-            color="#ffb020"
-            alerts={mediums}
-            onMarkRead={handleMarkRead}
-          />
-          <AlertGroup
-            label="Bajas"
-            color="#22d3ee"
-            alerts={lows}
-            onMarkRead={handleMarkRead}
-          />
+          <AlertGroup label="Críticas" color="#ff4d6a" alerts={criticals} onMarkRead={handleMarkRead} />
+          <AlertGroup label="Medias"   color="#ffb020" alerts={mediums}   onMarkRead={handleMarkRead} />
+          <AlertGroup label="Bajas"    color="#22d3ee" alerts={lows}      onMarkRead={handleMarkRead} />
         </div>
       )}
     </div>
