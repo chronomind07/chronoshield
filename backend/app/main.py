@@ -28,7 +28,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_origin_regex=r"chrome-extension://.*",  # Allow Chrome extension
+    # Hardcoded regex covers Chrome extensions + chronoshield.eu (www and apex).
+    # This ensures CORS works even if Railway has a stale CORS_ORIGINS env var.
+    allow_origin_regex=r"(chrome-extension://.*|https://(www\.)?chronoshield\.eu)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
