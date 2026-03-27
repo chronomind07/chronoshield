@@ -105,10 +105,26 @@ const UPTIME_LABELS: Record<string, StatusDef> = {
 };
 
 const STATUS_LABELS: Record<string, StatusDef> = {
-  pass: { label: "Pass", color: "#22c55e", bg: "rgba(34,197,94,0.10)"   },
-  fail: { label: "Fail", color: "#ff4d6a", bg: "rgba(255,77,106,0.10)"  },
-  none: { label: "N/A",  color: "#55556a", bg: "rgba(255,255,255,0.05)" },
+  // Backend scanner values
+  valid:   { label: "OK",      color: "#22c55e", bg: "rgba(34,197,94,0.10)"   },
+  invalid: { label: "Inválido",color: "#ff4d6a", bg: "rgba(255,77,106,0.10)"  },
+  missing: { label: "Falta",   color: "#ffb020", bg: "rgba(255,176,32,0.10)"  },
+  error:   { label: "Error",   color: "#ffb020", bg: "rgba(255,176,32,0.10)"  },
+  // Legacy / compatibility values
+  pass:    { label: "Pass",    color: "#22c55e", bg: "rgba(34,197,94,0.10)"   },
+  fail:    { label: "Fail",    color: "#ff4d6a", bg: "rgba(255,77,106,0.10)"  },
+  none:    { label: "N/A",     color: "#55556a", bg: "rgba(255,255,255,0.05)" },
 };
+
+function relTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "ahora mismo";
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `hace ${h}h`;
+  return new Date(iso).toLocaleDateString("es-ES");
+}
 
 /** Derive actionable recommendations from scan data */
 function getRecommendations(d: Domain): { icon: string; text: string }[] {
@@ -523,15 +539,58 @@ export default function DomainsPage() {
   };
 
   const handleScan = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Don't open detail panel
+    e.stopPropagation();
     setScanning(id);
     try {
       const res = await domainsApi.scan(id);
       const remaining = res.data?.credits_remaining;
-      toast.success(
-        `Escaneo iniciado${remaining !== undefined ? ` · ${remaining} crédito${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}` : ""}`
-      );
-      setTimeout(load, 6000);
+
+      toast("Escaneando dominio...", { icon: "🔍", duration: 13000 });
+
+      // Wait for the background scan to complete (~12 s)
+      await new Promise((resolve) => setTimeout(resolve, 12000));
+
+      // Reload the full domain list
+      const freshRes = await domainsApi.list();
+      const freshDomains: Domain[] = freshRes.data ?? [];
+      setDomains(freshDomains);
+
+      // If the detail panel is open for this domain, update it with fresh data
+      if (selected?.id === id) {
+        const updated = freshDomains.find((d) => d.id === id);
+        if (updated) setSelected(updated);
+      }
+
+      // Result toast
+      const d = freshDomains.find((d) => d.id === id);
+      if (d) {
+        const allOk =
+          d.ssl_status === "valid" &&
+          d.uptime_status === "up" &&
+          d.spf_status === "valid" &&
+          d.dkim_status === "valid" &&
+          d.dmarc_status === "valid";
+
+        if (allOk) {
+          toast.success(`✅ ${d.domain} está correctamente configurado y protegido`);
+        } else {
+          const issues: string[] = [];
+          if (d.ssl_status && d.ssl_status !== "valid") issues.push("SSL");
+          if (d.uptime_status && d.uptime_status !== "up") issues.push("Uptime");
+          if (d.spf_status   && d.spf_status   !== "valid") issues.push("SPF");
+          if (d.dkim_status  && d.dkim_status  !== "valid") issues.push("DKIM");
+          if (d.dmarc_status && d.dmarc_status !== "valid") issues.push("DMARC");
+          if (issues.length > 0) {
+            toast(`⚠️ Revisar: ${issues.join(", ")}`, { duration: 6000 });
+          } else {
+            toast.success("Scan completado");
+          }
+        }
+      }
+
+      if (remaining !== undefined) {
+        toast(`${remaining} crédito${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}`, { duration: 3000 });
+      }
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 402 || detail?.code === "NO_CREDITS") {
@@ -793,7 +852,7 @@ export default function DomainsPage() {
                     </p>
                     <p style={{ fontSize: "0.72rem", color: "#33334a", marginTop: 2 }}>
                       {d.last_scanned_at
-                        ? `${techMode ? "Last scan" : "Revisado"}: ${new Date(d.last_scanned_at).toLocaleString("es-ES")}`
+                        ? `${techMode ? "Last scan" : "Último scan"}: ${relTime(d.last_scanned_at)}`
                         : (techMode ? "Never scanned" : "Sin revisar aún")}
                     </p>
                   </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { dashboardApi, emailsApi } from "@/lib/api";
+import { dashboardApi, emailsApi, domainsApi } from "@/lib/api";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -174,6 +174,50 @@ export default function DashboardPage() {
         } : prev
       );
     } catch { /* silent */ }
+  };
+
+  const [scanning, setScanning] = useState(false);
+
+  const handleScanAll = async () => {
+    if (scanning) return;
+    setScanning(true);
+    try {
+      const domsRes = await domainsApi.list();
+      const doms: { id: string }[] = domsRes.data ?? [];
+      if (doms.length === 0) {
+        toast("Sin dominios que escanear");
+        setScanning(false);
+        return;
+      }
+      // Fire all domain scans (ignore individual 402 errors)
+      await Promise.allSettled(doms.map((d) => domainsApi.scan(d.id)));
+      // Wait for background scans to complete (~12 s)
+      await new Promise((resolve) => setTimeout(resolve, 12000));
+      // Reload fresh data
+      const [sumRes, emlRes] = await Promise.all([
+        dashboardApi.summary(),
+        emailsApi.list(),
+      ]);
+      const fresh: DashboardSummary = sumRes.data;
+      setSummary(fresh);
+      setEmails(emlRes.data ?? []);
+      // Toast based on results
+      const score = Math.round(fresh?.average_score ?? 0);
+      const issues = fresh?.active_alerts ?? 0;
+      if (score >= 90 && issues === 0) {
+        toast.success("✅ Tu dominio está correctamente configurado y protegido");
+      } else if (score >= 70) {
+        toast.success(
+          `Scan completado · Score: ${score}${issues > 0 ? ` · ${issues} alerta${issues !== 1 ? "s" : ""} activa${issues !== 1 ? "s" : ""}` : ""}`,
+        );
+      } else {
+        toast.error(`Score: ${score} · Revisa las alertas activas`);
+      }
+    } catch {
+      toast.error("Error al escanear");
+    } finally {
+      setScanning(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -380,7 +424,8 @@ export default function DashboardPage() {
           <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4, margin: "4px 0 0" }}>Panel de monitorización de seguridad</p>
         </div>
         <button
-          onClick={load}
+          onClick={handleScanAll}
+          disabled={scanning}
           style={{
             display: "flex",
             alignItems: "center",
@@ -392,16 +437,22 @@ export default function DashboardPage() {
             padding: "9px 18px",
             borderRadius: 10,
             border: "none",
-            cursor: "pointer",
+            cursor: scanning ? "not-allowed" : "pointer",
             background: "linear-gradient(135deg, #00e5bf, #00d4b0)",
             boxShadow: "0 0 20px rgba(0,229,191,0.25)",
             letterSpacing: "0.01em",
+            opacity: scanning ? 0.7 : 1,
+            transition: "opacity 0.2s",
           }}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="13" height="13" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ animation: scanning ? "spin 0.8s linear infinite" : "none" }}
+          >
             <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.84" />
           </svg>
-          Escanear
+          {scanning ? "Escaneando..." : "Escanear"}
         </button>
       </div>
 
