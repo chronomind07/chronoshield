@@ -2,12 +2,15 @@ from datetime import date
 from typing import List
 
 import anthropic
+import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.security import get_current_user_id
 from app.db.supabase import get_db
+
+logger = structlog.get_logger()
 
 router = APIRouter(prefix="/mitigation", tags=["mitigation"])
 
@@ -123,59 +126,71 @@ async def mitigation_chat(
         raise HTTPException(status_code=404, detail="Alerta no encontrada")
 
     alert = alert_res.data
+    logger.info("mitigation_chat: alert fetched", alert_id=req.alert_id, alert_data=alert)
 
-    # Resolve domain name via separate query if domain_id present
-    domain_name: str | None = None
-    if alert.get("domain_id"):
-        dom_res = (
-            db.table("domains")
-            .select("domain")
-            .eq("id", alert["domain_id"])
-            .single()
-            .execute()
+    try:
+        # Resolve domain name via separate query if domain_id present
+        domain_name: str | None = None
+        if alert.get("domain_id"):
+            dom_res = (
+                db.table("domains")
+                .select("domain")
+                .eq("id", alert["domain_id"])
+                .single()
+                .execute()
+            )
+            if dom_res.data:
+                domain_name = dom_res.data.get("domain")
+
+        alert_context = (
+            f"ALERTA ACTIVA:\n"
+            f"- Tipo: {alert.get('alert_type', 'desconocido')}\n"
+            f"- Severidad: {alert.get('severity', 'media')}\n"
+            f"- Título: {alert.get('title', '')}\n"
+            f"- Descripción: {alert.get('message', '')}"
+            + (f"\n- Dominio afectado: {domain_name}" if domain_name else "")
         )
-        if dom_res.data:
-            domain_name = dom_res.data.get("domain")
 
-    alert_context = (
-        f"ALERTA ACTIVA:\n"
-        f"- Tipo: {alert.get('alert_type', 'desconocido')}\n"
-        f"- Severidad: {alert.get('severity', 'media')}\n"
-        f"- Título: {alert.get('title', '')}\n"
-        f"- Descripción: {alert.get('message', '')}"
-        + (f"\n- Dominio afectado: {domain_name}" if domain_name else "")
-    )
+        # 5. Build messages — keep only last 6 history messages to minimise tokens
+        history = req.conversation_history[-6:]
+        messages: list[dict] = []
 
-    # 5. Build messages — keep only last 6 history messages to minimise tokens
-    history = req.conversation_history[-6:]
-    messages: list[dict] = []
+        if not history:
+            # First turn: inject alert context together with user message
+            messages.append({
+                "role": "user",
+                "content": f"{alert_context}\n\nPregunta: {req.message}",
+            })
+        else:
+            for msg in history:
+                messages.append({"role": msg.role, "content": msg.content})
+            messages.append({"role": "user", "content": req.message})
 
-    if not history:
-        # First turn: inject alert context together with user message
-        messages.append({
-            "role": "user",
-            "content": f"{alert_context}\n\nPregunta: {req.message}",
-        })
-    else:
-        for msg in history:
-            messages.append({"role": msg.role, "content": msg.content})
-        messages.append({"role": "user", "content": req.message})
+        logger.info("mitigation_chat: calling Claude Haiku", messages_count=len(messages))
 
-    # 6. Call Claude Haiku
-    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-    ai_response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=300,
-        temperature=0,
-        system=SYSTEM_PROMPT,
-        messages=messages,
-    )
+        # 6. Call Claude Haiku
+        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+        ai_response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            temperature=0,
+            system=SYSTEM_PROMPT,
+            messages=messages,
+        )
 
-    return MitigationChatResponse(
-        response=ai_response.content[0].text,
-        usage_count=current_count + 1,
-        usage_limit=limit,
-    )
+        logger.info("mitigation_chat: Claude response OK", usage=str(ai_response.usage))
+
+        return MitigationChatResponse(
+            response=ai_response.content[0].text,
+            usage_count=current_count + 1,
+            usage_limit=limit,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Mitigation error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error en el asistente: {str(e)}")
 
 
 @router.get("/usage")
