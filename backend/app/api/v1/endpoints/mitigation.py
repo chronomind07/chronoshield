@@ -58,9 +58,9 @@ class MitigationChatResponse(BaseModel):
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def _get_plan_limit(db, user_id: str) -> tuple[str, int]:
-    """Return (plan_name, monthly_limit) for the user."""
-    sub = db.table("subscriptions").select("plan").eq("user_id", user_id).single().execute()
-    plan = (sub.data or {}).get("plan", "free")
+    """Return (plan_name, monthly_limit) for the user. Never uses .single()."""
+    sub = db.table("subscriptions").select("plan").eq("user_id", user_id).execute()
+    plan = (sub.data[0] if sub.data else {}).get("plan", "free")
     return plan, MITIGATION_LIMITS.get(plan, 0)
 
 
@@ -114,18 +114,18 @@ async def mitigation_chat(
     _get_and_increment_usage(db, user_id, current_count, month_start)
 
     # 4. Fetch alert context — real columns: alert_type, severity, title, message, domain_id
+    #    Never use .single() — use .execute() + check data to avoid ValidationError
     alert_res = (
         db.table("alerts")
         .select("alert_type, severity, title, message, domain_id")
         .eq("id", req.alert_id)
         .eq("user_id", user_id)
-        .single()
         .execute()
     )
     if not alert_res.data:
         raise HTTPException(status_code=404, detail="Alerta no encontrada")
 
-    alert = alert_res.data
+    alert = alert_res.data[0]
     logger.info("mitigation_chat: alert fetched", alert_id=req.alert_id, alert_data=alert)
 
     try:
@@ -136,11 +136,10 @@ async def mitigation_chat(
                 db.table("domains")
                 .select("domain")
                 .eq("id", alert["domain_id"])
-                .single()
                 .execute()
             )
             if dom_res.data:
-                domain_name = dom_res.data.get("domain")
+                domain_name = dom_res.data[0].get("domain")
 
         alert_context = (
             f"ALERTA ACTIVA:\n"
