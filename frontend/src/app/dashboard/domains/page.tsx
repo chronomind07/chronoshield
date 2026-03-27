@@ -27,9 +27,9 @@ interface Domain {
 type BarColor = "green" | "yellow" | "red" | "neutral";
 
 const BAR_COLORS: Record<BarColor, string> = {
-  green:   "#00e5bf",
-  yellow:  "#ffb020",
-  red:     "#ff4d6a",
+  green:   "#3ecf8e",
+  yellow:  "#f59e0b",
+  red:     "#ef4444",
   neutral: "rgba(255,255,255,0.08)",
 };
 
@@ -41,9 +41,9 @@ function domainBarColor(d: Domain): BarColor {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return "#22c55e";
-  if (score >= 60) return "#ffb020";
-  return "#ff4d6a";
+  if (score >= 80) return "#3ecf8e";
+  if (score >= 60) return "#f59e0b";
+  return "#ef4444";
 }
 
 function ScorePill({ score }: { score: number }) {
@@ -51,13 +51,14 @@ function ScorePill({ score }: { score: number }) {
   return (
     <span
       style={{
-        fontFamily: "var(--font-mono-family)",
+        fontFamily: "var(--font-dm-mono, monospace)",
         fontSize: "0.78rem",
         fontWeight: 700,
         padding: "3px 10px",
         borderRadius: 6,
         color,
         background: `${color}18`,
+        letterSpacing: "0.01em",
       }}
     >
       {score}
@@ -72,12 +73,12 @@ function StatusChip({ status, labelMap }: {
   labelMap: Record<string, StatusDef>;
 }) {
   if (!status) return null;
-  const s: StatusDef = labelMap[status] ?? { label: status, color: "#55556a", bg: "rgba(255,255,255,0.05)" };
+  const s: StatusDef = labelMap[status] ?? { label: status, color: "#52525b", bg: "rgba(255,255,255,0.05)" };
   return (
     <span
       style={{
-        fontFamily: "var(--font-mono-family)",
-        fontSize: "0.58rem",
+        fontFamily: "var(--font-dm-mono, monospace)",
+        fontSize: "0.62rem",
         fontWeight: 600,
         textTransform: "uppercase",
         letterSpacing: "0.06em",
@@ -93,27 +94,27 @@ function StatusChip({ status, labelMap }: {
 }
 
 const SSL_LABELS: Record<string, StatusDef> = {
-  valid:   { label: "SSL OK",    color: "#22c55e", bg: "rgba(34,197,94,0.10)"   },
-  expired: { label: "SSL Venc.", color: "#ffb020", bg: "rgba(255,176,32,0.10)"  },
-  error:   { label: "SSL Error", color: "#ff4d6a", bg: "rgba(255,77,106,0.10)"  },
+  valid:   { label: "SSL OK",    color: "#3ecf8e", bg: "rgba(62,207,142,0.10)"  },
+  expired: { label: "SSL Venc.", color: "#f59e0b", bg: "rgba(245,158,11,0.10)"  },
+  error:   { label: "SSL Error", color: "#ef4444", bg: "rgba(239,68,68,0.10)"   },
 };
 
 const UPTIME_LABELS: Record<string, StatusDef> = {
-  up:    { label: "Online", color: "#22c55e", bg: "rgba(34,197,94,0.10)"  },
-  down:  { label: "Caída",  color: "#ff4d6a", bg: "rgba(255,77,106,0.10)" },
-  error: { label: "Error",  color: "#ffb020", bg: "rgba(255,176,32,0.10)" },
+  up:    { label: "Online", color: "#3ecf8e", bg: "rgba(62,207,142,0.10)"  },
+  down:  { label: "Caída",  color: "#ef4444", bg: "rgba(239,68,68,0.10)"   },
+  error: { label: "Error",  color: "#f59e0b", bg: "rgba(245,158,11,0.10)"  },
 };
 
 const STATUS_LABELS: Record<string, StatusDef> = {
   // Backend scanner values
-  valid:   { label: "OK",      color: "#22c55e", bg: "rgba(34,197,94,0.10)"   },
-  invalid: { label: "Inválido",color: "#ff4d6a", bg: "rgba(255,77,106,0.10)"  },
-  missing: { label: "Falta",   color: "#ffb020", bg: "rgba(255,176,32,0.10)"  },
-  error:   { label: "Error",   color: "#ffb020", bg: "rgba(255,176,32,0.10)"  },
+  valid:   { label: "OK",       color: "#3ecf8e", bg: "rgba(62,207,142,0.10)"  },
+  invalid: { label: "Inválido", color: "#ef4444", bg: "rgba(239,68,68,0.10)"   },
+  missing: { label: "Falta",    color: "#f59e0b", bg: "rgba(245,158,11,0.10)"  },
+  error:   { label: "Error",    color: "#f59e0b", bg: "rgba(245,158,11,0.10)"  },
   // Legacy / compatibility values
-  pass:    { label: "Pass",    color: "#22c55e", bg: "rgba(34,197,94,0.10)"   },
-  fail:    { label: "Fail",    color: "#ff4d6a", bg: "rgba(255,77,106,0.10)"  },
-  none:    { label: "N/A",     color: "#55556a", bg: "rgba(255,255,255,0.05)" },
+  pass:    { label: "Pass",     color: "#3ecf8e", bg: "rgba(62,207,142,0.10)"  },
+  fail:    { label: "Fail",     color: "#ef4444", bg: "rgba(239,68,68,0.10)"   },
+  none:    { label: "N/A",      color: "#52525b", bg: "rgba(255,255,255,0.05)" },
 };
 
 function relTime(iso: string): string {
@@ -131,27 +132,27 @@ function getRecommendations(d: Domain): { icon: string; text: string }[] {
   const recs: { icon: string; text: string }[] = [];
 
   if (d.ssl_status === "expired") {
-    recs.push({ icon: "🔴", text: "Tu certificado SSL ha caducado. Renuévalo urgentemente para evitar alertas de seguridad en los navegadores." });
+    recs.push({ icon: "red", text: "Tu certificado SSL ha caducado. Renuévalo urgentemente para evitar alertas de seguridad en los navegadores." });
   } else if (d.ssl_status === "error") {
-    recs.push({ icon: "🟠", text: "Hay un problema con tu certificado SSL. Verifica la configuración de tu servidor." });
+    recs.push({ icon: "warn", text: "Hay un problema con tu certificado SSL. Verifica la configuración de tu servidor." });
   } else if (d.ssl_days_remaining !== null && d.ssl_days_remaining < 30) {
-    recs.push({ icon: "⚠️", text: `Tu certificado SSL caduca en ${d.ssl_days_remaining} días. Renuévalo pronto para evitar interrupciones.` });
+    recs.push({ icon: "warn", text: `Tu certificado SSL caduca en ${d.ssl_days_remaining} días. Renuévalo pronto para evitar interrupciones.` });
   }
 
   if (d.uptime_status === "down") {
-    recs.push({ icon: "🔴", text: "Tu servidor está caído. Contacta con tu proveedor de hosting o reinicia el servidor." });
+    recs.push({ icon: "red", text: "Tu servidor está caído. Contacta con tu proveedor de hosting o reinicia el servidor." });
   } else if (d.uptime_status === "error") {
-    recs.push({ icon: "🟠", text: "No se puede acceder a tu servidor. Revisa el firewall o la configuración DNS." });
+    recs.push({ icon: "warn", text: "No se puede acceder a tu servidor. Revisa el firewall o la configuración DNS." });
   }
 
-  if (d.spf_status && d.spf_status !== "pass") {
-    recs.push({ icon: "⚡", text: "Configura un registro SPF en tu DNS para evitar que otros envíen correos suplantando tu dominio." });
+  if (d.spf_status && d.spf_status !== "pass" && d.spf_status !== "valid") {
+    recs.push({ icon: "info", text: "Configura un registro SPF en tu DNS para evitar que otros envíen correos suplantando tu dominio." });
   }
-  if (d.dkim_status && d.dkim_status !== "pass") {
-    recs.push({ icon: "⚡", text: "Activa DKIM para firmar criptográficamente los correos salientes y mejorar la entregabilidad." });
+  if (d.dkim_status && d.dkim_status !== "pass" && d.dkim_status !== "valid") {
+    recs.push({ icon: "info", text: "Activa DKIM para firmar criptográficamente los correos salientes y mejorar la entregabilidad." });
   }
-  if (d.dmarc_status && d.dmarc_status !== "pass") {
-    recs.push({ icon: "⚡", text: "Añade un registro DMARC para definir qué hacer con correos que no pasen SPF/DKIM." });
+  if (d.dmarc_status && d.dmarc_status !== "pass" && d.dmarc_status !== "valid") {
+    recs.push({ icon: "info", text: "Añade un registro DMARC para definir qué hacer con correos que no pasen SPF/DKIM." });
   }
 
   return recs;
@@ -169,15 +170,23 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "10px 0",
-          borderBottom: "1px solid rgba(255,255,255,0.03)",
+          padding: "9px 0",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
         }}
       >
-        <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.75rem", color: "#55556a" }}>{label}</span>
         <span
           style={{
-            fontFamily: "var(--font-mono-family)",
-            fontSize: "0.58rem",
+            fontFamily: "var(--font-dm-mono, monospace)",
+            fontSize: "0.75rem",
+            color: "#52525b",
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-dm-mono, monospace)",
+            fontSize: "0.62rem",
             fontWeight: 600,
             textTransform: "uppercase",
             letterSpacing: "0.06em",
@@ -198,25 +207,25 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(5,5,7,0.85)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(0,0,0,0.7)",
+        backdropFilter: "blur(6px)",
         zIndex: 50,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
+        fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{
-          background: "#0a0a0f",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 20,
-          padding: 28,
+          background: "#161616",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 14,
           width: "100%",
           maxWidth: 480,
-          boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
           overflow: "hidden",
         }}
       >
@@ -226,20 +235,19 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: 20,
-            paddingBottom: 18,
+            padding: "18px 22px",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
           <div>
             <span
               style={{
-                fontFamily: "var(--font-mono-family)",
-                fontSize: "0.7rem",
+                fontFamily: "var(--font-dm-mono, monospace)",
+                fontSize: "0.62rem",
                 textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                color: "#00e5bf",
-                fontWeight: 500,
+                letterSpacing: "0.12em",
+                color: "#52525b",
+                fontWeight: 600,
                 display: "block",
                 marginBottom: 4,
               }}
@@ -248,11 +256,11 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             </span>
             <h2
               style={{
-                fontFamily: "var(--font-serif-family)",
-                fontSize: "1.3rem",
-                fontWeight: 400,
-                letterSpacing: "-0.02em",
-                color: "#f0f0f5",
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                letterSpacing: "-0.01em",
+                color: "#f0f0f0",
+                margin: 0,
               }}
             >
               {domain.domain}
@@ -263,8 +271,8 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    fontFamily: "var(--font-mono-family)",
-                    fontSize: "1.5rem",
+                    fontFamily: "var(--font-dm-mono, monospace)",
+                    fontSize: "1.6rem",
                     fontWeight: 700,
                     color: scoreColor(domain.security_score),
                     lineHeight: 1,
@@ -274,12 +282,12 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 </div>
                 <div
                   style={{
-                    fontFamily: "var(--font-mono-family)",
+                    fontFamily: "var(--font-dm-mono, monospace)",
                     fontSize: "0.6rem",
-                    color: "#55556a",
+                    color: "#52525b",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
-                    marginTop: 2,
+                    marginTop: 3,
                   }}
                 >
                   Score
@@ -292,48 +300,58 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#55556a",
-                padding: 4,
-                transition: "color 0.2s",
+                color: "#52525b",
+                padding: 6,
+                borderRadius: 6,
+                transition: "color 0.15s",
+                display: "flex",
+                alignItems: "center",
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#f0f0f5")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#55556a")}
+              onMouseEnter={e => (e.currentTarget.style.color = "#f0f0f0")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
             >
-              <svg viewBox="0 0 16 16" fill="none" style={{ width: 16, height: 16 }}>
+              <svg viewBox="0 0 16 16" fill="none" style={{ width: 15, height: 15 }}>
                 <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </button>
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "70vh", overflowY: "auto" }}>
+        <div style={{ padding: "18px 22px", display: "flex", flexDirection: "column", gap: 12, maxHeight: "70vh", overflowY: "auto" }}>
 
           {/* Last scan */}
           {domain.last_scanned_at && (
-            <p style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", color: "#55556a" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-mono, monospace)",
+                fontSize: "0.72rem",
+                color: "#52525b",
+                margin: 0,
+              }}
+            >
               Último escaneo: {new Date(domain.last_scanned_at).toLocaleString("es-ES")}
             </p>
           )}
 
-          {/* SSL */}
+          {/* SSL card */}
           <div
             style={{
-              borderRadius: 12,
-              padding: "16px",
-              background: "#0f0f16",
-              border: "1px solid rgba(255,255,255,0.03)",
+              borderRadius: 10,
+              padding: "14px 16px",
+              background: "#1c1c1c",
+              border: "1px solid rgba(255,255,255,0.06)",
             }}
           >
             <span
               style={{
-                fontFamily: "var(--font-mono-family)",
-                fontSize: "0.7rem",
+                fontFamily: "var(--font-dm-mono, monospace)",
+                fontSize: "0.62rem",
                 textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                color: "#00e5bf",
-                fontWeight: 500,
+                letterSpacing: "0.12em",
+                color: "#52525b",
+                fontWeight: 600,
                 display: "block",
-                marginBottom: 12,
+                marginBottom: 10,
               }}
             >
               Certificado SSL
@@ -341,9 +359,9 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span
                 style={{
-                  fontSize: "0.88rem",
-                  fontWeight: 500,
-                  color: domain.ssl_status === "valid" ? "#22c55e" : domain.ssl_status ? "#ff4d6a" : "#55556a",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: domain.ssl_status === "valid" ? "#3ecf8e" : domain.ssl_status ? "#ef4444" : "#52525b",
                 }}
               >
                 {domain.ssl_status === "valid" ? "Válido" :
@@ -351,32 +369,38 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                  domain.ssl_status === "error" ? "Error" : "Sin datos"}
               </span>
               {domain.ssl_days_remaining !== null && (
-                <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.75rem", color: "#55556a" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-mono, monospace)",
+                    fontSize: "0.75rem",
+                    color: "#52525b",
+                  }}
+                >
                   {domain.ssl_days_remaining} días restantes
                 </span>
               )}
             </div>
           </div>
 
-          {/* Uptime */}
+          {/* Uptime card */}
           <div
             style={{
-              borderRadius: 12,
-              padding: "16px",
-              background: "#0f0f16",
-              border: "1px solid rgba(255,255,255,0.03)",
+              borderRadius: 10,
+              padding: "14px 16px",
+              background: "#1c1c1c",
+              border: "1px solid rgba(255,255,255,0.06)",
             }}
           >
             <span
               style={{
-                fontFamily: "var(--font-mono-family)",
-                fontSize: "0.7rem",
+                fontFamily: "var(--font-dm-mono, monospace)",
+                fontSize: "0.62rem",
                 textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                color: "#00e5bf",
-                fontWeight: 500,
+                letterSpacing: "0.12em",
+                color: "#52525b",
+                fontWeight: 600,
                 display: "block",
-                marginBottom: 12,
+                marginBottom: 10,
               }}
             >
               Disponibilidad
@@ -384,9 +408,9 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span
                 style={{
-                  fontSize: "0.88rem",
-                  fontWeight: 500,
-                  color: domain.uptime_status === "up" ? "#22c55e" : domain.uptime_status ? "#ff4d6a" : "#55556a",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: domain.uptime_status === "up" ? "#3ecf8e" : domain.uptime_status ? "#ef4444" : "#52525b",
                 }}
               >
                 {domain.uptime_status === "up" ? "Online" :
@@ -394,32 +418,38 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                  domain.uptime_status === "error" ? "Error" : "Sin datos"}
               </span>
               {domain.last_response_ms !== null && (
-                <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.75rem", color: "#55556a" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-mono, monospace)",
+                    fontSize: "0.75rem",
+                    color: "#52525b",
+                  }}
+                >
                   {domain.last_response_ms} ms
                 </span>
               )}
             </div>
           </div>
 
-          {/* Email Security */}
+          {/* Email Security card */}
           <div
             style={{
-              borderRadius: 12,
-              padding: "16px",
-              background: "#0f0f16",
-              border: "1px solid rgba(255,255,255,0.03)",
+              borderRadius: 10,
+              padding: "14px 16px",
+              background: "#1c1c1c",
+              border: "1px solid rgba(255,255,255,0.06)",
             }}
           >
             <span
               style={{
-                fontFamily: "var(--font-mono-family)",
-                fontSize: "0.7rem",
+                fontFamily: "var(--font-dm-mono, monospace)",
+                fontSize: "0.62rem",
                 textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                color: "#00e5bf",
-                fontWeight: 500,
+                letterSpacing: "0.12em",
+                color: "#52525b",
+                fontWeight: 600,
                 display: "block",
-                marginBottom: 8,
+                marginBottom: 6,
               }}
             >
               Seguridad de Email
@@ -433,31 +463,60 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
           {recs.length > 0 ? (
             <div
               style={{
-                borderRadius: 12,
-                padding: "16px",
-                background: "#0f0f16",
-                border: "1px solid rgba(255,255,255,0.03)",
+                borderRadius: 10,
+                padding: "14px 16px",
+                background: "#1c1c1c",
+                border: "1px solid rgba(255,255,255,0.06)",
               }}
             >
               <span
                 style={{
-                  fontFamily: "var(--font-mono-family)",
-                  fontSize: "0.7rem",
+                  fontFamily: "var(--font-dm-mono, monospace)",
+                  fontSize: "0.62rem",
                   textTransform: "uppercase",
-                  letterSpacing: "0.18em",
-                  color: "#ffb020",
-                  fontWeight: 500,
+                  letterSpacing: "0.12em",
+                  color: "#f59e0b",
+                  fontWeight: 600,
                   display: "block",
-                  marginBottom: 12,
+                  marginBottom: 10,
                 }}
               >
                 Recomendaciones
               </span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {recs.map((r, i) => (
-                  <div key={i} style={{ display: "flex", gap: 10 }}>
-                    <span style={{ fontSize: "0.9rem", flexShrink: 0, marginTop: 1 }}>{r.icon}</span>
-                    <p style={{ fontSize: "0.78rem", color: "#9999ad", lineHeight: 1.6 }}>{r.text}</p>
+                  <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <div
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 4,
+                        flexShrink: 0,
+                        marginTop: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: r.icon === "red"
+                          ? "rgba(239,68,68,0.12)"
+                          : r.icon === "warn"
+                          ? "rgba(245,158,11,0.12)"
+                          : "rgba(62,207,142,0.12)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: r.icon === "red"
+                            ? "#ef4444"
+                            : r.icon === "warn"
+                            ? "#f59e0b"
+                            : "#3ecf8e",
+                        }}
+                      />
+                    </div>
+                    <p style={{ fontSize: "0.78rem", color: "#a1a1aa", lineHeight: 1.6, margin: 0 }}>{r.text}</p>
                   </div>
                 ))}
               </div>
@@ -468,14 +527,16 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                borderRadius: 12,
-                padding: "14px 16px",
-                background: "rgba(34,197,94,0.05)",
-                border: "1px solid rgba(34,197,94,0.12)",
+                borderRadius: 10,
+                padding: "12px 14px",
+                background: "rgba(62,207,142,0.05)",
+                border: "1px solid rgba(62,207,142,0.10)",
               }}
             >
-              <span style={{ fontSize: "1.1rem" }}>✅</span>
-              <p style={{ fontSize: "0.78rem", color: "#22c55e" }}>
+              <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}>
+                <path d="M3 8l3.5 3.5L13 4" stroke="#3ecf8e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <p style={{ fontSize: "0.78rem", color: "#3ecf8e", margin: 0 }}>
                 Sin recomendaciones críticas. Tu dominio está bien configurado.
               </p>
             </div>
@@ -490,12 +551,12 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function DomainsPage() {
   const { techMode } = useTechMode();
-  const [domains, setDomains]       = useState<Domain[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [adding, setAdding]         = useState(false);
-  const [newDomain, setNewDomain]   = useState("");
-  const [scanning, setScanning]     = useState<string | null>(null);
-  const [selected, setSelected]     = useState<Domain | null>(null);
+  const [domains, setDomains]         = useState<Domain[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [adding, setAdding]           = useState(false);
+  const [newDomain, setNewDomain]     = useState("");
+  const [scanning, setScanning]       = useState<string | null>(null);
+  const [selected, setSelected]       = useState<Domain | null>(null);
   const [showCredits, setShowCredits] = useState(false);
 
   const load = async () => {
@@ -572,7 +633,7 @@ export default function DomainsPage() {
           d.dmarc_status === "valid";
 
         if (allOk) {
-          toast.success(`✅ ${d.domain} está correctamente configurado y protegido`);
+          toast.success(`${d.domain} está correctamente configurado y protegido`);
         } else {
           const issues: string[] = [];
           if (d.ssl_status && d.ssl_status !== "valid") issues.push("SSL");
@@ -581,7 +642,7 @@ export default function DomainsPage() {
           if (d.dkim_status  && d.dkim_status  !== "valid") issues.push("DKIM");
           if (d.dmarc_status && d.dmarc_status !== "valid") issues.push("DMARC");
           if (issues.length > 0) {
-            toast(`⚠️ Revisar: ${issues.join(", ")}`, { duration: 6000 });
+            toast(`Revisar: ${issues.join(", ")}`, { duration: 6000 });
           } else {
             toast.success("Scan completado");
           }
@@ -606,27 +667,35 @@ export default function DomainsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div style={{ padding: "32px 36px 60px", background: "#050507", minHeight: "100vh", position: "relative", zIndex: 1 }}>
-
+    <div
+      style={{
+        background: "#0a0a0a",
+        padding: "28px 32px 60px",
+        minHeight: "100vh",
+        fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+        position: "relative",
+        zIndex: 1,
+      }}
+    >
       {/* Modals */}
       {showCredits && <BuyCreditsModal onClose={() => setShowCredits(false)} />}
       {selected    && <DomainDetailPanel domain={selected} onClose={() => setSelected(null)} />}
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+      {/* Page Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
           <h1
             style={{
-              fontFamily: "var(--font-serif-family)",
-              fontSize: "1.75rem",
-              fontWeight: 400,
-              letterSpacing: "-0.02em",
-              color: "#f0f0f5",
+              fontSize: "1.4rem",
+              fontWeight: 700,
+              color: "#f0f0f0",
+              letterSpacing: "-0.01em",
+              margin: 0,
             }}
           >
             {techMode ? "Domain Monitor" : "Tus webs"}
           </h1>
-          <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4 }}>
+          <p style={{ color: "#52525b", fontSize: "0.8rem", marginTop: 4, marginBottom: 0 }}>
             {techMode
               ? "SSL, uptime & security score per domain"
               : "Comprueba que tus webs funcionan y están protegidas"}
@@ -637,50 +706,63 @@ export default function DomainsPage() {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 7,
-            padding: "8px 16px",
+            gap: 6,
+            padding: "9px 18px",
             borderRadius: 8,
-            background: "#0f0f16",
-            color: "#9999ad",
-            fontFamily: "var(--font-jakarta-family)",
-            fontSize: "0.8rem",
+            background: "#1c1c1c",
+            color: "#a1a1aa",
+            fontSize: "0.875rem",
             fontWeight: 600,
             border: "1px solid rgba(255,255,255,0.06)",
             cursor: "pointer",
-            transition: "all 0.2s",
+            transition: "all 0.15s",
+            fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+            flexShrink: 0,
+            marginTop: 2,
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = "#00e5bf"; e.currentTarget.style.borderColor = "rgba(0,229,191,0.2)"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "#9999ad"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+          onMouseEnter={e => {
+            e.currentTarget.style.color = "#3ecf8e";
+            e.currentTarget.style.borderColor = "rgba(62,207,142,0.2)";
+            e.currentTarget.style.background = "#242424";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.color = "#a1a1aa";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+            e.currentTarget.style.background = "#1c1c1c";
+          }}
         >
+          <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
+            <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
           Comprar créditos
         </button>
       </div>
 
-      {/* Add domain */}
+      {/* Add domain card */}
       <div
         style={{
-          background: "#0f0f16",
-          border: "1px solid rgba(255,255,255,0.03)",
-          borderRadius: 16,
-          padding: "22px 24px",
-          marginBottom: 12,
+          background: "#1c1c1c",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12,
+          padding: "20px",
+          marginBottom: 10,
         }}
       >
         <span
           style={{
-            fontFamily: "var(--font-mono-family)",
-            fontSize: "0.7rem",
+            fontFamily: "var(--font-dm-mono, monospace)",
+            fontSize: "0.62rem",
             textTransform: "uppercase",
-            letterSpacing: "0.18em",
-            color: "#00e5bf",
-            fontWeight: 500,
+            letterSpacing: "0.12em",
+            color: "#52525b",
+            fontWeight: 600,
             display: "block",
-            marginBottom: 14,
+            marginBottom: 12,
           }}
         >
           {techMode ? "Add domain" : "Añadir web"}
         </span>
-        <form onSubmit={handleAdd} style={{ display: "flex", gap: 10 }}>
+        <form onSubmit={handleAdd} style={{ display: "flex", gap: 8 }}>
           <input
             type="text"
             value={newDomain}
@@ -690,17 +772,17 @@ export default function DomainsPage() {
             style={{
               flex: 1,
               padding: "10px 14px",
-              background: "#0a0a0f",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "#161616",
+              border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 8,
-              color: "#f0f0f5",
-              fontFamily: "var(--font-jakarta-family)",
-              fontSize: "0.88rem",
+              color: "#f0f0f0",
+              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+              fontSize: "0.875rem",
               outline: "none",
-              transition: "border-color 0.2s",
+              transition: "border-color 0.15s",
             }}
-            onFocus={e => (e.currentTarget.style.borderColor = "rgba(0,229,191,0.3)")}
-            onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
+            onFocus={e => (e.currentTarget.style.borderColor = "rgba(62,207,142,0.3)")}
+            onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
           />
           <button
             type="submit"
@@ -708,22 +790,22 @@ export default function DomainsPage() {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 7,
-              padding: "9px 20px",
-              borderRadius: 100,
-              background: "#00e5bf",
+              gap: 6,
+              padding: "9px 18px",
+              borderRadius: 8,
+              background: "#3ecf8e",
               color: "#000",
-              fontFamily: "var(--font-jakarta-family)",
-              fontSize: "0.82rem",
+              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+              fontSize: "0.875rem",
               fontWeight: 700,
               border: "none",
               cursor: adding || !newDomain.trim() ? "not-allowed" : "pointer",
               opacity: adding || !newDomain.trim() ? 0.45 : 1,
-              boxShadow: "0 0 24px rgba(0,229,191,0.12)",
-              transition: "all 0.25s",
+              transition: "opacity 0.15s",
+              whiteSpace: "nowrap",
             }}
           >
-            <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14 }}>
+            <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
               <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
             {adding ? "Añadiendo..." : "Añadir"}
@@ -732,21 +814,27 @@ export default function DomainsPage() {
       </div>
 
       {/* Credits hint */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <p style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", color: "#33334a" }}>
-          Los escaneos manuales consumen 1 crédito por dominio
-        </p>
-      </div>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-mono, monospace)",
+          fontSize: "0.7rem",
+          color: "#3a3a3a",
+          marginBottom: 20,
+          marginTop: 8,
+        }}
+      >
+        Los escaneos manuales consumen 1 crédito por dominio
+      </p>
 
       {/* Domain list */}
       {loading ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0" }}>
           <div
             style={{
-              width: 28,
-              height: 28,
-              border: "2px solid rgba(0,229,191,0.15)",
-              borderTopColor: "#00e5bf",
+              width: 26,
+              height: 26,
+              border: "2px solid rgba(62,207,142,0.15)",
+              borderTopColor: "#3ecf8e",
               borderRadius: "50%",
             }}
             className="animate-spin"
@@ -755,48 +843,50 @@ export default function DomainsPage() {
       ) : domains.length === 0 ? (
         <div
           style={{
-            background: "#0f0f16",
-            border: "1px solid rgba(255,255,255,0.03)",
-            borderRadius: 16,
-            padding: "22px 24px",
+            background: "#1c1c1c",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 12,
+            padding: "20px",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "64px 0", textAlign: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "56px 0", textAlign: "center" }}>
             <div
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: "rgba(0,229,191,0.06)",
-                border: "1px solid rgba(0,229,191,0.12)",
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: "rgba(62,207,142,0.06)",
+                border: "1px solid rgba(62,207,142,0.10)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 24,
               }}
             >
-              🌐
+              <svg viewBox="0 0 24 24" fill="none" style={{ width: 22, height: 22 }}>
+                <circle cx="12" cy="12" r="10" stroke="#3ecf8e" strokeWidth="1.4"/>
+                <path d="M12 2C12 2 8 7 8 12s4 10 4 10M12 2c0 0 4 5 4 10s-4 10-4 10" stroke="#3ecf8e" strokeWidth="1.2"/>
+                <path d="M2 12h20" stroke="#3ecf8e" strokeWidth="1.2"/>
+              </svg>
             </div>
             <div>
-              <div
+              <p
                 style={{
-                  fontFamily: "var(--font-serif-family)",
-                  fontSize: "1.1rem",
-                  fontWeight: 400,
-                  color: "#f0f0f5",
-                  marginBottom: 6,
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  color: "#f0f0f0",
+                  margin: "0 0 6px",
                 }}
               >
                 Sin dominios
-              </div>
-              <div style={{ fontSize: "0.85rem", color: "#55556a", maxWidth: 320 }}>
+              </p>
+              <p style={{ fontSize: "0.82rem", color: "#52525b", maxWidth: 300, margin: 0 }}>
                 {techMode ? "Add your first domain to start monitoring." : "Añade tu web para empezar a vigilarla."}
-              </div>
+              </p>
             </div>
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {domains.map((d) => {
             const barColor = domainBarColor(d);
             return (
@@ -804,22 +894,22 @@ export default function DomainsPage() {
                 key={d.id}
                 style={{
                   position: "relative",
-                  background: "#0f0f16",
-                  border: "1px solid rgba(255,255,255,0.03)",
-                  borderRadius: 16,
-                  padding: "16px 20px",
+                  background: "#1c1c1c",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
+                  padding: "14px 18px",
                   overflow: "hidden",
                   cursor: "pointer",
-                  transition: "border-color 0.2s, transform 0.2s",
+                  transition: "background 0.15s, border-color 0.15s",
                 }}
                 onClick={() => setSelected(d)}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.background = "#242424";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.03)";
-                  e.currentTarget.style.transform = "";
+                  e.currentTarget.style.background = "#1c1c1c";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
                 }}
               >
                 {/* Bottom color bar */}
@@ -839,18 +929,27 @@ export default function DomainsPage() {
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <p
                       style={{
-                        fontFamily: "var(--font-mono-family)",
-                        fontSize: "0.88rem",
+                        fontFamily: "var(--font-dm-mono, monospace)",
+                        fontSize: "0.875rem",
                         fontWeight: 600,
-                        color: "#f0f0f5",
+                        color: "#f0f0f0",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
+                        margin: 0,
                       }}
                     >
                       {d.domain}
                     </p>
-                    <p style={{ fontSize: "0.72rem", color: "#33334a", marginTop: 2 }}>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-mono, monospace)",
+                        fontSize: "0.68rem",
+                        color: "#3a3a3a",
+                        marginTop: 3,
+                        marginBottom: 0,
+                      }}
+                    >
                       {d.last_scanned_at
                         ? `${techMode ? "Last scan" : "Último scan"}: ${relTime(d.last_scanned_at)}`
                         : (techMode ? "Never scanned" : "Sin revisar aún")}
@@ -858,7 +957,16 @@ export default function DomainsPage() {
                   </div>
 
                   {/* Right: status chips + score + actions */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      flexShrink: 0,
+                      flexWrap: "wrap",
+                      justifyContent: "flex-end",
+                    }}
+                  >
                     <StatusChip status={d.uptime_status} labelMap={UPTIME_LABELS} />
                     <StatusChip status={d.ssl_status}    labelMap={SSL_LABELS}    />
                     {d.security_score !== null && <ScorePill score={d.security_score} />}
@@ -872,20 +980,28 @@ export default function DomainsPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 5,
-                        padding: "6px 12px",
+                        padding: "6px 10px",
                         borderRadius: 8,
-                        background: "#0f0f16",
-                        color: scanning === d.id ? "#00e5bf" : "#9999ad",
-                        fontFamily: "var(--font-jakarta-family)",
-                        fontSize: "0.75rem",
+                        background: "#111111",
+                        color: scanning === d.id ? "#3ecf8e" : "#a1a1aa",
+                        fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+                        fontSize: "0.8rem",
                         fontWeight: 600,
                         border: "1px solid rgba(255,255,255,0.06)",
                         cursor: scanning === d.id ? "not-allowed" : "pointer",
                         opacity: scanning === d.id ? 0.6 : 1,
-                        transition: "all 0.2s",
+                        transition: "all 0.15s",
                       }}
-                      onMouseEnter={e2 => { if (scanning !== d.id) { e2.currentTarget.style.color = "#00e5bf"; e2.currentTarget.style.borderColor = "rgba(0,229,191,0.2)"; } }}
-                      onMouseLeave={e2 => { e2.currentTarget.style.color = "#9999ad"; e2.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+                      onMouseEnter={e2 => {
+                        if (scanning !== d.id) {
+                          e2.currentTarget.style.color = "#3ecf8e";
+                          e2.currentTarget.style.borderColor = "rgba(62,207,142,0.2)";
+                        }
+                      }}
+                      onMouseLeave={e2 => {
+                        e2.currentTarget.style.color = "#a1a1aa";
+                        e2.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                      }}
                     >
                       <svg
                         viewBox="0 0 16 16"
@@ -908,22 +1024,20 @@ export default function DomainsPage() {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleRemove(d.id, d.domain); }}
                       style={{
-                        padding: "6px 8px",
+                        padding: "6px 10px",
                         borderRadius: 8,
-                        background: "rgba(255,77,106,0.08)",
-                        color: "#ff4d6a",
-                        border: "1px solid rgba(255,77,106,0.15)",
-                        fontSize: "0.78rem",
-                        fontWeight: 600,
+                        background: "rgba(239,68,68,0.08)",
+                        color: "#ef4444",
+                        border: "1px solid rgba(239,68,68,0.15)",
                         cursor: "pointer",
-                        transition: "all 0.2s",
+                        transition: "background 0.15s",
                         display: "flex",
                         alignItems: "center",
                       }}
-                      onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(255,77,106,0.15)"; }}
-                      onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(255,77,106,0.08)"; }}
+                      onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.15)"; }}
+                      onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
                     >
-                      <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14 }}>
+                      <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
                         <path
                           d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
                           stroke="currentColor"

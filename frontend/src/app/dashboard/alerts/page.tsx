@@ -53,11 +53,35 @@ function relTime(iso: string) {
 }
 
 // ── Severity config ────────────────────────────────────────────────────────────
-const SEV_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string; glow: string }> = {
-  critical: { color: "#ff4d6a", bg: "rgba(255,77,106,0.05)", border: "rgba(255,77,106,0.14)", dot: "#ff4d6a", glow: "rgba(255,77,106,0.3)" },
-  high:     { color: "#ff4d6a", bg: "rgba(255,77,106,0.05)", border: "rgba(255,77,106,0.14)", dot: "#ff4d6a", glow: "rgba(255,77,106,0.3)" },
-  medium:   { color: "#ffb020", bg: "rgba(255,176,32,0.05)",  border: "rgba(255,176,32,0.14)",  dot: "#ffb020", glow: "rgba(255,176,32,0.3)" },
-  low:      { color: "#22d3ee", bg: "rgba(34,211,238,0.04)", border: "rgba(34,211,238,0.12)", dot: "#22d3ee", glow: "rgba(34,211,238,0.3)" },
+const SEV_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string; leftBorder: string }> = {
+  critical: {
+    color: "#ef4444",
+    bg: "rgba(239,68,68,0.04)",
+    border: "rgba(239,68,68,0.10)",
+    dot: "#ef4444",
+    leftBorder: "#ef4444",
+  },
+  high: {
+    color: "#ef4444",
+    bg: "rgba(239,68,68,0.04)",
+    border: "rgba(239,68,68,0.10)",
+    dot: "#ef4444",
+    leftBorder: "#ef4444",
+  },
+  medium: {
+    color: "#f59e0b",
+    bg: "rgba(245,158,11,0.04)",
+    border: "rgba(245,158,11,0.10)",
+    dot: "#f59e0b",
+    leftBorder: "#f59e0b",
+  },
+  low: {
+    color: "#3b82f6",
+    bg: "rgba(59,130,246,0.04)",
+    border: "rgba(59,130,246,0.10)",
+    dot: "#3b82f6",
+    leftBorder: "#3b82f6",
+  },
 };
 
 // ── Mitigation chat ────────────────────────────────────────────────────────────
@@ -70,12 +94,10 @@ function MitigationChat({ alertId }: { alertId: string }) {
   const [initialized, setInitialized] = useState(false);
   const bottomRef                     = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom whenever messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  // Fire initial message automatically
   useEffect(() => {
     if (initialized) return;
     setInitialized(true);
@@ -112,7 +134,6 @@ function MitigationChat({ alertId }: { alertId: string }) {
     const text = input.trim();
     if (!text || sending) return;
     setInput("");
-    // Pass current messages (without the new user msg) as history
     doSend(text, messages);
   };
 
@@ -122,9 +143,9 @@ function MitigationChat({ alertId }: { alertId: string }) {
     <div
       style={{
         marginTop: 12,
-        borderRadius: 10,
-        background: "#0c0c14",
-        border: "1px solid rgba(0,229,191,0.14)",
+        borderRadius: 12,
+        background: "#161616",
+        border: "1px solid rgba(255,255,255,0.08)",
         overflow: "hidden",
       }}
     >
@@ -135,19 +156,32 @@ function MitigationChat({ alertId }: { alertId: string }) {
           alignItems: "center",
           gap: 10,
           padding: "10px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-          background: "rgba(0,229,191,0.04)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(62,207,142,0.04)",
         }}
       >
-        <span style={{ fontSize: "0.85rem" }}>🤖</span>
+        <div
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: 6,
+            background: "rgba(62,207,142,0.12)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "0.75rem",
+          }}
+        >
+          ✦
+        </div>
         <span
           style={{
-            fontFamily: "var(--font-mono-family)",
+            fontFamily: "var(--font-dm-mono)",
             fontSize: "0.6rem",
             textTransform: "uppercase",
-            letterSpacing: "1.5px",
-            fontWeight: 700,
-            color: "#00e5bf",
+            letterSpacing: "0.12em",
+            fontWeight: 600,
+            color: "#3ecf8e",
           }}
         >
           Asistente de mitigación
@@ -156,12 +190,13 @@ function MitigationChat({ alertId }: { alertId: string }) {
           style={{
             padding: "1px 6px",
             borderRadius: 4,
-            background: "rgba(0,229,191,0.15)",
-            fontFamily: "var(--font-mono-family)",
+            background: "rgba(62,207,142,0.12)",
+            fontFamily: "var(--font-dm-mono)",
             fontSize: "0.52rem",
             fontWeight: 700,
-            letterSpacing: "1px",
-            color: "#00e5bf",
+            letterSpacing: "0.08em",
+            color: "#3ecf8e",
+            textTransform: "uppercase",
           }}
         >
           IA
@@ -169,12 +204,12 @@ function MitigationChat({ alertId }: { alertId: string }) {
         <span
           style={{
             marginLeft: "auto",
-            fontFamily: "var(--font-mono-family)",
+            fontFamily: "var(--font-dm-mono)",
             fontSize: "0.6rem",
-            color: limitReached ? "#ff4d6a" : "#55556a",
+            color: limitReached ? "#ef4444" : "#52525b",
           }}
         >
-          {usageCount}/{usageLimit} consultas este mes
+          {usageCount}/{usageLimit} consultas
         </span>
       </div>
 
@@ -208,16 +243,16 @@ function MitigationChat({ alertId }: { alertId: string }) {
                 fontSize: "0.78rem",
                 lineHeight: 1.65,
                 whiteSpace: "pre-wrap",
-                color: "#f0f0f5",
-                background:
-                  msg.role === "user"
-                    ? "rgba(255,255,255,0.06)"
-                    : "rgba(0,229,191,0.06)",
-                border:
-                  msg.role === "user"
-                    ? "1px solid rgba(255,255,255,0.08)"
-                    : "1px solid rgba(0,229,191,0.15)",
-                fontFamily: "var(--font-jakarta-family)",
+                ...(msg.role === "user"
+                  ? {
+                      background: "#3ecf8e",
+                      color: "#000",
+                    }
+                  : {
+                      background: "#1c1c1c",
+                      color: "#f0f0f0",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                    }),
               }}
             >
               {msg.content}
@@ -232,8 +267,8 @@ function MitigationChat({ alertId }: { alertId: string }) {
               style={{
                 padding: "10px 14px",
                 borderRadius: "12px 12px 12px 4px",
-                background: "rgba(0,229,191,0.06)",
-                border: "1px solid rgba(0,229,191,0.15)",
+                background: "#1c1c1c",
+                border: "1px solid rgba(255,255,255,0.06)",
                 display: "flex",
                 gap: 5,
                 alignItems: "center",
@@ -246,7 +281,7 @@ function MitigationChat({ alertId }: { alertId: string }) {
                     width: 5,
                     height: 5,
                     borderRadius: "50%",
-                    background: "#00e5bf",
+                    background: "#3ecf8e",
                     animation: `dotPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
                   }}
                 />
@@ -262,11 +297,11 @@ function MitigationChat({ alertId }: { alertId: string }) {
         <div
           style={{
             padding: "12px 16px",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
             fontSize: "0.75rem",
-            color: "#ff4d6a",
+            color: "#ef4444",
             textAlign: "center",
-            fontFamily: "var(--font-jakarta-family)",
+            fontFamily: "var(--font-dm-sans)",
           }}
         >
           {usageLimit <= 3
@@ -280,7 +315,7 @@ function MitigationChat({ alertId }: { alertId: string }) {
             display: "flex",
             gap: 8,
             padding: "10px 12px",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
           }}
         >
           <input
@@ -290,18 +325,18 @@ function MitigationChat({ alertId }: { alertId: string }) {
             disabled={sending}
             style={{
               flex: 1,
-              background: "transparent",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "#111111",
+              border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 8,
               padding: "7px 12px",
               fontSize: "0.78rem",
-              color: "#f0f0f5",
+              color: "#f0f0f0",
               outline: "none",
-              fontFamily: "var(--font-jakarta-family)",
+              fontFamily: "var(--font-dm-sans)",
               transition: "border-color 0.2s",
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,191,0.35)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(62,207,142,0.4)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
           />
           <button
             type="submit"
@@ -309,14 +344,14 @@ function MitigationChat({ alertId }: { alertId: string }) {
             style={{
               padding: "7px 16px",
               borderRadius: 8,
-              background: "rgba(0,229,191,0.12)",
-              border: "1px solid rgba(0,229,191,0.3)",
-              color: "#00e5bf",
+              background: "#3ecf8e",
+              border: "none",
+              color: "#000",
               fontSize: "0.75rem",
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: sending || !input.trim() ? "not-allowed" : "pointer",
-              opacity: sending || !input.trim() ? 0.45 : 1,
-              fontFamily: "var(--font-jakarta-family)",
+              opacity: sending || !input.trim() ? 0.4 : 1,
+              fontFamily: "var(--font-dm-sans)",
               transition: "opacity 0.2s",
             }}
           >
@@ -352,13 +387,13 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
   return (
     <div
       style={{
-        background: alert.is_unread ? sev.bg : "#0f0f16",
-        border: `1px solid ${alert.is_unread ? sev.border : "rgba(255,255,255,0.03)"}`,
+        background: "#1c1c1c",
+        border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 12,
         marginBottom: 8,
         overflow: "hidden",
+        borderLeft: `3px solid ${alert.is_unread ? sev.leftBorder : "rgba(255,255,255,0.06)"}`,
         transition: "border-color 0.2s",
-        animation: "dashFadeIn 0.4s ease both",
       }}
     >
       {/* Header row */}
@@ -377,65 +412,99 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
         }}
       >
         {/* Severity dot */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0, marginTop: 3 }}>
+        <div style={{ flexShrink: 0, marginTop: 5 }}>
           <div
             style={{
-              width: 6,
-              height: 6,
+              width: 7,
+              height: 7,
               borderRadius: "50%",
-              background: sev.dot,
-              boxShadow: alert.is_unread ? `0 0 6px ${sev.glow}` : "none",
+              background: alert.is_unread ? sev.dot : "#3f3f46",
             }}
           />
-          {alert.is_unread && (
-            <div style={{ width: 1, flexGrow: 1, minHeight: 16, background: `${sev.dot}22` }} />
-          )}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              {/* Severity badge */}
               <span
                 style={{
-                  fontFamily: "var(--font-mono-family)",
-                  fontSize: "0.6rem",
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.68rem",
                   textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  padding: "2px 8px",
-                  borderRadius: 20,
-                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  fontWeight: 600,
                   flexShrink: 0,
                   color: sev.color,
-                  background: `${sev.color}18`,
+                  background: sev.bg,
                 }}
               >
                 {alert.severity_label}
               </span>
+              {/* Type badge */}
               <span
                 style={{
-                  fontFamily: "var(--font-serif-family)",
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.62rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  flexShrink: 0,
+                  color: "#52525b",
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                {alert.alert_type.replace(/_/g, " ")}
+              </span>
+              {/* Title */}
+              <span
+                style={{
                   fontSize: "0.88rem",
                   fontWeight: 600,
-                  color: alert.is_unread ? "#f0f0f5" : "#9999ad",
+                  color: alert.is_unread ? "#f0f0f0" : "#71717a",
                   lineHeight: 1.3,
                 }}
               >
                 {alert.title}
               </span>
             </div>
+            {/* Right side: timestamp + chevron */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", color: "#33334a", whiteSpace: "nowrap" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.65rem",
+                  color: "#52525b",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {relTime(alert.sent_at)}
               </span>
-              <span style={{ color: "#33334a", fontSize: "0.7rem" }}>{expanded ? "▲" : "▼"}</span>
+              {alert.is_unread && (
+                <div
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#3ecf8e",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              <span style={{ color: "#52525b", fontSize: "0.65rem" }}>{expanded ? "▲" : "▼"}</span>
             </div>
           </div>
 
+          {/* Message preview */}
           <p
             style={{
               fontSize: "0.78rem",
-              color: "#9999ad",
-              marginTop: 5,
+              color: "#71717a",
+              marginTop: 6,
               lineHeight: 1.55,
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -450,33 +519,32 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
 
       {/* Expanded detail */}
       {expanded && (
-        <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           {/* Human impact */}
           <div
             style={{
               marginTop: 16,
               borderRadius: 10,
-              padding: 16,
-              background: `${sev.color}0d`,
-              border: `1px solid ${sev.color}22`,
+              padding: "14px 16px",
+              background: `rgba(${sev.color === "#ef4444" ? "239,68,68" : sev.color === "#f59e0b" ? "245,158,11" : "59,130,246"},0.06)`,
+              border: `1px solid rgba(${sev.color === "#ef4444" ? "239,68,68" : sev.color === "#f59e0b" ? "245,158,11" : "59,130,246"},0.12)`,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: "0.9rem" }}>⚠️</span>
               <span
                 style={{
-                  fontFamily: "var(--font-mono-family)",
-                  fontSize: "0.6rem",
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.62rem",
                   textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  fontWeight: 600,
                   color: sev.color,
                 }}
               >
                 Impacto en tu negocio
               </span>
             </div>
-            <p style={{ fontSize: "0.78rem", lineHeight: 1.6, color: "#9999ad" }}>{alert.human_impact}</p>
+            <p style={{ fontSize: "0.78rem", lineHeight: 1.6, color: "#a1a1aa", margin: 0 }}>{alert.human_impact}</p>
           </div>
 
           {/* Fix steps */}
@@ -484,21 +552,20 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
             style={{
               marginTop: 10,
               borderRadius: 10,
-              padding: 16,
-              background: "rgba(0,229,191,0.04)",
-              border: "1px solid rgba(0,229,191,0.12)",
+              padding: "14px 16px",
+              background: "rgba(62,207,142,0.04)",
+              border: "1px solid rgba(62,207,142,0.10)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: "0.9rem" }}>🔧</span>
               <span
                 style={{
-                  fontFamily: "var(--font-mono-family)",
-                  fontSize: "0.6rem",
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.62rem",
                   textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  fontWeight: 700,
-                  color: "#00e5bf",
+                  letterSpacing: "0.12em",
+                  fontWeight: 600,
+                  color: "#3ecf8e",
                 }}
               >
                 Cómo solucionarlo
@@ -511,29 +578,29 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                     style={{
                       width: 20,
                       height: 20,
-                      borderRadius: "50%",
+                      borderRadius: 6,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontFamily: "var(--font-mono-family)",
+                      fontFamily: "var(--font-dm-mono)",
                       fontSize: "0.6rem",
                       fontWeight: 700,
                       flexShrink: 0,
                       marginTop: 1,
-                      background: "rgba(0,229,191,0.15)",
-                      color: "#00e5bf",
+                      background: "rgba(62,207,142,0.12)",
+                      color: "#3ecf8e",
                     }}
                   >
                     {i + 1}
                   </span>
-                  <span style={{ fontSize: "0.78rem", color: "#9999ad", lineHeight: 1.6 }}>{step}</span>
+                  <span style={{ fontSize: "0.78rem", color: "#a1a1aa", lineHeight: 1.6 }}>{step}</span>
                 </li>
               ))}
             </ol>
           </div>
 
-          {/* AI Mitigation button */}
-          <div style={{ marginTop: 10 }}>
+          {/* AI Mitigation toggle */}
+          <div style={{ marginTop: 12 }}>
             <button
               onClick={() => setShowChat(!showChat)}
               style={{
@@ -541,28 +608,29 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                 alignItems: "center",
                 gap: 8,
                 padding: "8px 14px",
-                borderRadius: 9,
-                fontSize: "0.8rem",
+                borderRadius: 8,
+                fontSize: "0.78rem",
                 fontWeight: 600,
-                background: showChat ? "rgba(0,229,191,0.12)" : "rgba(0,229,191,0.06)",
-                border: `1px solid rgba(0,229,191,${showChat ? "0.28" : "0.15"})`,
-                color: "#00e5bf",
+                background: showChat ? "rgba(62,207,142,0.12)" : "#1c1c1c",
+                border: `1px solid ${showChat ? "rgba(62,207,142,0.25)" : "rgba(255,255,255,0.06)"}`,
+                color: showChat ? "#3ecf8e" : "#a1a1aa",
                 cursor: "pointer",
-                fontFamily: "var(--font-jakarta-family)",
+                fontFamily: "var(--font-dm-sans)",
                 transition: "all 0.2s",
               }}
             >
-              🤖 Asistente de mitigación
+              ✦ Asistente de mitigación
               <span
                 style={{
                   padding: "1px 6px",
                   borderRadius: 4,
-                  background: "rgba(0,229,191,0.15)",
-                  fontFamily: "var(--font-mono-family)",
+                  background: "rgba(62,207,142,0.12)",
+                  fontFamily: "var(--font-dm-mono)",
                   fontSize: "0.52rem",
                   fontWeight: 700,
-                  letterSpacing: "1px",
-                  color: "#00e5bf",
+                  letterSpacing: "0.08em",
+                  color: "#3ecf8e",
+                  textTransform: "uppercase",
                 }}
               >
                 IA
@@ -574,8 +642,23 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
           {showChat && <MitigationChat alertId={alert.id} />}
 
           {/* Footer */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
-            <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", color: "#33334a" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: 16,
+              paddingTop: 14,
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-dm-mono)",
+                fontSize: "0.65rem",
+                color: "#52525b",
+              }}
+            >
               {fmtDate(alert.sent_at)}
             </span>
             {alert.is_unread ? (
@@ -586,25 +669,34 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  fontSize: "0.75rem",
+                  fontSize: "0.72rem",
                   fontWeight: 600,
-                  padding: "6px 12px",
+                  padding: "5px 12px",
                   borderRadius: 8,
                   transition: "all 0.2s",
                   opacity: marking ? 0.5 : 1,
                   cursor: marking ? "not-allowed" : "pointer",
-                  background: "rgba(255,255,255,0.04)",
-                  color: "#9999ad",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  fontFamily: "var(--font-jakarta-family)",
+                  background: "rgba(62,207,142,0.08)",
+                  color: "#3ecf8e",
+                  border: "1px solid rgba(62,207,142,0.15)",
+                  fontFamily: "var(--font-dm-sans)",
                 }}
               >
                 <span>{marking ? "…" : "✓"}</span>
                 Marcar como leída
               </button>
             ) : (
-              <span style={{ fontSize: "0.65rem", color: "#33334a", display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ color: "#00e5bf" }}>✓</span> Leída{" "}
+              <span
+                style={{
+                  fontSize: "0.65rem",
+                  color: "#52525b",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontFamily: "var(--font-dm-mono)",
+                }}
+              >
+                <span style={{ color: "#3ecf8e" }}>✓</span> Leída{" "}
                 {alert.read_at ? relTime(alert.read_at) : ""}
               </span>
             )}
@@ -627,32 +719,49 @@ function AlertGroup({
   if (alerts.length === 0) return null;
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        <div style={{ width: 6, height: 6, borderRadius: "50%", flexShrink: 0, background: color }} />
+      {/* Group header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            flexShrink: 0,
+            background: color,
+          }}
+        />
         <span
           style={{
-            fontFamily: "var(--font-mono-family)",
-            fontSize: "0.65rem",
+            fontFamily: "var(--font-dm-mono)",
+            fontSize: "0.62rem",
             textTransform: "uppercase",
-            letterSpacing: "2px",
-            color,
+            letterSpacing: "0.12em",
+            fontWeight: 600,
+            color: "#52525b",
           }}
         >
           {label}
         </span>
         <span
           style={{
-            fontFamily: "var(--font-mono-family)",
+            fontFamily: "var(--font-dm-mono)",
             fontSize: "0.6rem",
-            padding: "1px 6px",
-            borderRadius: 10,
+            padding: "1px 7px",
+            borderRadius: 6,
             color,
             background: `${color}18`,
           }}
         >
           {alerts.length}
         </span>
-        <div style={{ flex: 1, height: 1, background: `${color}20` }} />
+        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
       </div>
       <div>
         {alerts.map((a) => (
@@ -666,37 +775,45 @@ function AlertGroup({
 // ── Empty state ────────────────────────────────────────────────────────────────
 function EmptyState() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "80px 0", textAlign: "center" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 16,
+        padding: "80px 0",
+        textAlign: "center",
+      }}
+    >
       <div
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: 16,
-          background: "rgba(0,229,191,0.06)",
-          border: "1px solid rgba(0,229,191,0.10)",
+          width: 52,
+          height: 52,
+          borderRadius: 14,
+          background: "rgba(62,207,142,0.06)",
+          border: "1px solid rgba(62,207,142,0.10)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 24,
+          fontSize: "1.4rem",
         }}
       >
-        🛡
+        ✦
       </div>
       <div>
         <div
           style={{
-            fontFamily: "var(--font-serif-family)",
-            fontSize: "1.1rem",
-            fontWeight: 400,
-            color: "#f0f0f5",
+            fontSize: "1rem",
+            fontWeight: 700,
+            color: "#f0f0f0",
             marginBottom: 6,
           }}
         >
           Todo está en orden
         </div>
-        <div style={{ fontSize: "0.85rem", color: "#55556a", maxWidth: 280, lineHeight: 1.6 }}>
-          No tienes alertas activas. Tus sistemas de seguridad están monitorizados
-          y te avisaremos si se detecta cualquier problema.
+        <div style={{ fontSize: "0.82rem", color: "#52525b", maxWidth: 280, lineHeight: 1.6 }}>
+          No tienes alertas activas. Tus sistemas están monitorizados y te avisaremos si se detecta
+          cualquier problema.
         </div>
       </div>
       <div
@@ -704,19 +821,19 @@ function EmptyState() {
           display: "flex",
           alignItems: "center",
           gap: 8,
-          padding: "6px 16px",
+          padding: "5px 14px",
           borderRadius: 20,
-          background: "rgba(0,229,191,0.06)",
-          border: "1px solid rgba(0,229,191,0.12)",
+          background: "rgba(62,207,142,0.06)",
+          border: "1px solid rgba(62,207,142,0.12)",
         }}
       >
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#00e5bf" }} />
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3ecf8e" }} />
         <span
           style={{
-            fontFamily: "var(--font-mono-family)",
+            fontFamily: "var(--font-dm-mono)",
             fontSize: "0.62rem",
-            color: "#00e5bf",
-            letterSpacing: "1px",
+            color: "#3ecf8e",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
           }}
         >
@@ -739,7 +856,7 @@ function FilterBar({
 }) {
   const filters = [
     { key: "all",      label: "Todas",     count: counts.all },
-    { key: "unread",   label: "No leídas", count: counts.unread },
+    { key: "unread",   label: "Sin leer",  count: counts.unread },
     { key: "critical", label: "Críticas",  count: counts.critical },
     { key: "medium",   label: "Medias",    count: counts.medium },
     { key: "low",      label: "Bajas",     count: counts.low },
@@ -751,50 +868,54 @@ function FilterBar({
         display: "flex",
         gap: 4,
         padding: 4,
-        background: "#0f0f16",
-        border: "1px solid rgba(255,255,255,0.03)",
+        background: "#111111",
+        border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 10,
-        marginBottom: 20,
+        marginBottom: 24,
         width: "fit-content",
         flexWrap: "wrap",
       }}
     >
-      {filters.map((f) => (
-        <button
-          key={f.key}
-          onClick={() => onChange(f.key)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "7px 14px",
-            borderRadius: 7,
-            fontSize: "0.8rem",
-            fontWeight: 600,
-            transition: "all 0.2s",
-            cursor: "pointer",
-            border: "none",
-            fontFamily: "var(--font-jakarta-family)",
-            background: activeFilter === f.key ? "#1a1a26" : "transparent",
-            color: activeFilter === f.key ? "#f0f0f5" : "#55556a",
-          }}
-        >
-          {f.label}
-          {f.count > 0 && (
-            <span
-              style={{
-                fontFamily: "var(--font-mono-family)",
-                fontSize: "0.6rem",
-                padding: "1px 5px",
-                borderRadius: 4,
-                background: activeFilter === f.key ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-              }}
-            >
-              {f.count}
-            </span>
-          )}
-        </button>
-      ))}
+      {filters.map((f) => {
+        const active = activeFilter === f.key;
+        return (
+          <button
+            key={f.key}
+            onClick={() => onChange(f.key)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              borderRadius: 7,
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              transition: "all 0.15s",
+              cursor: "pointer",
+              border: active ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+              fontFamily: "var(--font-dm-sans)",
+              background: active ? "#1c1c1c" : "transparent",
+              color: active ? "#f0f0f0" : "#52525b",
+            }}
+          >
+            {f.label}
+            {f.count > 0 && (
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.6rem",
+                  padding: "1px 5px",
+                  borderRadius: 4,
+                  background: active ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
+                  color: active ? "#f0f0f0" : "#52525b",
+                }}
+              >
+                {f.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -856,14 +977,24 @@ export default function AlertsPage() {
     }
   };
 
+  // ── Loading state ────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{ padding: "40px", display: "flex", alignItems: "center", justifyContent: "center", height: 256, background: "#050507" }}>
+      <div
+        style={{
+          padding: "28px 32px 60px",
+          background: "#0a0a0a",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <div
           style={{
-            width: 32,
-            height: 32,
-            border: "2px solid #00e5bf",
+            width: 28,
+            height: 28,
+            border: "2px solid #3ecf8e",
             borderTopColor: "transparent",
             borderRadius: "50%",
             animation: "spin 0.8s linear infinite",
@@ -898,35 +1029,48 @@ export default function AlertsPage() {
   return (
     <div
       style={{
-        padding: "32px 36px 60px",
-        background: "#050507",
+        padding: "28px 32px 60px",
+        background: "#0a0a0a",
         minHeight: "100vh",
-        position: "relative",
-        zIndex: 1,
-        fontFamily: "var(--font-jakarta-family)",
+        fontFamily: "var(--font-dm-sans)",
       }}
     >
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
+      {/* Page header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginBottom: 28,
+        }}
+      >
         <div>
           <h1
             style={{
-              fontFamily: "var(--font-serif-family)",
-              fontSize: "1.75rem",
-              fontWeight: 400,
-              letterSpacing: "-0.02em",
-              color: "#f0f0f5",
+              fontSize: "1.4rem",
+              fontWeight: 700,
+              color: "#f0f0f0",
               margin: 0,
+              letterSpacing: "-0.01em",
             }}
           >
             Alertas de seguridad
           </h1>
-          <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4, margin: "4px 0 0" }}>
+          <p
+            style={{
+              color: "#52525b",
+              fontSize: "0.8rem",
+              marginTop: 5,
+              margin: "5px 0 0",
+              fontFamily: "var(--font-dm-mono)",
+            }}
+          >
             {data.unread_count > 0
-              ? `${data.unread_count} alerta${data.unread_count !== 1 ? "s" : ""} sin leer · ${data.total} total`
+              ? `${data.unread_count} sin leer · ${data.total} total`
               : `${data.total} alerta${data.total !== 1 ? "s" : ""} · todo al día`}
           </p>
         </div>
+
         {data.unread_count > 0 && (
           <button
             onClick={handleMarkAllRead}
@@ -935,25 +1079,25 @@ export default function AlertsPage() {
               display: "flex",
               alignItems: "center",
               gap: 6,
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 600,
               padding: "8px 16px",
-              borderRadius: 9,
-              transition: "all 0.2s",
+              borderRadius: 8,
+              transition: "opacity 0.2s",
               opacity: markingAll ? 0.5 : 1,
               cursor: markingAll ? "not-allowed" : "pointer",
-              background: "rgba(255,255,255,0.04)",
-              color: "#9999ad",
+              background: "#1c1c1c",
+              color: "#a1a1aa",
               border: "1px solid rgba(255,255,255,0.06)",
-              fontFamily: "var(--font-jakarta-family)",
+              fontFamily: "var(--font-dm-sans)",
             }}
           >
-            {markingAll ? "⟳" : "✓"} Marcar todas como leídas
+            <span>{markingAll ? "⟳" : "✓"}</span> Marcar todas como leídas
           </button>
         )}
       </div>
 
-      {/* Filters */}
+      {/* Filter bar */}
       {data.total > 0 && (
         <FilterBar activeFilter={filter} onChange={setFilter} counts={counts} />
       )}
@@ -963,9 +1107,9 @@ export default function AlertsPage() {
         <EmptyState />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          <AlertGroup label="Críticas" color="#ff4d6a" alerts={criticals} onMarkRead={handleMarkRead} />
-          <AlertGroup label="Medias"   color="#ffb020" alerts={mediums}   onMarkRead={handleMarkRead} />
-          <AlertGroup label="Bajas"    color="#22d3ee" alerts={lows}      onMarkRead={handleMarkRead} />
+          <AlertGroup label="Críticas" color="#ef4444" alerts={criticals} onMarkRead={handleMarkRead} />
+          <AlertGroup label="Medias"   color="#f59e0b" alerts={mediums}   onMarkRead={handleMarkRead} />
+          <AlertGroup label="Bajas"    color="#3b82f6" alerts={lows}      onMarkRead={handleMarkRead} />
         </div>
       )}
     </div>

@@ -49,10 +49,8 @@ const T = {
     tabs: { general: "General", account: "Cuenta", subscription: "Suscripción", notifications: "Notificaciones" },
     save: "Guardar cambios",
     saving: "Guardando…",
-    // General
     fullName: "Nombre y apellidos", email: "Email", language: "Idioma", timezone: "Zona horaria",
     langEs: "Español", langEn: "English",
-    // Account
     orgId: "ID de organización", orgIdHelp: "Usa este ID al contactar con soporte técnico.",
     activeSessions: "Sesiones activas", currentDevice: "Este dispositivo (sesión actual)",
     signOutOthers: "Cerrar todas las otras sesiones",
@@ -68,13 +66,11 @@ const T = {
     deleteModalDesc: "Esta acción NO se puede deshacer. Escribe",
     deleteModalConfirm: "para confirmar:",
     deleteModalBtn: "Eliminar mi cuenta",
-    // Subscription
     currentPlan: "Plan actual", renewal: "Próxima renovación",
     creditsAvail: "Créditos disponibles", creditsReset: "Reset",
     upgradeBtn: "Upgrade a Business", manageBtn: "Gestionar método de pago",
     billingHistory: "Historial de pagos", noBilling: "Sin pagos registrados aún.",
     cancelNote: "Tu suscripción se cancelará al final del período.",
-    // Notifications
     notifTitle: "Preferencias de notificación",
     notifCritical: "Alertas críticas por email",
     notifCriticalDesc: "SSL caducado, web caída, filtraciones graves. Siempre recomendado.",
@@ -89,10 +85,8 @@ const T = {
     tabs: { general: "General", account: "Account", subscription: "Subscription", notifications: "Notifications" },
     save: "Save changes",
     saving: "Saving…",
-    // General
     fullName: "Full name", email: "Email", language: "Language", timezone: "Timezone",
     langEs: "Español", langEn: "English",
-    // Account
     orgId: "Organization ID", orgIdHelp: "Use this ID when contacting technical support.",
     activeSessions: "Active sessions", currentDevice: "This device (current session)",
     signOutOthers: "Sign out all other sessions",
@@ -108,13 +102,11 @@ const T = {
     deleteModalDesc: "This action CANNOT be undone. Type",
     deleteModalConfirm: "to confirm:",
     deleteModalBtn: "Delete my account",
-    // Subscription
     currentPlan: "Current plan", renewal: "Next renewal",
     creditsAvail: "Available credits", creditsReset: "Reset",
     upgradeBtn: "Upgrade to Business", manageBtn: "Manage payment method",
     billingHistory: "Payment history", noBilling: "No payments recorded yet.",
     cancelNote: "Your subscription will cancel at the end of the period.",
-    // Notifications
     notifTitle: "Notification preferences",
     notifCritical: "Critical alerts by email",
     notifCriticalDesc: "Expired SSL, site down, serious breaches. Always recommended.",
@@ -141,33 +133,33 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+// ── Plan badge ─────────────────────────────────────────────────────────────────
 function PlanBadge({ plan }: { plan: string }) {
   const map: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    business: { label: "Business", color: "#22d3ee", bg: "rgba(34,211,238,0.08)", border: "rgba(34,211,238,0.18)" },
-    starter:  { label: "Starter",  color: "#00e5bf", bg: "rgba(0,229,191,0.08)", border: "rgba(0,229,191,0.18)" },
-    trial:    { label: "Trial",    color: "#55556a", bg: "rgba(85,85,106,0.10)", border: "rgba(85,85,106,0.18)" },
+    business: { label: "Business", color: "#3b82f6", bg: "rgba(59,130,246,0.08)",  border: "rgba(59,130,246,0.18)" },
+    starter:  { label: "Starter",  color: "#3ecf8e", bg: "rgba(62,207,142,0.08)", border: "rgba(62,207,142,0.18)" },
+    trial:    { label: "Trial",    color: "#52525b", bg: "rgba(82,82,91,0.10)",    border: "rgba(82,82,91,0.18)" },
   };
   const s = map[plan] ?? map.trial;
   return (
-    <span
-      style={{
-        fontFamily: "var(--font-mono-family)",
-        fontSize: "0.6rem",
-        textTransform: "uppercase" as const,
-        letterSpacing: "0.14em",
-        padding: "3px 10px",
-        borderRadius: 20,
-        fontWeight: 700,
-        color: s.color,
-        background: s.bg,
-        border: `1px solid ${s.border}`,
-      }}
-    >
+    <span style={{
+      fontFamily: "var(--font-dm-mono)",
+      fontSize: "0.68rem",
+      textTransform: "uppercase" as const,
+      letterSpacing: "0.06em",
+      padding: "3px 8px",
+      borderRadius: 6,
+      fontWeight: 700,
+      color: s.color,
+      background: s.bg,
+      border: `1px solid ${s.border}`,
+    }}>
       {s.label}
     </span>
   );
 }
 
+// ── Toggle switch ──────────────────────────────────────────────────────────────
 function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <button
@@ -176,52 +168,87 @@ function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean; onCha
       disabled={disabled}
       onClick={() => onChange(!checked)}
       style={{
-        width: 44, height: 24, borderRadius: 12,
-        background: checked ? "#00e5bf" : "rgba(255,255,255,0.08)",
-        border: "none", cursor: "pointer", position: "relative", transition: "background 0.25s",
-        flexShrink: 0, opacity: disabled ? 0.4 : 1,
+        width: 44,
+        height: 24,
+        borderRadius: 12,
+        background: checked ? "#3ecf8e" : "rgba(255,255,255,0.08)",
+        border: "none",
+        cursor: disabled ? "not-allowed" : "pointer",
+        position: "relative",
+        transition: "background 0.25s",
+        flexShrink: 0,
+        opacity: disabled ? 0.4 : 1,
       }}
     >
       <span style={{
-        position: "absolute", top: 3, left: checked ? 23 : 3,
-        width: 18, height: 18, borderRadius: "50%",
-        background: checked ? "#000" : "#55556a",
-        transition: "left 0.25s", display: "block",
+        position: "absolute",
+        top: 3,
+        left: checked ? 23 : 3,
+        width: 18,
+        height: 18,
+        borderRadius: "50%",
+        background: checked ? "#000" : "#52525b",
+        transition: "left 0.25s",
+        display: "block",
       }} />
     </button>
   );
 }
 
+// ── Section card ──────────────────────────────────────────────────────────────
 function SectionCard({ label, title, children }: { label?: string; title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "#0f0f16", border: "1px solid rgba(255,255,255,0.03)", borderRadius: 16, marginBottom: 16, overflow: "hidden" }}>
-      <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+    <div style={{
+      background: "#1c1c1c",
+      border: "1px solid rgba(255,255,255,0.06)",
+      borderRadius: 12,
+      marginBottom: 14,
+      overflow: "hidden",
+    }}>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         {label && (
-          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", textTransform: "uppercase" as const, letterSpacing: "0.16em", color: "#33334a", marginBottom: 2 }}>
+          <div style={{
+            fontFamily: "var(--font-dm-mono)",
+            fontSize: "0.62rem",
+            textTransform: "uppercase" as const,
+            letterSpacing: "0.12em",
+            color: "#52525b",
+            fontWeight: 600,
+            marginBottom: 3,
+          }}>
             {label}
           </div>
         )}
-        <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f0f0f5", letterSpacing: "-0.01em" }}>{title}</div>
+        <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#f0f0f0" }}>{title}</div>
       </div>
-      <div style={{ padding: "0 24px" }}>
+      <div style={{ padding: "0 20px" }}>
         {children}
       </div>
     </div>
   );
 }
 
+// ── Setting row ────────────────────────────────────────────────────────────────
 function SettingRow({ label, help, children, last }: { label: string; help?: string; children: React.ReactNode; last?: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.03)" }}>
-      <div>
-        <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f5" }}>{label}</div>
-        {help && <div style={{ fontSize: "0.78rem", color: "#55556a", marginTop: 2 }}>{help}</div>}
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "14px 0",
+      borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.06)",
+      gap: 16,
+    }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f0f0f0" }}>{label}</div>
+        {help && <div style={{ fontSize: "0.75rem", color: "#52525b", marginTop: 2 }}>{help}</div>}
       </div>
       <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
   );
 }
 
+// ── Styled input ───────────────────────────────────────────────────────────────
 function StyledInput({ value, onChange, placeholder, readOnly, type = "text" }: {
   value: string; onChange?: (v: string) => void; placeholder?: string; readOnly?: boolean; type?: string;
 }) {
@@ -234,18 +261,18 @@ function StyledInput({ value, onChange, placeholder, readOnly, type = "text" }: 
       placeholder={placeholder}
       style={{
         padding: "9px 14px",
-        background: readOnly ? "rgba(255,255,255,0.02)" : "#0a0a0f",
-        border: `1px solid ${readOnly ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.06)"}`,
+        background: readOnly ? "rgba(255,255,255,0.02)" : "#0a0a0a",
+        border: `1px solid ${readOnly ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"}`,
         borderRadius: 8,
-        color: readOnly ? "#55556a" : "#f0f0f5",
-        fontFamily: "var(--font-jakarta-family)",
+        color: readOnly ? "#52525b" : "#f0f0f0",
+        fontFamily: "var(--font-dm-sans)",
         fontSize: "0.85rem",
         outline: "none",
         transition: "border-color 0.2s",
         width: 240,
       }}
-      onFocus={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(0,229,191,0.3)"; }}
-      onBlur={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+      onFocus={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(62,207,142,0.35)"; }}
+      onBlur={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
     />
   );
 }
@@ -264,17 +291,47 @@ function DeleteModal({ lang, onConfirm, onClose }: { lang: "es" | "en"; onConfir
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(5,5,7,0.92)", backdropFilter: "blur(4px)" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        background: "rgba(0,0,0,0.78)",
+        backdropFilter: "blur(4px)",
+      }}
       onClick={onClose}
     >
       <div
-        style={{ width: "100%", maxWidth: 380, borderRadius: 16, padding: 28, background: "#0f0f16", border: "1px solid rgba(255,77,106,0.25)" }}
+        style={{
+          width: "100%",
+          maxWidth: 380,
+          borderRadius: 12,
+          padding: 28,
+          background: "#161616",
+          border: "1px solid rgba(239,68,68,0.2)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ width: 48, height: 48, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, background: "rgba(255,77,106,0.08)", marginBottom: 20 }}>⚠️</div>
-        <h2 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.1rem", fontWeight: 400, color: "#ff4d6a", marginBottom: 8 }}>{t.deleteModal}</h2>
-        <p style={{ fontSize: "0.8rem", color: "#55556a", marginBottom: 20, lineHeight: 1.6 }}>
-          {t.deleteModalDesc} <span style={{ fontFamily: "var(--font-mono-family)", fontWeight: 700, color: "#f0f0f5" }}>ELIMINAR</span> {t.deleteModalConfirm}
+        <div style={{
+          width: 44,
+          height: 44,
+          borderRadius: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 20,
+          background: "rgba(239,68,68,0.10)",
+          color: "#ef4444",
+          marginBottom: 18,
+        }}>!</div>
+        <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#ef4444", marginBottom: 8 }}>{t.deleteModal}</h2>
+        <p style={{ fontSize: "0.8rem", color: "#52525b", marginBottom: 20, lineHeight: 1.6 }}>
+          {t.deleteModalDesc}{" "}
+          <span style={{ fontFamily: "var(--font-dm-mono)", fontWeight: 700, color: "#f0f0f0" }}>ELIMINAR</span>{" "}
+          {t.deleteModalConfirm}
         </p>
         <input
           type="text"
@@ -282,23 +339,38 @@ function DeleteModal({ lang, onConfirm, onClose }: { lang: "es" | "en"; onConfir
           onChange={(e) => setText(e.target.value)}
           placeholder="ELIMINAR"
           style={{
-            width: "100%", padding: "10px 14px", borderRadius: 8, fontSize: "0.85rem",
-            fontFamily: "var(--font-mono-family)", outline: "none", marginBottom: 16, boxSizing: "border-box",
-            background: "#0a0a0f", border: `1px solid ${text === "ELIMINAR" ? "rgba(255,77,106,0.4)" : "rgba(255,255,255,0.06)"}`,
-            color: "#f0f0f5",
+            width: "100%",
+            padding: "10px 14px",
+            borderRadius: 8,
+            fontSize: "0.85rem",
+            fontFamily: "var(--font-dm-mono)",
+            outline: "none",
+            marginBottom: 16,
+            boxSizing: "border-box",
+            background: "#0a0a0a",
+            border: `1px solid ${text === "ELIMINAR" ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.08)"}`,
+            color: "#f0f0f0",
           }}
         />
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={onClose}
-            style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#55556a", background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }}
+            style={{
+              flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600,
+              color: "#a1a1aa", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer",
+            }}
           >
             Cancelar
           </button>
           <button
             onClick={handleDelete}
             disabled={text !== "ELIMINAR" || deleting}
-            style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#fff", background: "rgba(255,77,106,0.10)", border: "1px solid rgba(255,77,106,0.2)", cursor: "pointer", opacity: (text !== "ELIMINAR" || deleting) ? 0.4 : 1 }}
+            style={{
+              flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 700,
+              color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+              cursor: (text !== "ELIMINAR" || deleting) ? "not-allowed" : "pointer",
+              opacity: (text !== "ELIMINAR" || deleting) ? 0.4 : 1,
+            }}
           >
             {deleting ? "Eliminando…" : t.deleteModalBtn}
           </button>
@@ -323,19 +395,30 @@ function TabGeneral({ profile, lang, onChange, onSave, saving }: {
           <StyledInput value={profile.email} readOnly />
         </SettingRow>
         <SettingRow label={t.language}>
-          <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", background: "#0a0a0f" }}>
+          <div style={{
+            display: "flex",
+            borderRadius: 8,
+            overflow: "hidden",
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "#0a0a0a",
+          }}>
             {(["es", "en"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => onChange({ language: l })}
                 style={{
-                  padding: "8px 16px", fontSize: "0.82rem", fontWeight: 600, border: "none", cursor: "pointer", transition: "all 0.15s",
-                  color: lang === l ? "#00e5bf" : "#55556a",
-                  background: lang === l ? "rgba(0,229,191,0.08)" : "transparent",
-                  fontFamily: "var(--font-jakarta-family)",
+                  padding: "8px 16px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  color: lang === l ? "#3ecf8e" : "#52525b",
+                  background: lang === l ? "rgba(62,207,142,0.10)" : "transparent",
+                  fontFamily: "var(--font-dm-sans)",
                 }}
               >
-                {l === "es" ? "🇪🇸 " + t.langEs : "🇬🇧 " + t.langEn}
+                {l === "es" ? t.langEs : t.langEn}
               </button>
             ))}
           </div>
@@ -345,12 +428,19 @@ function TabGeneral({ profile, lang, onChange, onSave, saving }: {
             value={profile.timezone}
             onChange={(e) => onChange({ timezone: e.target.value })}
             style={{
-              padding: "9px 14px", background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
-              color: "#f0f0f5", fontFamily: "var(--font-jakarta-family)", fontSize: "0.85rem", outline: "none", width: 240,
+              padding: "9px 14px",
+              background: "#0a0a0a",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 8,
+              color: "#f0f0f0",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "0.85rem",
+              outline: "none",
+              width: 240,
             }}
           >
             {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz} style={{ background: "#0f0f16" }}>{tz}</option>
+              <option key={tz} value={tz} style={{ background: "#1c1c1c" }}>{tz}</option>
             ))}
           </select>
         </SettingRow>
@@ -360,10 +450,16 @@ function TabGeneral({ profile, lang, onChange, onSave, saving }: {
           onClick={onSave}
           disabled={saving}
           style={{
-            padding: "10px 24px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, color: "#000",
-            background: saving ? "rgba(0,229,191,0.5)" : "#00e5bf", border: "none", cursor: "pointer",
-            opacity: saving ? 0.7 : 1, transition: "opacity 0.2s",
-            fontFamily: "var(--font-jakarta-family)",
+            padding: "9px 18px",
+            borderRadius: 8,
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            color: "#000",
+            background: "#3ecf8e",
+            border: "none",
+            cursor: saving ? "not-allowed" : "pointer",
+            opacity: saving ? 0.7 : 1,
+            transition: "opacity 0.2s",
           }}
         >
           {saving ? t.saving : t.save}
@@ -407,53 +503,120 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: {
     finally { setSoLoading(false); }
   };
 
+  const inputStyle = {
+    width: "100%",
+    padding: "9px 14px",
+    borderRadius: 8,
+    fontSize: "0.85rem",
+    outline: "none",
+    boxSizing: "border-box" as const,
+    background: "#0a0a0a",
+    border: "1px solid rgba(255,255,255,0.08)",
+    color: "#f0f0f0",
+    fontFamily: "var(--font-dm-sans)",
+    transition: "border-color 0.2s",
+  };
+
   return (
     <div>
       {/* Org ID */}
       <SectionCard label="Organización" title={t.orgId}>
-        <div style={{ padding: "16px 0", borderBottom: "none" }}>
+        <div style={{ padding: "16px 0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
             <code style={{
-              flex: 1, fontFamily: "var(--font-mono-family)", fontSize: "0.78rem", color: "#9999ad",
-              padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)",
+              flex: 1,
+              fontFamily: "var(--font-dm-mono)",
+              fontSize: "0.78rem",
+              color: "#a1a1aa",
+              padding: "8px 12px",
+              borderRadius: 8,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              background: "#0a0a0a",
+              border: "1px solid rgba(255,255,255,0.06)",
             }}>
               {profile.org_id}
             </code>
             <button
               onClick={() => { navigator.clipboard.writeText(profile.org_id); toast.success("Copiado"); }}
               style={{
-                padding: "8px 14px", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600, color: "#9999ad",
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", flexShrink: 0,
-                fontFamily: "var(--font-jakarta-family)",
+                padding: "8px 14px",
+                borderRadius: 8,
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                color: "#a1a1aa",
+                background: "#1c1c1c",
+                border: "1px solid rgba(255,255,255,0.08)",
+                cursor: "pointer",
+                flexShrink: 0,
               }}
             >
               Copiar
             </button>
           </div>
-          <p style={{ fontSize: "0.75rem", color: "#55556a" }}>{t.orgIdHelp}</p>
+          <p style={{ fontSize: "0.75rem", color: "#52525b" }}>{t.orgIdHelp}</p>
         </div>
       </SectionCard>
 
       {/* Sessions */}
       <SectionCard label="Seguridad" title={t.activeSessions}>
-        <div style={{ padding: "16px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, marginBottom: 14, background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <div style={{ width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, background: "rgba(0,229,191,0.06)", flexShrink: 0 }}>💻</div>
+        <div style={{ padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "12px 14px",
+            borderRadius: 10,
+            marginBottom: 12,
+            background: "#0a0a0a",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 16,
+              background: "rgba(62,207,142,0.08)",
+              color: "#3ecf8e",
+              flexShrink: 0,
+            }}>💻</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f0f0f5" }}>{t.currentDevice}</div>
-              <div style={{ fontSize: "0.72rem", color: "#55556a", marginTop: 2 }}>{new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</div>
+              <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f0f0f0" }}>{t.currentDevice}</div>
+              <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.72rem", color: "#52525b", marginTop: 2 }}>
+                {new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
+              </div>
             </div>
-            <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 20, background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.15)" }}>ACTIVA</span>
+            <span style={{
+              fontFamily: "var(--font-dm-mono)",
+              fontSize: "0.68rem",
+              padding: "3px 8px",
+              borderRadius: 6,
+              background: "rgba(34,197,94,0.08)",
+              color: "#22c55e",
+              border: "1px solid rgba(34,197,94,0.15)",
+            }}>ACTIVA</span>
           </div>
           <button
             onClick={handleSignOutOthers}
             disabled={soLoading}
             style={{
-              display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", fontWeight: 600,
-              padding: "9px 16px", borderRadius: 8, transition: "all 0.15s", cursor: "pointer",
-              color: "#ffb020", background: "rgba(255,176,32,0.06)", border: "1px solid rgba(255,176,32,0.15)",
-              opacity: soLoading ? 0.5 : 1, fontFamily: "var(--font-jakarta-family)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              padding: "9px 16px",
+              borderRadius: 8,
+              cursor: soLoading ? "not-allowed" : "pointer",
+              color: "#f59e0b",
+              background: "rgba(245,158,11,0.06)",
+              border: "1px solid rgba(245,158,11,0.15)",
+              opacity: soLoading ? 0.5 : 1,
+              transition: "opacity 0.15s",
             }}
           >
             {soLoading ? "⟳ " : "⊘ "}{t.signOutOthers}
@@ -462,7 +625,7 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: {
 
         {/* Change password */}
         <div style={{ padding: "16px 0 20px" }}>
-          <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f5", marginBottom: 14 }}>{t.changePassword}</div>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#f0f0f0", marginBottom: 14 }}>{t.changePassword}</div>
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
             {[
               { key: "current", label: t.currentPw },
@@ -470,19 +633,23 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: {
               { key: "confirm", label: t.confirmPw },
             ].map((f) => (
               <div key={f.key}>
-                <label style={{ fontSize: "0.75rem", color: "#55556a", display: "block", marginBottom: 5 }}>{f.label}</label>
+                <label style={{
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.62rem",
+                  textTransform: "uppercase" as const,
+                  letterSpacing: "0.12em",
+                  color: "#52525b",
+                  fontWeight: 600,
+                  display: "block",
+                  marginBottom: 5,
+                }}>{f.label}</label>
                 <input
                   type="password"
                   value={pw[f.key as keyof typeof pw]}
                   onChange={(e) => setPw((p) => ({ ...p, [f.key]: e.target.value }))}
-                  style={{
-                    width: "100%", padding: "9px 14px", borderRadius: 8, fontSize: "0.85rem",
-                    outline: "none", boxSizing: "border-box",
-                    background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.06)", color: "#f0f0f5",
-                    fontFamily: "var(--font-jakarta-family)",
-                  }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,229,191,0.3)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+                  style={inputStyle}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(62,207,142,0.35)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                 />
               </div>
             ))}
@@ -490,10 +657,18 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: {
               onClick={handleChangePw}
               disabled={pwSaving || !pw.current || !pw.new || !pw.confirm}
               style={{
-                alignSelf: "flex-start", marginTop: 4, padding: "9px 20px", borderRadius: 8, fontSize: "0.82rem",
-                fontWeight: 600, color: "#000", background: "#00e5bf", border: "none", cursor: "pointer",
+                alignSelf: "flex-start",
+                marginTop: 4,
+                padding: "9px 20px",
+                borderRadius: 8,
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                color: "#000",
+                background: "#3ecf8e",
+                border: "none",
+                cursor: (pwSaving || !pw.current || !pw.new || !pw.confirm) ? "not-allowed" : "pointer",
                 opacity: (pwSaving || !pw.current || !pw.new || !pw.confirm) ? 0.4 : 1,
-                fontFamily: "var(--font-jakarta-family)",
+                transition: "opacity 0.2s",
               }}
             >
               {pwSaving ? "Actualizando…" : t.updatePw}
@@ -504,28 +679,57 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: {
 
       {/* Sign out */}
       <SectionCard label="Sesión" title={t.signOut}>
-        <div style={{ padding: "16px 0" }}>
-          <p style={{ fontSize: "0.8rem", color: "#55556a", marginBottom: 14 }}>{t.signOutDesc}</p>
+        <div style={{ padding: "14px 0" }}>
+          <p style={{ fontSize: "0.8rem", color: "#52525b", marginBottom: 14 }}>{t.signOutDesc}</p>
           <button
             onClick={onSignOut}
             style={{
-              padding: "9px 18px", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer",
-              color: "#9999ad", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-              fontFamily: "var(--font-jakarta-family)",
+              padding: "9px 18px",
+              borderRadius: 8,
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              color: "#a1a1aa",
+              background: "#1c1c1c",
+              border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            Cerrar sesión
+            {t.signOut}
           </button>
         </div>
       </SectionCard>
 
       {/* Danger zone */}
-      <div style={{ background: "rgba(255,77,106,0.04)", border: "1px solid rgba(255,77,106,0.12)", borderRadius: 16, padding: "24px 28px", marginTop: 4 }}>
-        <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#ff4d6a", marginBottom: 6 }}>{t.dangerZone}</div>
-        <div style={{ fontSize: "0.82rem", color: "#55556a", marginBottom: 16, lineHeight: 1.6, maxWidth: 480 }}>{t.deleteDesc}</div>
+      <div style={{
+        background: "rgba(239,68,68,0.04)",
+        border: "1px solid rgba(239,68,68,0.12)",
+        borderRadius: 12,
+        padding: "20px 24px",
+        marginTop: 4,
+      }}>
+        <div style={{
+          fontFamily: "var(--font-dm-mono)",
+          fontSize: "0.62rem",
+          textTransform: "uppercase" as const,
+          letterSpacing: "0.12em",
+          color: "rgba(239,68,68,0.6)",
+          fontWeight: 600,
+          marginBottom: 6,
+        }}>{t.dangerZone}</div>
+        <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#ef4444", marginBottom: 6 }}>{t.deleteAccount}</div>
+        <div style={{ fontSize: "0.8rem", color: "#52525b", marginBottom: 16, lineHeight: 1.6, maxWidth: 480 }}>{t.deleteDesc}</div>
         <button
           onClick={onDelete}
-          style={{ padding: "9px 18px", background: "rgba(255,77,106,0.10)", border: "1px solid rgba(255,77,106,0.2)", borderRadius: 8, color: "#ff4d6a", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
+          style={{
+            padding: "9px 18px",
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.15)",
+            borderRadius: 8,
+            color: "#ef4444",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
         >
           {t.deleteBtn}
         </button>
@@ -557,32 +761,54 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
 
   const totalCredits = info.credits_available + info.credits_used;
   const creditPct = totalCredits > 0 ? info.credits_available / totalCredits : 1;
-  const creditColor = info.credits_available > 2 ? "#00e5bf" : info.credits_available > 0 ? "#ffb020" : "#ff4d6a";
+  const creditColor = info.credits_available > 2 ? "#3ecf8e" : info.credits_available > 0 ? "#f59e0b" : "#ef4444";
 
   return (
     <div>
       {/* Plan card */}
-      <div style={{ background: "linear-gradient(135deg, rgba(0,229,191,0.04), rgba(99,102,241,0.04))", border: "1px solid rgba(0,229,191,0.12)", borderRadius: 16, padding: "24px 28px", marginBottom: 16 }}>
-        <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", textTransform: "uppercase" as const, letterSpacing: "0.15em", color: "#33334a", marginBottom: 8 }}>{t.currentPlan}</div>
+      <div style={{
+        background: "#1c1c1c",
+        border: "1px solid rgba(62,207,142,0.12)",
+        borderRadius: 12,
+        padding: "22px 24px",
+        marginBottom: 14,
+      }}>
+        <div style={{
+          fontFamily: "var(--font-dm-mono)",
+          fontSize: "0.62rem",
+          textTransform: "uppercase" as const,
+          letterSpacing: "0.12em",
+          color: "#52525b",
+          fontWeight: 600,
+          marginBottom: 12,
+        }}>{t.currentPlan}</div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.6rem", fontWeight: 400, color: "#f0f0f5" }}>
+              <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "#f0f0f0" }}>
                 {info.plan.charAt(0).toUpperCase() + info.plan.slice(1)}
               </span>
               <PlanBadge plan={info.plan} />
               {info.cancel_at_period_end && (
-                <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 20, color: "#ffb020", background: "rgba(255,176,32,0.08)", border: "1px solid rgba(255,176,32,0.15)" }}>
+                <span style={{
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "0.68rem",
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  color: "#f59e0b",
+                  background: "rgba(245,158,11,0.08)",
+                  border: "1px solid rgba(245,158,11,0.15)",
+                }}>
                   {t.cancelNote}
                 </span>
               )}
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#9999ad" }}>
+            <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.8rem", color: "#a1a1aa" }}>
               {info.plan === "business" ? "59€/mes" : info.plan === "starter" ? "29€/mes" : "—"}
             </div>
             {info.current_period_end && (
-              <div style={{ fontSize: "0.78rem", color: "#55556a", marginTop: 6 }}>
-                {t.renewal}: <span style={{ color: "#9999ad" }}>{fmtDate(info.current_period_end)}</span>
+              <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.72rem", color: "#52525b", marginTop: 6 }}>
+                {t.renewal}: <span style={{ color: "#a1a1aa" }}>{fmtDate(info.current_period_end)}</span>
               </div>
             )}
           </div>
@@ -590,7 +816,16 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
             {info.plan !== "business" && (
               <button
                 onClick={handleUpgrade}
-                style={{ padding: "9px 18px", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#000", background: "#00e5bf", border: "none", cursor: "pointer", fontFamily: "var(--font-jakarta-family)" }}
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: 8,
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  color: "#000",
+                  background: "#3ecf8e",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
                 {t.upgradeBtn}
               </button>
@@ -599,7 +834,17 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
               <button
                 onClick={handlePortal}
                 disabled={portalLoading}
-                style={{ padding: "9px 18px", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600, color: "#9999ad", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", opacity: portalLoading ? 0.6 : 1, fontFamily: "var(--font-jakarta-family)" }}
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: 8,
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  color: "#a1a1aa",
+                  background: "#1c1c1c",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  cursor: portalLoading ? "not-allowed" : "pointer",
+                  opacity: portalLoading ? 0.6 : 1,
+                }}
               >
                 {portalLoading ? "⟳" : t.manageBtn}
               </button>
@@ -608,22 +853,43 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
         </div>
       </div>
 
-      {/* Credits */}
+      {/* Credits usage */}
       <SectionCard label="Uso" title={t.creditsAvail}>
-        <div style={{ padding: "16px 0" }}>
+        <div style={{ padding: "14px 0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 8 }}>
-                <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "2.2rem", fontWeight: 400, color: creditColor, lineHeight: 1 }}>{info.credits_available}</span>
-                <span style={{ fontSize: "0.82rem", color: "#55556a" }}>/ {totalCredits}</span>
+                <span style={{
+                  fontFamily: "var(--font-dm-mono)",
+                  fontSize: "2rem",
+                  fontWeight: 700,
+                  color: creditColor,
+                  lineHeight: 1,
+                }}>{info.credits_available}</span>
+                <span style={{ fontSize: "0.82rem", color: "#52525b" }}>/ {totalCredits}</span>
               </div>
-              <div style={{ height: 4, borderRadius: 4, overflow: "hidden", background: "rgba(255,255,255,0.05)" }}>
-                <div style={{ height: "100%", borderRadius: 4, transition: "width 0.7s", width: `${creditPct * 100}%`, background: creditColor }} />
+              <div style={{ height: 4, borderRadius: 4, overflow: "hidden", background: "rgba(255,255,255,0.06)" }}>
+                <div style={{
+                  height: "100%",
+                  borderRadius: 4,
+                  transition: "width 0.7s",
+                  width: `${creditPct * 100}%`,
+                  background: creditColor,
+                }} />
               </div>
             </div>
             <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
-              <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.14em", color: "#33334a" }}>{t.creditsReset}</div>
-              <div style={{ fontSize: "0.82rem", color: "#9999ad", marginTop: 4 }}>{info.credits_reset_date || "—"}</div>
+              <div style={{
+                fontFamily: "var(--font-dm-mono)",
+                fontSize: "0.62rem",
+                textTransform: "uppercase" as const,
+                letterSpacing: "0.12em",
+                color: "#52525b",
+                fontWeight: 600,
+              }}>{t.creditsReset}</div>
+              <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.78rem", color: "#a1a1aa", marginTop: 4 }}>
+                {info.credits_reset_date || "—"}
+              </div>
             </div>
           </div>
         </div>
@@ -633,20 +899,31 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
       <SectionCard label="Facturación" title={t.billingHistory}>
         <div style={{ padding: "8px 0" }}>
           {info.billing_history.length === 0 ? (
-            <p style={{ fontSize: "0.82rem", color: "#55556a", padding: "10px 0" }}>{t.noBilling}</p>
+            <p style={{ fontSize: "0.82rem", color: "#52525b", padding: "10px 0" }}>{t.noBilling}</p>
           ) : (
             <div>
               {info.billing_history.map((inv, i) => (
                 <div
                   key={i}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: i < info.billing_history.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 0",
+                    borderBottom: i < info.billing_history.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                  }}
                 >
                   <div>
-                    <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#f0f0f5" }}>{inv.description}</div>
-                    <div style={{ fontSize: "0.72rem", color: "#55556a", marginTop: 2 }}>{fmtDate(inv.date)}</div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#f0f0f0" }}>{inv.description}</div>
+                    <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.72rem", color: "#52525b", marginTop: 2 }}>{fmtDate(inv.date)}</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "1rem", fontWeight: 400, color: "#00e5bf" }}>
+                    <span style={{
+                      fontFamily: "var(--font-dm-mono)",
+                      fontSize: "0.9rem",
+                      fontWeight: 700,
+                      color: "#3ecf8e",
+                    }}>
                       {inv.amount.toFixed(2)} {inv.currency}
                     </span>
                     {inv.invoice_url && (
@@ -654,7 +931,16 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
                         href={inv.invoice_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ fontSize: "0.72rem", fontWeight: 600, padding: "3px 10px", borderRadius: 6, color: "#6366f1", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", textDecoration: "none" }}
+                        style={{
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          padding: "3px 10px",
+                          borderRadius: 6,
+                          color: "#3b82f6",
+                          background: "rgba(59,130,246,0.08)",
+                          border: "1px solid rgba(59,130,246,0.15)",
+                          textDecoration: "none",
+                        }}
                       >
                         PDF
                       </a>
@@ -688,18 +974,33 @@ function TabNotifications({ prefs, lang, onChange, onSave, saving }: {
         {mainToggles.map((item, idx) => (
           <div
             key={item.key}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: idx < mainToggles.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px 0",
+              borderBottom: idx < mainToggles.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+              gap: 16,
+            }}
           >
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f5" }}>{item.label}</span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f0f0f0" }}>{item.label}</span>
                 {item.alwaysOn && (
-                  <span style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.6rem", padding: "2px 7px", borderRadius: 4, background: "rgba(0,229,191,0.08)", color: "#00e5bf", border: "1px solid rgba(0,229,191,0.15)" }}>
+                  <span style={{
+                    fontFamily: "var(--font-dm-mono)",
+                    fontSize: "0.68rem",
+                    padding: "2px 7px",
+                    borderRadius: 6,
+                    background: "rgba(62,207,142,0.08)",
+                    color: "#3ecf8e",
+                    border: "1px solid rgba(62,207,142,0.15)",
+                  }}>
                     RECOMENDADO
                   </span>
                 )}
               </div>
-              <p style={{ fontSize: "0.78rem", color: "#55556a", marginTop: 3, lineHeight: 1.5 }}>{item.desc}</p>
+              <p style={{ fontSize: "0.78rem", color: "#52525b", marginTop: 4, lineHeight: 1.5 }}>{item.desc}</p>
             </div>
             <ToggleSwitch
               checked={prefs[item.key as keyof NotifPrefs]}
@@ -713,9 +1014,16 @@ function TabNotifications({ prefs, lang, onChange, onSave, saving }: {
           onClick={onSave}
           disabled={saving}
           style={{
-            padding: "10px 24px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, color: "#000",
-            background: saving ? "rgba(0,229,191,0.5)" : "#00e5bf", border: "none", cursor: "pointer",
-            opacity: saving ? 0.7 : 1, transition: "opacity 0.2s", fontFamily: "var(--font-jakarta-family)",
+            padding: "9px 18px",
+            borderRadius: 8,
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            color: "#000",
+            background: "#3ecf8e",
+            border: "none",
+            cursor: saving ? "not-allowed" : "pointer",
+            opacity: saving ? 0.7 : 1,
+            transition: "opacity 0.2s",
           }}
         >
           {saving ? T[lang].saving : t.savePrefs}
@@ -803,8 +1111,22 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 256, background: "#050507" }}>
-        <div style={{ width: 28, height: 28, border: "2px solid #00e5bf", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{
+        padding: 40,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: 256,
+        background: "#0a0a0a",
+      }}>
+        <div style={{
+          width: 28,
+          height: 28,
+          border: "2px solid #3ecf8e",
+          borderTopColor: "transparent",
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite",
+        }} />
       </div>
     );
   }
@@ -819,36 +1141,65 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div style={{ padding: "32px 36px 60px", background: "#050507", minHeight: "100vh", position: "relative", zIndex: 1, fontFamily: "var(--font-jakarta-family)", maxWidth: 860, margin: "0 auto" }}>
+    <div style={{
+      padding: "28px 32px 60px",
+      background: "#0a0a0a",
+      minHeight: "100vh",
+      fontFamily: "var(--font-dm-sans)",
+      maxWidth: 860,
+      margin: "0 auto",
+    }}>
       {showDelete && (
         <DeleteModal lang={lang} onConfirm={handleDeleteAccount} onClose={() => setShowDelete(false)} />
       )}
 
-      {/* Header */}
+      {/* Page header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "var(--font-serif-family)", fontSize: "1.75rem", fontWeight: 400, letterSpacing: "-0.02em", color: "#f0f0f5" }}>{t.title}</h1>
-        <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4 }}>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f0f0f0", marginBottom: 4 }}>
+          {t.title}
+        </h1>
+        <p style={{ fontSize: "0.8rem", color: "#52525b" }}>
           {profile.email}
           {profile.company_name ? ` · ${profile.company_name}` : ""}
         </p>
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: 0 }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        marginBottom: 24,
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        paddingBottom: 0,
+      }}>
         {TABS.map((tb) => (
           <button
             key={tb.key}
             onClick={() => setTab(tb.key)}
             style={{
-              position: "relative", padding: "10px 16px", fontSize: "0.82rem", fontWeight: 600,
-              background: "none", border: "none", cursor: "pointer", transition: "color 0.15s",
-              color: tab === tb.key ? "#00e5bf" : "#55556a",
-              fontFamily: "var(--font-jakarta-family)",
+              position: "relative",
+              padding: "10px 16px",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              transition: "color 0.15s",
+              color: tab === tb.key ? "#f0f0f0" : "#52525b",
             }}
           >
             {tb.label}
             {tab === tb.key && (
-              <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, borderRadius: "2px 2px 0 0", background: "#00e5bf", boxShadow: "0 0 8px rgba(0,229,191,0.4)" }} />
+              <span style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 2,
+                borderRadius: "2px 2px 0 0",
+                background: "#3ecf8e",
+              }} />
             )}
           </button>
         ))}

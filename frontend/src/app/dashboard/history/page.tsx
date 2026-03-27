@@ -63,10 +63,10 @@ function groupByDay(entries: HistoryEntry[]): { dayLabel: string; items: History
 
 // ── Result badge ───────────────────────────────────────────────────────────────
 const RESULT_STYLE: Record<string, { color: string; bg: string }> = {
-  clean:    { color: "#22c55e", bg: "rgba(34,197,94,0.10)" },
-  findings: { color: "#ff4d6a", bg: "rgba(255,77,106,0.10)" },
-  ok:       { color: "#22d3ee", bg: "rgba(34,211,238,0.10)" },
-  info:     { color: "#55556a", bg: "rgba(85,85,106,0.10)" },
+  clean:    { color: "#3ecf8e", bg: "rgba(62,207,142,0.10)" },
+  findings: { color: "#ef4444", bg: "rgba(239,68,68,0.10)" },
+  ok:       { color: "#3b82f6", bg: "rgba(59,130,246,0.10)" },
+  info:     { color: "#52525b", bg: "rgba(82,82,91,0.10)" },
 };
 
 function ResultBadge({ result, label }: { result: string; label: string }) {
@@ -74,10 +74,10 @@ function ResultBadge({ result, label }: { result: string; label: string }) {
   return (
     <span
       style={{
-        fontFamily: "var(--font-mono-family)",
-        fontSize: "0.58rem",
+        fontFamily: "var(--font-dm-mono)",
+        fontSize: "0.68rem",
         textTransform: "uppercase" as const,
-        letterSpacing: "1px",
+        letterSpacing: "0.06em",
         padding: "3px 8px",
         borderRadius: 6,
         fontWeight: 600,
@@ -93,9 +93,9 @@ function ResultBadge({ result, label }: { result: string; label: string }) {
 
 // ── Origin badge ───────────────────────────────────────────────────────────────
 const ORIGIN_STYLE: Record<string, { color: string; bg: string }> = {
-  automatic: { color: "#55556a", bg: "rgba(85,85,106,0.08)" },
-  manual:    { color: "#22d3ee", bg: "rgba(34,211,238,0.08)" },
-  system:    { color: "#6366f1", bg: "rgba(99,102,241,0.08)" },
+  automatic: { color: "#52525b", bg: "rgba(82,82,91,0.08)" },
+  manual:    { color: "#3b82f6", bg: "rgba(59,130,246,0.08)" },
+  system:    { color: "#a855f7", bg: "rgba(168,85,247,0.08)" },
 };
 
 function OriginBadge({ origin, label }: { origin: string; label: string }) {
@@ -103,17 +103,17 @@ function OriginBadge({ origin, label }: { origin: string; label: string }) {
   return (
     <span
       style={{
-        fontFamily: "var(--font-mono-family)",
-        fontSize: "0.58rem",
+        fontFamily: "var(--font-dm-mono)",
+        fontSize: "0.68rem",
         textTransform: "uppercase" as const,
-        letterSpacing: "1px",
+        letterSpacing: "0.06em",
         padding: "3px 8px",
         borderRadius: 6,
         fontWeight: 600,
         flexShrink: 0,
         color: s.color,
         background: s.bg,
-        border: `1px solid ${s.color}30`,
+        border: `1px solid ${s.color}25`,
       }}
     >
       {label}
@@ -121,14 +121,9 @@ function OriginBadge({ origin, label }: { origin: string; label: string }) {
   );
 }
 
-// ── Entry card ─────────────────────────────────────────────────────────────────
+// ── Entry row ─────────────────────────────────────────────────────────────────
 function EntryRow({ entry }: { entry: HistoryEntry }) {
   const isFindings = entry.result === "findings";
-
-  // Type icon background color based on result
-  const iconBg = isFindings
-    ? "rgba(255,77,106,0.10)"
-    : "rgba(255,255,255,0.04)";
 
   return (
     <div
@@ -137,24 +132,25 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
         alignItems: "center",
         gap: 14,
         padding: "13px 20px",
-        background: "#0f0f16",
-        border: `1px solid ${isFindings ? "rgba(255,77,106,0.10)" : "rgba(255,255,255,0.03)"}`,
+        background: "#1c1c1c",
+        border: `1px solid ${isFindings ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.06)"}`,
         borderRadius: 10,
         marginBottom: 6,
         transition: "border-color 0.15s",
+        borderLeft: isFindings ? "3px solid rgba(239,68,68,0.5)" : "3px solid rgba(255,255,255,0.06)",
       }}
     >
-      {/* Type icon in colored circle */}
+      {/* Icon */}
       <div
         style={{
           width: 34,
           height: 34,
           borderRadius: 9,
-          background: iconBg,
+          background: isFindings ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.04)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "1rem",
+          fontSize: "0.95rem",
           flexShrink: 0,
         }}
       >
@@ -163,13 +159,21 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
 
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+            marginBottom: 4,
+          }}
+        >
           <span
             style={{
               fontSize: "0.85rem",
               fontWeight: 600,
-              color: "#f0f0f5",
-              fontFamily: "var(--font-jakarta-family)",
+              color: "#f0f0f0",
+              fontFamily: "var(--font-dm-sans)",
             }}
           >
             {entry.title}
@@ -180,7 +184,7 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
         <p
           style={{
             fontSize: "0.75rem",
-            color: "#55556a",
+            color: "#52525b",
             marginTop: 2,
             lineHeight: 1.5,
             display: "-webkit-box",
@@ -196,9 +200,9 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
       {/* Timestamp */}
       <div
         style={{
-          fontFamily: "var(--font-mono-family)",
-          fontSize: "0.7rem",
-          color: "#33334a",
+          fontFamily: "var(--font-dm-mono)",
+          fontSize: "0.68rem",
+          color: "#52525b",
           textAlign: "right",
           flexShrink: 0,
           whiteSpace: "nowrap",
@@ -214,20 +218,31 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
 function DayGroup({ dayLabel, items }: { dayLabel: string; items: HistoryEntry[] }) {
   return (
     <div>
+      {/* Section label */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
         <span
           style={{
-            fontFamily: "var(--font-mono-family)",
-            fontSize: "0.65rem",
+            fontFamily: "var(--font-dm-mono)",
+            fontSize: "0.62rem",
             textTransform: "uppercase",
-            letterSpacing: "2px",
-            color: "#55556a",
+            letterSpacing: "0.12em",
+            fontWeight: 600,
+            color: "#52525b",
             whiteSpace: "nowrap",
           }}
         >
           {dayLabel}
         </span>
-        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
+        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+        <span
+          style={{
+            fontFamily: "var(--font-dm-mono)",
+            fontSize: "0.6rem",
+            color: "#3f3f46",
+          }}
+        >
+          {items.length}
+        </span>
       </div>
       <div>
         {items.map((e) => (
@@ -237,22 +252,6 @@ function DayGroup({ dayLabel, items }: { dayLabel: string; items: HistoryEntry[]
     </div>
   );
 }
-
-// ── Filter bar ─────────────────────────────────────────────────────────────────
-const DATE_FILTERS = [
-  { key: "week",  label: "Última semana" },
-  { key: "month", label: "Último mes" },
-  { key: "all",   label: "Todo" },
-];
-
-const EVENT_FILTERS = [
-  { key: "",                label: "Todos los eventos" },
-  { key: "alert_generated", label: "⚡ Alertas" },
-  { key: "darkweb_scan",    label: "🕸 Escaneos Dark Web" },
-  { key: "auto_scan",       label: "⟳ Escaneos automáticos" },
-  { key: "domain_added",    label: "◎ Dominios añadidos" },
-  { key: "email_added",     label: "✉ Emails añadidos" },
-];
 
 // ── Empty state ────────────────────────────────────────────────────────────────
 function EmptyState({ dateFilter }: { dateFilter: string }) {
@@ -264,18 +263,27 @@ function EmptyState({ dateFilter }: { dateFilter: string }) {
       : "aún";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "80px 0", textAlign: "center" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 16,
+        padding: "80px 0",
+        textAlign: "center",
+      }}
+    >
       <div
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: 16,
-          background: "rgba(34,211,238,0.06)",
-          border: "1px solid rgba(34,211,238,0.10)",
+          width: 52,
+          height: 52,
+          borderRadius: 14,
+          background: "rgba(59,130,246,0.06)",
+          border: "1px solid rgba(59,130,246,0.10)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 24,
+          fontSize: "1.3rem",
         }}
       >
         ≡
@@ -283,16 +291,15 @@ function EmptyState({ dateFilter }: { dateFilter: string }) {
       <div>
         <div
           style={{
-            fontFamily: "var(--font-serif-family)",
-            fontSize: "1.1rem",
-            fontWeight: 400,
-            color: "#f0f0f5",
+            fontSize: "1rem",
+            fontWeight: 700,
+            color: "#f0f0f0",
             marginBottom: 6,
           }}
         >
           Sin actividad
         </div>
-        <div style={{ fontSize: "0.85rem", color: "#55556a", maxWidth: 280, lineHeight: 1.6 }}>
+        <div style={{ fontSize: "0.82rem", color: "#52525b", maxWidth: 280, lineHeight: 1.6 }}>
           Tu historial de actividad {msg} aparecerá aquí. Los escaneos automáticos y eventos de
           seguridad quedarán registrados.
         </div>
@@ -300,6 +307,22 @@ function EmptyState({ dateFilter }: { dateFilter: string }) {
     </div>
   );
 }
+
+// ── Filter constants ───────────────────────────────────────────────────────────
+const DATE_FILTERS = [
+  { key: "week",  label: "Última semana" },
+  { key: "month", label: "Último mes" },
+  { key: "all",   label: "Todo" },
+];
+
+const EVENT_FILTERS = [
+  { key: "",                label: "Todos los eventos" },
+  { key: "alert_generated", label: "Alertas" },
+  { key: "darkweb_scan",    label: "Escaneos Dark Web" },
+  { key: "auto_scan",       label: "Escaneos automáticos" },
+  { key: "domain_added",    label: "Dominios añadidos" },
+  { key: "email_added",     label: "Emails añadidos" },
+];
 
 // ── Pagination ─────────────────────────────────────────────────────────────────
 function Pagination({
@@ -321,34 +344,37 @@ function Pagination({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        marginTop: 20,
-        paddingTop: 16,
-        borderTop: "1px solid rgba(255,255,255,0.03)",
+        marginTop: 24,
+        paddingTop: 18,
+        borderTop: "1px solid rgba(255,255,255,0.06)",
       }}
     >
       <span
         style={{
-          fontFamily: "var(--font-mono-family)",
-          fontSize: "0.72rem",
-          color: "#33334a",
+          fontFamily: "var(--font-dm-mono)",
+          fontSize: "0.68rem",
+          color: "#52525b",
         }}
       >
         {showing} de {total} eventos
       </span>
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
         <button
           onClick={() => onPage(page - 1)}
           disabled={page <= 1}
           style={{
             padding: "6px 14px",
-            borderRadius: 7,
-            background: "#0f0f16",
+            borderRadius: 8,
+            background: "#1c1c1c",
             border: "1px solid rgba(255,255,255,0.06)",
-            color: "#9999ad",
-            fontSize: "0.8rem",
+            color: "#a1a1aa",
+            fontSize: "0.78rem",
+            fontWeight: 600,
             cursor: page <= 1 ? "not-allowed" : "pointer",
             opacity: page <= 1 ? 0.3 : 1,
-            fontFamily: "var(--font-jakarta-family)",
+            fontFamily: "var(--font-dm-sans)",
+            transition: "opacity 0.15s",
           }}
         >
           ← Anterior
@@ -357,6 +383,7 @@ function Pagination({
         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
           const p = page <= 3 ? i + 1 : page + i - 2;
           if (p < 1 || p > totalPages) return null;
+          const isActive = p === page;
           return (
             <button
               key={p}
@@ -364,23 +391,15 @@ function Pagination({
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 7,
-                fontFamily: "var(--font-mono-family)",
+                borderRadius: 8,
+                fontFamily: "var(--font-dm-mono)",
                 fontSize: "0.75rem",
                 fontWeight: 600,
-                transition: "all 0.2s",
+                transition: "all 0.15s",
                 cursor: "pointer",
-                ...(p === page
-                  ? {
-                      background: "rgba(0,229,191,0.10)",
-                      color: "#00e5bf",
-                      border: "1px solid rgba(0,229,191,0.20)",
-                    }
-                  : {
-                      background: "rgba(255,255,255,0.03)",
-                      color: "#55556a",
-                      border: "1px solid rgba(255,255,255,0.05)",
-                    }),
+                background: isActive ? "#3ecf8e" : "#1c1c1c",
+                color: isActive ? "#000" : "#52525b",
+                border: isActive ? "none" : "1px solid rgba(255,255,255,0.06)",
               }}
             >
               {p}
@@ -393,14 +412,16 @@ function Pagination({
           disabled={page >= totalPages}
           style={{
             padding: "6px 14px",
-            borderRadius: 7,
-            background: "#0f0f16",
+            borderRadius: 8,
+            background: "#1c1c1c",
             border: "1px solid rgba(255,255,255,0.06)",
-            color: "#9999ad",
-            fontSize: "0.8rem",
+            color: "#a1a1aa",
+            fontSize: "0.78rem",
+            fontWeight: 600,
             cursor: page >= totalPages ? "not-allowed" : "pointer",
             opacity: page >= totalPages ? 0.3 : 1,
-            fontFamily: "var(--font-jakarta-family)",
+            fontFamily: "var(--font-dm-sans)",
+            transition: "opacity 0.15s",
           }}
         >
           Siguiente →
@@ -449,39 +470,51 @@ export default function HistoryPage() {
   return (
     <div
       style={{
-        padding: "32px 36px 60px",
-        background: "#050507",
+        padding: "28px 32px 60px",
+        background: "#0a0a0a",
         minHeight: "100vh",
-        position: "relative",
-        zIndex: 1,
-        fontFamily: "var(--font-jakarta-family)",
+        fontFamily: "var(--font-dm-sans)",
       }}
     >
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+      {/* Page header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginBottom: 28,
+        }}
+      >
         <div>
           <h1
             style={{
-              fontFamily: "var(--font-serif-family)",
-              fontSize: "1.75rem",
-              fontWeight: 400,
-              letterSpacing: "-0.02em",
-              color: "#f0f0f5",
+              fontSize: "1.4rem",
+              fontWeight: 700,
+              color: "#f0f0f0",
               margin: 0,
+              letterSpacing: "-0.01em",
             }}
           >
             Historial de actividad
           </h1>
-          <p style={{ color: "#55556a", fontSize: "0.82rem", marginTop: 4, margin: "4px 0 0" }}>
-            Registro cronológico de todos los eventos de seguridad de tu cuenta
+          <p
+            style={{
+              color: "#52525b",
+              fontSize: "0.8rem",
+              marginTop: 5,
+              margin: "5px 0 0",
+            }}
+          >
+            Registro cronológico de todos los eventos de seguridad
           </p>
         </div>
         {data && (
           <span
             style={{
-              fontFamily: "var(--font-mono-family)",
-              fontSize: "0.72rem",
-              color: "#33334a",
+              fontFamily: "var(--font-dm-mono)",
+              fontSize: "0.68rem",
+              color: "#52525b",
+              marginTop: 6,
             }}
           >
             {data.total} evento{data.total !== 1 ? "s" : ""}
@@ -490,38 +523,49 @@ export default function HistoryPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
-        {/* Date filter tabs */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+          marginBottom: 28,
+        }}
+      >
+        {/* Date filter pills */}
         <div
           style={{
             display: "flex",
             gap: 4,
             padding: 4,
-            background: "#0f0f16",
-            border: "1px solid rgba(255,255,255,0.03)",
+            background: "#111111",
+            border: "1px solid rgba(255,255,255,0.06)",
             borderRadius: 10,
           }}
         >
-          {DATE_FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setDateFilter(f.key)}
-              style={{
-                padding: "7px 14px",
-                borderRadius: 7,
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                transition: "all 0.2s",
-                cursor: "pointer",
-                border: "none",
-                fontFamily: "var(--font-jakarta-family)",
-                background: dateFilter === f.key ? "#1a1a26" : "transparent",
-                color: dateFilter === f.key ? "#f0f0f5" : "#55556a",
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+          {DATE_FILTERS.map((f) => {
+            const active = dateFilter === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setDateFilter(f.key)}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 7,
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  transition: "all 0.15s",
+                  cursor: "pointer",
+                  border: active ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+                  fontFamily: "var(--font-dm-sans)",
+                  background: active ? "#1c1c1c" : "transparent",
+                  color: active ? "#f0f0f0" : "#52525b",
+                }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Event type select */}
@@ -530,18 +574,25 @@ export default function HistoryPage() {
           onChange={(e) => setEventFilter(e.target.value)}
           style={{
             padding: "8px 12px",
-            borderRadius: 9,
+            borderRadius: 8,
             fontSize: "0.8rem",
             outline: "none",
             cursor: "pointer",
-            fontFamily: "var(--font-jakarta-family)",
-            background: "#0f0f16",
+            fontFamily: "var(--font-dm-sans)",
+            background: "#111111",
             border: "1px solid rgba(255,255,255,0.06)",
-            color: eventFilter ? "#00e5bf" : "#55556a",
+            color: eventFilter ? "#3ecf8e" : "#52525b",
+            appearance: "none",
+            WebkitAppearance: "none",
+            paddingRight: "28px",
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2352525b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 10px center",
           }}
         >
           {EVENT_FILTERS.map((f) => (
-            <option key={f.key} value={f.key} style={{ background: "#0f0f16" }}>
+            <option key={f.key} value={f.key} style={{ background: "#111111", color: "#f0f0f0" }}>
               {f.label}
             </option>
           ))}
@@ -550,12 +601,19 @@ export default function HistoryPage() {
 
       {/* Content */}
       {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 192 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: 192,
+          }}
+        >
           <div
             style={{
-              width: 32,
-              height: 32,
-              border: "2px solid #00e5bf",
+              width: 28,
+              height: 28,
+              border: "2px solid #3ecf8e",
               borderTopColor: "transparent",
               borderRadius: "50%",
               animation: "spin 0.8s linear infinite",
