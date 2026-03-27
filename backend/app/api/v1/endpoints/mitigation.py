@@ -110,10 +110,10 @@ async def mitigation_chat(
     # 3. Increment usage immediately (before the AI call to avoid race conditions)
     _get_and_increment_usage(db, user_id, current_count, month_start)
 
-    # 4. Fetch alert context — real columns: type, severity, title, description, domain
+    # 4. Fetch alert context — real columns: alert_type, severity, title, message, domain_id
     alert_res = (
         db.table("alerts")
-        .select("type, severity, title, description, domain")
+        .select("alert_type, severity, title, message, domain_id")
         .eq("id", req.alert_id)
         .eq("user_id", user_id)
         .single()
@@ -124,13 +124,26 @@ async def mitigation_chat(
 
     alert = alert_res.data
 
+    # Resolve domain name via separate query if domain_id present
+    domain_name: str | None = None
+    if alert.get("domain_id"):
+        dom_res = (
+            db.table("domains")
+            .select("domain")
+            .eq("id", alert["domain_id"])
+            .single()
+            .execute()
+        )
+        if dom_res.data:
+            domain_name = dom_res.data.get("domain")
+
     alert_context = (
         f"ALERTA ACTIVA:\n"
-        f"- Tipo: {alert.get('type', 'desconocido')}\n"
+        f"- Tipo: {alert.get('alert_type', 'desconocido')}\n"
         f"- Severidad: {alert.get('severity', 'media')}\n"
         f"- Título: {alert.get('title', '')}\n"
-        f"- Descripción: {alert.get('description', '')}"
-        + (f"\n- Dominio afectado: {alert['domain']}" if alert.get("domain") else "")
+        f"- Descripción: {alert.get('message', '')}"
+        + (f"\n- Dominio afectado: {domain_name}" if domain_name else "")
     )
 
     # 5. Build messages — keep only last 6 history messages to minimise tokens
