@@ -14,56 +14,89 @@ resolver = dns.resolver.Resolver()
 resolver.timeout = 5
 resolver.lifetime = 10
 
+# All DKIM selectors to try, in priority order.
+# Extend this list freely — any selector with a valid "p=" key will be accepted.
+DKIM_SELECTORS = [
+    "default",       # generic fallback
+    "protonmail",    # Proton Mail
+    "protonmail2",   # Proton Mail (secondary)
+    "protonmail3",   # Proton Mail (tertiary)
+    "google",        # Google Workspace
+    "selector1",     # Microsoft 365
+    "selector2",     # Microsoft 365
+    "k1",            # Mailchimp
+    "mail",          # generic
+    "smtp",          # generic
+    "dkim",          # generic
+    "s1",            # generic
+    "s2",            # generic
+    "mandrill",      # Mailchimp / Mandrill
+    "resend",        # Resend
+]
+
 
 def _check_spf(domain: str) -> tuple[str, str]:
-    """Returns (status, record_text)"""
+    """
+    Check SPF: search ALL TXT records on the bare domain for v=spf1.
+    Returns (status, record_text).
+    Status values: "valid" | "invalid" | "missing" | "error"
+    """
     try:
         answers = resolver.resolve(domain, "TXT")
         for rdata in answers:
             txt = b"".join(rdata.strings).decode("utf-8", errors="ignore")
-            if txt.startswith("v=spf1"):
-                # Basic validation: must have a mechanism
+            if txt.lower().startswith("v=spf1"):
                 if "~all" in txt or "-all" in txt or "+all" in txt or "?all" in txt:
                     return "valid", txt
                 else:
                     return "invalid", txt
         return "missing", ""
     except Exception as e:
+        logger.warning("SPF check error", domain=domain, error=str(e))
         return "error", str(e)
 
 
 def _check_dmarc(domain: str) -> tuple[str, str]:
-    """Returns (status, record_text)"""
+    """
+    Check DMARC: look for TXT record at _dmarc.{domain} containing v=DMARC1.
+    p=none is treated as "valid" (monitoring mode — the record IS configured).
+    Returns (status, record_text).
+    Status values: "valid" | "invalid" | "missing" | "error"
+    """
     try:
         answers = resolver.resolve(f"_dmarc.{domain}", "TXT")
         for rdata in answers:
             txt = b"".join(rdata.strings).decode("utf-8", errors="ignore")
-            if txt.startswith("v=DMARC1"):
-                # Must have a policy
-                if "p=none" in txt or "p=quarantine" in txt or "p=reject" in txt:
-                    policy = txt
-                    if "p=reject" in txt or "p=quarantine" in txt:
-                        return "valid", policy
-                    else:
-                        return "invalid", policy  # p=none is not protective
+            if txt.lower().startswith("v=dmarc1"):
+                if "p=reject" in txt or "p=quarantine" in txt:
+                    return "valid", txt
+                elif "p=none" in txt:
+                    # p=none means monitoring mode — the record IS present and valid.
+                    # We mark it valid so the score counts it as configured.
+                    return "valid", txt
+                else:
+                    return "invalid", txt
         return "missing", ""
     except Exception as e:
+        logger.warning("DMARC check error", domain=domain, error=str(e))
         return "error", str(e)
 
 
-def _check_dkim(domain: str, selector: str = "default") -> tuple[str, str]:
+def _check_dkim(domain: str) -> tuple[str, str]:
     """
-    DKIM check: tries common selectors.
-    Returns (status, record_text)
+    Check DKIM: iterate DKIM_SELECTORS and try {selector}._domainkey.{domain}.
+    Returns on the first selector that has a valid public key ("p=" present).
+    Returns (status, record_text) where record_text includes which selector matched.
+    Status values: "valid" | "missing"
     """
-    selectors = [selector, "google", "mail", "smtp", "dkim", "k1", "s1", "s2"]
-    for sel in selectors:
+    for sel in DKIM_SELECTORS:
         try:
             answers = resolver.resolve(f"{sel}._domainkey.{domain}", "TXT")
             for rdata in answers:
                 txt = b"".join(rdata.strings).decode("utf-8", errors="ignore")
-                if "p=" in txt:  # DKIM public key present
-                    return "valid", txt
+                if "p=" in txt:  # DKIM public key is present
+                    logger.info("DKIM found", domain=domain, selector=sel)
+                    return "valid", f"selector={sel}; {txt}"
         except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
             continue
         except Exception:
@@ -93,6 +126,7 @@ def scan_email_security(domain_id: str, domain: str, user_id: str):
         }
     ).execute()
 
+    # Only create alerts for genuinely missing/invalid records
     issues = []
     if spf_status in ("missing", "invalid"):
         issues.append(f"SPF {spf_status}")
