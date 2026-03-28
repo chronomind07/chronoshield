@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { emailsApi } from "@/lib/api";
 import BuyCreditsModal from "@/components/BuyCreditsModal";
 import { toast } from "@/components/Toast";
+import { useCredits } from "@/contexts/CreditsContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface BreachResult {
@@ -328,6 +329,7 @@ function BreachDetailPanel({
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function EmailsPage() {
+  const { refreshCredits, decrementCredits } = useCredits();
   const [emails, setEmails]           = useState<MonitoredEmail[]>([]);
   const [loading, setLoading]         = useState(true);
   const [adding, setAdding]           = useState(false);
@@ -387,10 +389,15 @@ export default function EmailsPage() {
     try {
       const res = await emailsApi.scan(emailItem.id);
       const remaining = res.data?.credits_remaining;
-      toast.success(
-        `Escaneo iniciado${remaining !== undefined ? ` · ${remaining} crédito${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}` : ""}`
-      );
-      setTimeout(load, 6000);
+      toast.info("Escaneando email...");
+      decrementCredits(1);
+      // Wait for background breach scan to complete then reload
+      await new Promise(resolve => setTimeout(resolve, 8000));
+      await load();
+      refreshCredits();
+      if (remaining !== undefined) {
+        toast.info(`${remaining} crédito${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}`);
+      }
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 402 || detail?.code === "NO_CREDITS") {

@@ -68,15 +68,29 @@ async def get_dashboard_summary(
     )
     breached_count = len({r["email_id"] for r in breached})
 
-    # Average score
-    scores = (
+    # Average scores — use only the LATEST score per domain (avoid stale historical averages)
+    all_scores = (
         db.table("security_scores")
-        .select("overall_score")
+        .select("domain_id,overall_score,ssl_score,uptime_score,email_sec_score,breach_score,calculated_at")
         .eq("user_id", user_id)
+        .order("calculated_at", desc=True)
         .execute()
         .data
-    )
-    avg_score = int(sum(s["overall_score"] for s in scores) / len(scores)) if scores else 0
+    ) or []
+    # Keep only the most-recent row per domain_id
+    seen_domains: set = set()
+    latest_scores = []
+    for s in all_scores:
+        did = str(s.get("domain_id") or "")
+        if did not in seen_domains:
+            seen_domains.add(did)
+            latest_scores.append(s)
+    n = len(latest_scores)
+    avg_score     = int(sum(s["overall_score"]  for s in latest_scores) / n) if n else 0
+    avg_ssl       = int(sum(s["ssl_score"]       for s in latest_scores) / n) if n else 0
+    avg_uptime    = int(sum(s["uptime_score"]    for s in latest_scores) / n) if n else 0
+    avg_email_sec = int(sum(s["email_sec_score"] for s in latest_scores) / n) if n else 0
+    avg_breach    = int(sum(s["breach_score"]    for s in latest_scores) / n) if n else 0
 
     # Recent alerts
     recent_alerts_data = (
@@ -98,6 +112,10 @@ async def get_dashboard_summary(
         domains_down=down_count,
         breached_emails=breached_count,
         recent_alerts=[AlertResponse(**a) for a in recent_alerts_data],
+        avg_ssl_score=avg_ssl,
+        avg_uptime_score=avg_uptime,
+        avg_email_sec_score=avg_email_sec,
+        avg_breach_score=avg_breach,
     )
 
 

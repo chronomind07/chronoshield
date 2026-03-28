@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { dashboardApi, emailsApi, domainsApi, alertsApi } from "@/lib/api";
+import { dashboardApi, emailsApi, domainsApi, alertsApi, settingsApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { toast } from "@/components/Toast";
@@ -17,6 +17,11 @@ interface DashboardSummary {
   domains_down: number;
   breached_emails: number;
   recent_alerts: Alert[];
+  // Individual score components from backend
+  avg_ssl_score: number;
+  avg_uptime_score: number;
+  avg_email_sec_score: number;
+  avg_breach_score: number;
 }
 
 interface Alert {
@@ -33,11 +38,13 @@ interface Domain {
   id: string;
   domain: string;
   is_active: boolean;
-  last_scan_at: string | null;
-  overall_score?: number | null;
-  ssl_score?: number | null;
-  uptime_score?: number | null;
-  email_security_score?: number | null;
+  last_scanned_at: string | null;
+  security_score?: number | null;
+  ssl_status?: string | null;
+  uptime_status?: string | null;
+  spf_status?: string | null;
+  dkim_status?: string | null;
+  dmarc_status?: string | null;
 }
 
 interface MonitoredEmail {
@@ -76,10 +83,11 @@ function sevColor(sev: string): string {
 }
 
 function domainStatus(d: Domain): { label: string; color: string; bg: string } {
-  const score = d.overall_score ?? 0;
+  const score = d.security_score ?? 0;
   if (!d.is_active) return { label: "Inactivo", color: "#71717a", bg: "rgba(113,113,122,0.12)" };
   if (score >= 80) return { label: "Seguro", color: "#3ecf8e", bg: "rgba(62,207,142,0.12)" };
   if (score >= 60) return { label: "Advertencia", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" };
+  if (score === 0 && d.last_scanned_at == null) return { label: "Sin escanear", color: "#71717a", bg: "rgba(113,113,122,0.12)" };
   return { label: "Error", color: "#ef4444", bg: "rgba(239,68,68,0.12)" };
 }
 
@@ -162,7 +170,7 @@ function MultiRingDonut({ ssl, email, uptime, darkweb, score }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
       <div style={{ position: "relative", width: 140, height: 140, flexShrink: 0 }}>
-        <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)", overflow: "visible" }}>
+        <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)", overflow: "hidden", display: "block" }}>
           {segments.map(({ r }) => (
             <circle
               key={r}
@@ -183,7 +191,7 @@ function MultiRingDonut({ ssl, email, uptime, darkweb, score }: {
                 fill="none"
                 stroke={color}
                 strokeWidth="7"
-                strokeLinecap="round"
+                strokeLinecap="butt"
                 strokeDasharray={`${dash} ${gap}`}
                 style={{ transition: "stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1)" }}
               />
@@ -330,11 +338,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     load();
-    // Get username from Supabase session
-    supabase.auth.getSession().then(({ data }) => {
+    // Get username: prefer profile full_name, fall back to auth metadata, then email prefix
+    supabase.auth.getSession().then(async ({ data }) => {
       const meta = data.session?.user?.user_metadata;
-      const name = meta?.full_name || meta?.name || data.session?.user?.email?.split("@")[0] || "Usuario";
-      setUsername(name);
+      const emailPrefix = data.session?.user?.email?.split("@")[0] || "Usuario";
+      try {
+        const profileRes = await settingsApi.getProfile();
+        const profileName = profileRes.data?.full_name || profileRes.data?.name;
+        setUsername(profileName || meta?.full_name || emailPrefix);
+      } catch {
+        setUsername(meta?.full_name || emailPrefix);
+      }
     });
   }, []);
 
@@ -389,17 +403,13 @@ export default function DashboardPage() {
     );
   }
 
-  // ── Derived values ──
-  const td = Math.max(1, summary?.domains_monitored ?? 1);
-  const te = Math.max(1, summary?.emails_monitored ?? 1);
-  const sslScore = Math.round(Math.max(0, (1 - (summary?.domains_with_ssl_issues ?? 0) / td) * 100));
-  const uptimeScore = Math.round(Math.max(0, (1 - (summary?.domains_down ?? 0) / td) * 100));
-  const breachScore = Math.round(Math.max(0, (1 - (summary?.breached_emails ?? 0) / te) * 100));
-  const avg = Math.round(summary?.average_score ?? 0);
-  const emailSecScore = Math.min(100, Math.max(0, Math.round(
-    (avg - breachScore * 0.30 - sslScore * 0.25 - uptimeScore * 0.25) / 0.20
-  )));
-  const darkwebScore = breachScore;
+  // ── Derived values — use backend-computed individual scores when available ──
+  const avg         = Math.round(summary?.average_score       ?? 0);
+  // Prefer direct score components from API (accurate); fall back to proxy computations
+  const sslScore    = summary?.avg_ssl_score       ?? Math.round(Math.max(0, (1 - (summary?.domains_with_ssl_issues ?? 0) / Math.max(1, summary?.domains_monitored ?? 1)) * 100));
+  const uptimeScore = summary?.avg_uptime_score    ?? Math.round(Math.max(0, (1 - (summary?.domains_down ?? 0) / Math.max(1, summary?.domains_monitored ?? 1)) * 100));
+  const emailSecScore = summary?.avg_email_sec_score ?? 0;
+  const darkwebScore  = summary?.avg_breach_score    ?? Math.round(Math.max(0, (1 - (summary?.breached_emails ?? 0) / Math.max(1, summary?.emails_monitored ?? 1)) * 100));
   const hasAlerts = (summary?.active_alerts ?? 0) > 0;
 
   const activeAlerts = alerts.filter(a => !a.read_at);
@@ -646,7 +656,7 @@ export default function DashboardPage() {
                           {d.domain}
                         </div>
                         <div style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}>
-                          {d.last_scan_at ? relTime(d.last_scan_at) : "Sin escanear"}
+                          {d.last_scanned_at ? `Último scan: ${relTime(d.last_scanned_at)}` : "Sin escanear"}
                         </div>
                       </div>
                       {/* Status chip */}
@@ -655,7 +665,7 @@ export default function DashboardPage() {
                       </span>
                       {/* Score */}
                       <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: 13, fontWeight: 600, color: "#3ecf8e", flexShrink: 0, minWidth: 28, textAlign: "right" }}>
-                        {d.overall_score != null ? Math.round(d.overall_score) : "—"}
+                        {d.security_score != null ? Math.round(d.security_score) : "—"}
                       </span>
                     </div>
                   );

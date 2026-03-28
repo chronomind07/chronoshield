@@ -36,6 +36,8 @@ EVENT_ICONS = {
     "darkweb_scan":       "🕸",
     "auto_scan":          "⟳",
     "credit_purchase":    "💳",
+    "scan_success":       "✓",
+    "scan_warning":       "⚠",
 }
 
 RESULT_COLORS = {
@@ -186,6 +188,72 @@ async def get_history(
                 origin="manual" if is_manual else "automatic",
                 origin_label=ORIGIN_LABELS["manual" if is_manual else "automatic"],
                 occurred_at=r["scanned_at"],
+            ))
+
+    # ── 5. Scan completions (from security_scores — every score row = one scan) ──
+    if not event_type or event_type in ("scan_success", "scan_warning"):
+        sq = (
+            db.table("security_scores")
+            .select("id,domain_id,overall_score,ssl_score,uptime_score,email_sec_score,breach_score,grade,calculated_at")
+            .eq("user_id", user_id)
+        )
+        if cutoff:
+            sq = sq.gte("calculated_at", cutoff)
+        score_rows = sq.order("calculated_at", desc=True).limit(200).execute().data or []
+
+        # Batch-fetch domain names
+        d_ids = list({str(r["domain_id"]) for r in score_rows if r.get("domain_id")})
+        d_map: dict = {}
+        if d_ids:
+            d_rows = db.table("domains").select("id,domain").in_("id", d_ids).execute().data or []
+            d_map = {str(r["id"]): r["domain"] for r in d_rows}
+
+        for r in score_rows:
+            score   = r.get("overall_score", 0)
+            grade   = r.get("grade", "")
+            dname   = d_map.get(str(r.get("domain_id", "")), "dominio")
+            ssl_s   = r.get("ssl_score", 0)
+            up_s    = r.get("uptime_score", 0)
+            em_s    = r.get("email_sec_score", 0)
+            br_s    = r.get("breach_score", 0)
+
+            parts: list = []
+            if ssl_s >= 100:  parts.append("SSL válido")
+            elif ssl_s >= 40: parts.append("SSL expirando pronto")
+            else:             parts.append("SSL inválido")
+
+            if em_s >= 100:   parts.append("SPF/DKIM/DMARC configurados")
+            elif em_s >= 67:  parts.append("email parcialmente configurado")
+            else:             parts.append("email sin configurar")
+
+            if up_s >= 100:   parts.append("uptime 100%")
+            elif up_s >= 80:  parts.append(f"uptime {up_s}%")
+            else:             parts.append(f"uptime bajo ({up_s}%)")
+
+            if br_s >= 100:   parts.append("sin brechas detectadas")
+            else:             parts.append("brechas detectadas")
+
+            is_ok = score >= 90 and em_s >= 100
+            desc = (
+                f"Escaneo completado: {dname} — {', '.join(parts)}. Nivel de seguridad: Excelente."
+                if is_ok else
+                f"Escaneo completado: {dname} — {', '.join(parts)}. Requiere atención."
+            )
+            etype = "scan_success" if is_ok else "scan_warning"
+            if event_type and event_type != etype:
+                continue
+
+            entries.append(HistoryEntry(
+                id=f"scan_{r['id']}",
+                event_type=etype,
+                icon=EVENT_ICONS[etype],
+                title=f"Escaneo completado — {dname}",
+                description=desc,
+                result="clean" if is_ok else "warn",
+                result_label=f"Score {score} · {grade}" if grade else f"Score {score}",
+                origin="automatic",
+                origin_label=ORIGIN_LABELS["automatic"],
+                occurred_at=r["calculated_at"],
             ))
 
     # ── Sort all entries by date desc ─────────────────────────────────────────

@@ -65,6 +65,7 @@ function groupByDay(entries: HistoryEntry[]): { dayLabel: string; items: History
 const RESULT_STYLE: Record<string, { color: string; bg: string; border: string }> = {
   clean:    { color: "#3ecf8e", bg: "rgba(62,207,142,0.10)",  border: "rgba(62,207,142,0.2)" },
   findings: { color: "#ef4444", bg: "rgba(239,68,68,0.10)",   border: "rgba(239,68,68,0.2)" },
+  warn:     { color: "#f59e0b", bg: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.2)" },
   ok:       { color: "#3b82f6", bg: "rgba(59,130,246,0.10)",  border: "rgba(59,130,246,0.2)" },
   info:     { color: "#b3b4b5", bg: "rgba(179,180,181,0.08)", border: "rgba(179,180,181,0.15)" },
 };
@@ -124,7 +125,21 @@ function OriginBadge({ origin, label }: { origin: string; label: string }) {
 
 // ── Entry row ─────────────────────────────────────────────────────────────────
 function EntryRow({ entry }: { entry: HistoryEntry }) {
-  const isFindings = entry.result === "findings";
+  const isFindings    = entry.result === "findings";
+  const isScanSuccess = entry.event_type === "scan_success";
+  const isScanWarn    = entry.event_type === "scan_warning";
+
+  const iconBg =
+    isScanSuccess ? "rgba(62,207,142,0.10)" :
+    isScanWarn    ? "rgba(245,158,11,0.10)"  :
+    isFindings    ? "rgba(239,68,68,0.08)"   :
+    "rgba(255,255,255,0.04)";
+
+  const leftBorderColor =
+    isScanSuccess ? "rgba(62,207,142,0.5)" :
+    isScanWarn    ? "rgba(245,158,11,0.5)"  :
+    isFindings    ? "rgba(239,68,68,0.5)"   :
+    "#1a1a1a";
 
   return (
     <div
@@ -138,7 +153,7 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
         borderRadius: 16,
         marginBottom: 6,
         transition: "border-color 0.15s",
-        borderLeft: isFindings ? "3px solid rgba(239,68,68,0.5)" : "3px solid #1a1a1a",
+        borderLeft: `3px solid ${leftBorderColor}`,
       }}
     >
       {/* Icon */}
@@ -147,12 +162,14 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
           width: 34,
           height: 34,
           borderRadius: 9,
-          background: isFindings ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.04)",
+          background: iconBg,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: "0.95rem",
           flexShrink: 0,
+          color: isScanSuccess ? "#3ecf8e" : isScanWarn ? "#f59e0b" : "inherit",
+          fontWeight: 700,
         }}
       >
         {entry.icon}
@@ -318,6 +335,8 @@ const DATE_FILTERS = [
 
 const EVENT_FILTERS = [
   { key: "",                label: "Todos los eventos" },
+  { key: "scan_success",    label: "Escaneos exitosos" },
+  { key: "scan_warning",    label: "Escaneos con advertencias" },
   { key: "alert_generated", label: "Alertas" },
   { key: "darkweb_scan",    label: "Escaneos Dark Web" },
   { key: "auto_scan",       label: "Escaneos automáticos" },

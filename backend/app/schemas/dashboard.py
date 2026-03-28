@@ -35,3 +35,8 @@ class DashboardSummary(BaseModel):
     domains_down: int
     breached_emails: int
     recent_alerts: List[AlertResponse]
+    # Individual score components (average of latest score per domain)
+    avg_ssl_score: int = 0
+    avg_uptime_score: int = 0
+    avg_email_sec_score: int = 0
+    avg_breach_score: int = 0

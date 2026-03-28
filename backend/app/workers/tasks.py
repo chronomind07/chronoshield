@@ -124,9 +124,33 @@ def darkweb_scan_all_users(self):
 
     logger.info("Dark web auto-scan started", users=len(subs))
 
+    from datetime import datetime, timezone, timedelta
+    now_utc = datetime.now(timezone.utc)
+
     for sub in subs:
         user_id = sub["user_id"]
         plan = sub["plan"]
+
+        # ── Frequency gate: Starter=7 days, Business=2 days ────────────────
+        days_interval = 7 if plan == "starter" else 2
+        cutoff_iso = (now_utc - timedelta(days=days_interval)).isoformat()
+        last_auto = (
+            db.table("dark_web_results")
+            .select("scanned_at")
+            .eq("user_id", user_id)
+            .eq("is_manual", False)
+            .order("scanned_at", desc=True)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if last_auto and last_auto[0]["scanned_at"] >= cutoff_iso:
+            logger.info(
+                "Skipping dark web auto-scan — interval not yet reached",
+                user_id=user_id, plan=plan, interval_days=days_interval,
+            )
+            continue
+
         try:
             # Active emails
             emails_rows = (
