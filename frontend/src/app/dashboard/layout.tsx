@@ -3,8 +3,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { alertsApi, creditsApi } from "@/lib/api";
+import { alertsApi } from "@/lib/api";
 import Link from "next/link";
+import { Toaster } from "@/components/Toast";
+import { CreditsProvider, useCredits } from "@/contexts/CreditsContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface AlertItem {
@@ -412,13 +414,21 @@ const PAGE_TITLES: Record<string, string> = {
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <CreditsProvider>
+      <LayoutInner>{children}</LayoutInner>
+    </CreditsProvider>
+  );
+}
+
+function LayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
-  const [credits, setCredits] = useState<number | null>(null);
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const { credits, refreshCredits } = useCredits();
 
   // Poll unread count every 2 min
   useEffect(() => {
@@ -427,16 +437,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
     fetch();
     const t = setInterval(fetch, 120_000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Fetch credits on mount, refresh every 5 min
-  useEffect(() => {
-    const fetch = async () => {
-      try { const r = await creditsApi.get(); setCredits(r.data.credits_available ?? 0); } catch { /* silent */ }
-    };
-    fetch();
-    const t = setInterval(fetch, 300_000);
     return () => clearInterval(t);
   }, []);
 
@@ -620,6 +620,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
 
       </div>
+      <Toaster />
     </div>
   );
 }

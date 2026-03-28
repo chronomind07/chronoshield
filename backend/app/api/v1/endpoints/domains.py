@@ -60,9 +60,26 @@ async def list_domains(
             .data
         )
 
+        # Compute last_scanned_at: prefer domain's own field, fall back to max of scan result timestamps
+        candidates = []
+        if d.get("last_scanned_at"):
+            candidates.append(d["last_scanned_at"])
+        if ssl:
+            ssl_ts = (db.table("ssl_results").select("scanned_at").eq("domain_id", domain_id)
+                      .order("scanned_at", desc=True).limit(1).execute().data)
+            if ssl_ts:
+                candidates.append(ssl_ts[0]["scanned_at"])
+        if uptime:
+            up_ts = (db.table("uptime_results").select("checked_at").eq("domain_id", domain_id)
+                     .order("checked_at", desc=True).limit(1).execute().data)
+            if up_ts:
+                candidates.append(up_ts[0]["checked_at"])
+        computed_last_scan = max(candidates) if candidates else None
+
         enriched.append(
             DomainWithMetrics(
-                **d,
+                **{k: v for k, v in d.items() if k != "last_scanned_at"},
+                last_scanned_at=computed_last_scan,
                 ssl_status=ssl[0]["status"] if ssl else None,
                 ssl_days_remaining=ssl[0]["days_remaining"] if ssl else None,
                 uptime_status=uptime[0]["status"] if uptime else None,

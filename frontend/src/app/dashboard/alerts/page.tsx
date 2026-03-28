@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { alertsApi, mitigationApi } from "@/lib/api";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Alert {
@@ -364,7 +364,17 @@ function MitigationChat({ alertId }: { alertId: string }) {
 }
 
 // ── Alert card ─────────────────────────────────────────────────────────────────
-function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: string) => void }) {
+function AlertCard({
+  alert,
+  onMarkRead,
+  onArchive,
+  archivingId,
+}: {
+  alert: Alert;
+  onMarkRead: (id: string) => void;
+  onArchive: (id: string) => void;
+  archivingId: string | null;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [marking, setMarking]   = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -474,7 +484,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                 {alert.title}
               </span>
             </div>
-            {/* Right side: timestamp + chevron */}
+            {/* Right side: timestamp + chevron + trash */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
               <span
                 style={{
@@ -498,6 +508,26 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                 />
               )}
               <span style={{ color: "#71717a", fontSize: "0.65rem" }}>{expanded ? "▲" : "▼"}</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); onArchive(alert.id); }}
+                disabled={archivingId === alert.id}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  color: "#71717a",
+                  borderRadius: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  opacity: archivingId === alert.id ? 0.5 : 1,
+                }}
+                title="Eliminar alerta"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -711,12 +741,14 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
 
 // ── Section group ──────────────────────────────────────────────────────────────
 function AlertGroup({
-  label, color, alerts, onMarkRead,
+  label, color, alerts, onMarkRead, onArchive, archivingId,
 }: {
   label: string;
   color: string;
   alerts: Alert[];
   onMarkRead: (id: string) => void;
+  onArchive: (id: string) => void;
+  archivingId: string | null;
 }) {
   if (alerts.length === 0) return null;
   return (
@@ -768,7 +800,7 @@ function AlertGroup({
       </div>
       <div>
         {alerts.map((a) => (
-          <AlertCard key={a.id} alert={a} onMarkRead={onMarkRead} />
+          <AlertCard key={a.id} alert={a} onMarkRead={onMarkRead} onArchive={onArchive} archivingId={archivingId} />
         ))}
       </div>
     </div>
@@ -929,6 +961,8 @@ export default function AlertsPage() {
   const [loading, setLoading]       = useState(true);
   const [filter, setFilter]         = useState("all");
   const [markingAll, setMarkingAll] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [archivingAll, setArchivingAll] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -977,6 +1011,40 @@ export default function AlertsPage() {
       toast.error("Error al marcar alertas");
     } finally {
       setMarkingAll(false);
+    }
+  };
+
+  const handleArchive = useCallback(async (id: string) => {
+    setArchivingId(id);
+    try {
+      await alertsApi.archiveAlert(id);
+      setData(prev => {
+        if (!prev) return prev;
+        const updated = (prev.alerts ?? []).filter(a => a.id !== id);
+        return { ...prev, alerts: updated, total: updated.length, unread_count: updated.filter(a => a.is_unread).length };
+      });
+      toast.success("Alerta eliminada");
+    } catch {
+      toast.error("Error al eliminar la alerta");
+    } finally {
+      setArchivingId(null);
+    }
+  }, []);
+
+  const handleArchiveResolved = async () => {
+    setArchivingAll(true);
+    try {
+      await alertsApi.archiveResolved();
+      setData(prev => {
+        if (!prev) return prev;
+        const active = (prev.alerts ?? []).filter(a => a.is_unread);
+        return { ...prev, alerts: active, total: active.length, unread_count: active.length };
+      });
+      toast.success("Alertas resueltas eliminadas");
+    } catch {
+      toast.error("Error al eliminar alertas resueltas");
+    } finally {
+      setArchivingAll(false);
     }
   };
 
@@ -1075,30 +1143,55 @@ export default function AlertsPage() {
           </p>
         </div>
 
-        {data.unread_count > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
-            onClick={handleMarkAllRead}
-            disabled={markingAll}
+            onClick={handleArchiveResolved}
+            disabled={archivingAll || (data?.alerts ?? []).every(a => a.is_unread)}
             style={{
+              background: "rgba(239,68,68,0.08)",
+              color: "#ef4444",
+              border: "0.8px solid rgba(239,68,68,0.2)",
+              borderRadius: 8,
+              padding: "7px 14px",
+              fontSize: "12px",
+              fontWeight: 500,
+              cursor: "pointer",
               display: "flex",
               alignItems: "center",
               gap: 6,
-              fontSize: "13px",
-              fontWeight: 600,
-              padding: "8px 16px",
-              borderRadius: 8,
-              transition: "opacity 0.2s",
-              opacity: markingAll ? 0.5 : 1,
-              cursor: markingAll ? "not-allowed" : "pointer",
-              background: "#151515",
-              color: "#f5f5f5",
-              border: "0.8px solid #1a1a1a",
-              fontFamily: "var(--font-dm-sans)",
             }}
           >
-            <span>{markingAll ? "⟳" : "✓"}</span> Marcar todas como leídas
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+            {archivingAll ? "Eliminando..." : "Borrar resueltas"}
           </button>
-        )}
+
+          {data.unread_count > 0 && (
+            <button
+              onClick={handleMarkAllRead}
+              disabled={markingAll}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: "13px",
+                fontWeight: 600,
+                padding: "8px 16px",
+                borderRadius: 8,
+                transition: "opacity 0.2s",
+                opacity: markingAll ? 0.5 : 1,
+                cursor: markingAll ? "not-allowed" : "pointer",
+                background: "#151515",
+                color: "#f5f5f5",
+                border: "0.8px solid #1a1a1a",
+                fontFamily: "var(--font-dm-sans)",
+              }}
+            >
+              <span>{markingAll ? "⟳" : "✓"}</span> Marcar todas como leídas
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter bar */}
@@ -1111,9 +1204,9 @@ export default function AlertsPage() {
         <EmptyState />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          <AlertGroup label="Críticas" color="#ef4444" alerts={criticals} onMarkRead={handleMarkRead} />
-          <AlertGroup label="Medias"   color="#f59e0b" alerts={mediums}   onMarkRead={handleMarkRead} />
-          <AlertGroup label="Bajas"    color="#3b82f6" alerts={lows}      onMarkRead={handleMarkRead} />
+          <AlertGroup label="Críticas" color="#ef4444" alerts={criticals} onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
+          <AlertGroup label="Medias"   color="#f59e0b" alerts={mediums}   onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
+          <AlertGroup label="Bajas"    color="#3b82f6" alerts={lows}      onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
         </div>
       )}
 

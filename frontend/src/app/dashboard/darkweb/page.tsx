@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { darkwebApi, creditsApi } from "@/lib/api";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Credits {

@@ -189,8 +189,11 @@ CREATE TABLE public.alerts (
     metadata        JSONB,
     sent_at         TIMESTAMPTZ DEFAULT NOW(),
     read_at         TIMESTAMPTZ,
-    email_sent      BOOLEAN DEFAULT FALSE
+    email_sent      BOOLEAN DEFAULT FALSE,
+    archived        BOOLEAN DEFAULT FALSE
 );
+-- Migration: ALTER TABLE public.alerts ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE;
+-- Migration: ALTER TABLE public.domains ADD COLUMN IF NOT EXISTS last_scanned_at TIMESTAMPTZ;
 
 -- ============================================================
 -- NOTIFICATION PREFERENCES

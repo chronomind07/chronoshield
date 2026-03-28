@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { settingsApi, billingApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Profile {

@@ -187,6 +187,7 @@ async def list_alerts(
         db.table("alerts")
         .select("*")
         .eq("user_id", user_id)
+        .neq("archived", True)
         .order("sent_at", desc=True)
         .limit(200)
     )
@@ -271,3 +272,28 @@ async def mark_all_read(
     db.table("alerts").update(
         {"read_at": datetime.now(timezone.utc).isoformat()}
     ).eq("user_id", user_id).is_("read_at", "null").execute()
+
+
+@router.delete("/{alert_id}", status_code=204)
+async def archive_alert(
+    alert_id: UUID,
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """Soft-delete: mark alert as archived so it disappears from dashboard but stays in history."""
+    result = db.table("alerts").update(
+        {"archived": True, "read_at": datetime.now(timezone.utc).isoformat()}
+    ).eq("id", str(alert_id)).eq("user_id", user_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+
+@router.delete("", status_code=204)
+async def archive_resolved_alerts(
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """Archive all resolved (read) alerts in bulk."""
+    db.table("alerts").update(
+        {"archived": True}
+    ).eq("user_id", user_id).not_.is_("read_at", "null").execute()

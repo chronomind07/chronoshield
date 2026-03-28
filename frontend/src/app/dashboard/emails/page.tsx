@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { emailsApi } from "@/lib/api";
 import BuyCreditsModal from "@/components/BuyCreditsModal";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface BreachResult {

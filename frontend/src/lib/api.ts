@@ -61,6 +61,8 @@ export const alertsApi = {
   unreadCount: () => api.get("/alerts/unread-count"),
   markRead: (id: string) => api.patch(`/alerts/${id}/read`),
   markAllRead: () => api.patch("/alerts/read-all"),
+  archiveAlert: (id: string) => api.delete(`/alerts/${id}`),
+  archiveResolved: () => api.delete("/alerts"),
 };
 
 // History endpoints

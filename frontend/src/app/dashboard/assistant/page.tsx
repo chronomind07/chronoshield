@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { mitigationApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ChatMsg {

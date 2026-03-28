@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { dashboardApi, emailsApi, domainsApi, alertsApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toast";
+import { useCredits } from "@/contexts/CreditsContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface DashboardSummary {
@@ -151,36 +152,37 @@ function MultiRingDonut({ ssl, email, uptime, darkweb, score }: {
   ssl: number; email: number; uptime: number; darkweb: number; score: number;
 }) {
   const grade = scoreGrade(score);
+  const cx = 70, cy = 70;
   const segments = [
-    { r: 52, val: ssl,     color: "#3ecf8e", label: "SSL" },
-    { r: 42, val: email,   color: "#3b82f6", label: "Email" },
-    { r: 32, val: uptime,  color: "#f59e0b", label: "Uptime" },
-    { r: 22, val: darkweb, color: "#ef4444", label: "DarkWeb" },
+    { r: 58, val: ssl,     color: "#3ecf8e", label: "SSL" },
+    { r: 47, val: email,   color: "#3b82f6", label: "Email" },
+    { r: 36, val: uptime,  color: "#f59e0b", label: "Uptime" },
+    { r: 25, val: darkweb, color: "#ef4444", label: "DarkWeb" },
   ];
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ position: "relative", width: 130, height: 130 }}>
-        <svg width="130" height="130" viewBox="0 0 130 130" style={{ transform: "rotate(-90deg)" }}>
+      <div style={{ position: "relative", width: 140, height: 140, flexShrink: 0 }}>
+        <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)", overflow: "visible" }}>
           {segments.map(({ r }) => (
             <circle
               key={r}
-              cx="65" cy="65" r={r}
+              cx={cx} cy={cy} r={r}
               fill="none"
-              stroke="rgba(255,255,255,0.05)"
-              strokeWidth="6"
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="7"
             />
           ))}
           {segments.map(({ r, val, color }) => {
             const circ = 2 * Math.PI * r;
-            const dash = circ * (val / 100);
+            const dash = circ * (Math.max(0, Math.min(100, val)) / 100);
             const gap = circ - dash;
             return (
               <circle
                 key={`arc-${r}`}
-                cx="65" cy="65" r={r}
+                cx={cx} cy={cy} r={r}
                 fill="none"
                 stroke={color}
-                strokeWidth="6"
+                strokeWidth="7"
                 strokeLinecap="round"
                 strokeDasharray={`${dash} ${gap}`}
                 style={{ transition: "stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1)" }}
@@ -192,11 +194,8 @@ function MultiRingDonut({ ssl, email, uptime, darkweb, score }: {
           position: "absolute", inset: 0,
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         }}>
-          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "1.5rem", fontWeight: 700, color: "#f5f5f5", lineHeight: 1 }}>
+          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", lineHeight: 1 }}>
             {score}%
-          </span>
-          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.875rem", fontWeight: 600, color: score >= 90 ? "#3ecf8e" : score >= 70 ? "#f59e0b" : "#ef4444", marginTop: 2 }}>
-            {grade}
           </span>
         </div>
       </div>
@@ -297,6 +296,7 @@ const cardStyle: React.CSSProperties = {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const { refreshCredits } = useCredits();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [emails, setEmails] = useState<MonitoredEmail[]>([]);
   const [domains, setDomains] = useState<Domain[]>([]);
@@ -355,7 +355,7 @@ export default function DashboardPage() {
     setScanning2(true);
     try {
       const doms = domains.length > 0 ? domains : (await domainsApi.list()).data ?? [];
-      if (doms.length === 0) { toast("Sin dominios que escanear"); setScanning2(false); return; }
+      if (doms.length === 0) { toast.info("Sin dominios que escanear"); setScanning2(false); return; }
       await Promise.allSettled(doms.map((d: Domain) => domainsApi.scan(d.id)));
       await new Promise(resolve => setTimeout(resolve, 12000));
       const [sumRes, emlRes, domRes, alRes] = await Promise.all([
@@ -370,6 +370,7 @@ export default function DashboardPage() {
       setDomains(Array.isArray(domRes.data) ? domRes.data : (domRes.data?.data ?? []));
       setAlerts(Array.isArray(alRes.data) ? alRes.data : (alRes.data?.alerts ?? alRes.data?.data ?? []));
       setLastScanTime(new Date());
+      refreshCredits();
       const score = Math.round(fresh?.average_score ?? 0);
       const issues = fresh?.active_alerts ?? 0;
       if (score >= 90 && issues === 0) toast.success("✅ Tu dominio está correctamente configurado y protegido");

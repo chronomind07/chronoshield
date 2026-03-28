@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { domainsApi, alertsApi } from "@/lib/api";
 import { useTechMode } from "@/lib/mode-context";
 import BuyCreditsModal from "@/components/BuyCreditsModal";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toast";
+import { useCredits } from "@/contexts/CreditsContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Domain {
@@ -594,6 +595,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function DomainsPage() {
   const { techMode } = useTechMode();
+  const { decrementCredits, refreshCredits } = useCredits();
   const [domains, setDomains]         = useState<Domain[]>([]);
   const [loading, setLoading]         = useState(true);
   const [adding, setAdding]           = useState(false);
@@ -649,7 +651,7 @@ export default function DomainsPage() {
       const res = await domainsApi.scan(id);
       const remaining = res.data?.credits_remaining;
 
-      toast("Escaneando dominio...", { duration: 13000 });
+      toast.info("Escaneando dominio...");
 
       // Wait for the background scan to complete (~12 s)
       await new Promise((resolve) => setTimeout(resolve, 12000));
@@ -664,6 +666,9 @@ export default function DomainsPage() {
         const updated = freshDomains.find((d) => d.id === id);
         if (updated) setSelected(updated);
       }
+
+      decrementCredits(1);
+      refreshCredits();
 
       // Result toast
       const d = freshDomains.find((d) => d.id === id);
@@ -685,7 +690,7 @@ export default function DomainsPage() {
           if (d.dkim_status  && d.dkim_status  !== "valid") issues.push("DKIM");
           if (d.dmarc_status && d.dmarc_status !== "valid") issues.push("DMARC");
           if (issues.length > 0) {
-            toast(`Revisar: ${issues.join(", ")}`, { duration: 6000 });
+            toast.warning(`Revisar: ${issues.join(", ")}`);
           } else {
             toast.success("Scan completado");
           }
@@ -693,7 +698,7 @@ export default function DomainsPage() {
       }
 
       if (remaining !== undefined) {
-        toast(`${remaining} crédito${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}`, { duration: 3000 });
+        toast.info(`${remaining} crédito${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}`);
       }
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
