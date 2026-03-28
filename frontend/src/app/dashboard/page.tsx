@@ -318,9 +318,9 @@ export default function DashboardPage() {
         alertsApi.list({ unread_only: false }),
       ]);
       setSummary(sumRes.data);
-      setEmails(emlRes.data ?? []);
-      setDomains(domRes.data ?? []);
-      setAlerts(alRes.data ?? []);
+      setEmails(Array.isArray(emlRes.data) ? emlRes.data : (emlRes.data?.data ?? []));
+      setDomains(Array.isArray(domRes.data) ? domRes.data : (domRes.data?.data ?? []));
+      setAlerts(Array.isArray(alRes.data) ? alRes.data : (alRes.data?.alerts ?? alRes.data?.data ?? []));
     } catch {
       toast.error("Error al cargar el dashboard");
     } finally {
@@ -344,7 +344,7 @@ export default function DashboardPage() {
       setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, read_at: new Date().toISOString() } : a));
       setSummary(prev => prev ? {
         ...prev,
-        recent_alerts: prev.recent_alerts.map(a => a.id === alertId ? { ...a, read_at: new Date().toISOString() } : a),
+        recent_alerts: (prev.recent_alerts ?? []).map(a => a.id === alertId ? { ...a, read_at: new Date().toISOString() } : a),
         active_alerts: Math.max(0, prev.active_alerts - 1),
       } : prev);
     } catch { /* silent */ }
@@ -366,9 +366,9 @@ export default function DashboardPage() {
       ]);
       const fresh: DashboardSummary = sumRes.data;
       setSummary(fresh);
-      setEmails(emlRes.data ?? []);
-      setDomains(domRes.data ?? []);
-      setAlerts(alRes.data ?? []);
+      setEmails(Array.isArray(emlRes.data) ? emlRes.data : (emlRes.data?.data ?? []));
+      setDomains(Array.isArray(domRes.data) ? domRes.data : (domRes.data?.data ?? []));
+      setAlerts(Array.isArray(alRes.data) ? alRes.data : (alRes.data?.alerts ?? alRes.data?.data ?? []));
       setLastScanTime(new Date());
       const score = Math.round(fresh?.average_score ?? 0);
       const issues = fresh?.active_alerts ?? 0;

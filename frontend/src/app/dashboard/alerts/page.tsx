@@ -949,7 +949,7 @@ export default function AlertsPage() {
       return {
         ...prev,
         unread_count: Math.max(0, prev.unread_count - 1),
-        alerts: prev.alerts.map((a) =>
+        alerts: (prev.alerts ?? []).map((a) =>
           a.id === id ? { ...a, is_unread: false, read_at: new Date().toISOString() } : a
         ),
       };
@@ -965,7 +965,7 @@ export default function AlertsPage() {
         return {
           ...prev,
           unread_count: 0,
-          alerts: prev.alerts.map((a) => ({
+          alerts: (prev.alerts ?? []).map((a) => ({
             ...a,
             is_unread: false,
             read_at: a.read_at ?? new Date().toISOString(),
@@ -1009,7 +1009,8 @@ export default function AlertsPage() {
 
   if (!data) return null;
 
-  const filteredAlerts = data.alerts.filter((a) => {
+  const allAlerts = Array.isArray(data.alerts) ? data.alerts : [];
+  const filteredAlerts = allAlerts.filter((a) => {
     if (filter === "unread")   return a.is_unread;
     if (filter === "critical") return a.severity === "critical" || a.severity === "high";
     if (filter === "medium")   return a.severity === "medium";
@@ -1022,11 +1023,11 @@ export default function AlertsPage() {
   const lows      = filteredAlerts.filter((a) => a.severity === "low");
 
   const counts = {
-    all:      data.total,
-    unread:   data.unread_count,
-    critical: data.alerts.filter((a) => a.severity === "critical" || a.severity === "high").length,
-    medium:   data.alerts.filter((a) => a.severity === "medium").length,
-    low:      data.alerts.filter((a) => a.severity === "low").length,
+    all:      data.total ?? allAlerts.length,
+    unread:   data.unread_count ?? 0,
+    critical: allAlerts.filter((a) => a.severity === "critical" || a.severity === "high").length,
+    medium:   allAlerts.filter((a) => a.severity === "medium").length,
+    low:      allAlerts.filter((a) => a.severity === "low").length,
   };
 
   return (

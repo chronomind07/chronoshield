@@ -605,7 +605,7 @@ export default function DomainsPage() {
   const load = async () => {
     try {
       const res = await domainsApi.list();
-      setDomains(res.data);
+      setDomains(Array.isArray(res.data) ? res.data : (res.data?.data ?? []));
     } catch {
       toast.error("Error al cargar dominios");
     } finally {
@@ -656,7 +656,7 @@ export default function DomainsPage() {
 
       // Reload the full domain list
       const freshRes = await domainsApi.list();
-      const freshDomains: Domain[] = freshRes.data ?? [];
+      const freshDomains: Domain[] = Array.isArray(freshRes.data) ? freshRes.data : (freshRes.data?.data ?? []);
       setDomains(freshDomains);
 
       // If the detail panel is open for this domain, update it with fresh data

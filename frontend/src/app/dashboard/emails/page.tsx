@@ -339,7 +339,7 @@ export default function EmailsPage() {
   const load = async () => {
     try {
       const res = await emailsApi.list();
-      setEmails(res.data ?? []);
+      setEmails(Array.isArray(res.data) ? res.data : (res.data?.data ?? []));
     } catch {
       toast.error("Error al cargar emails");
     } finally {

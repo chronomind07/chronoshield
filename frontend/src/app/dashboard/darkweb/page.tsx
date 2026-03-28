@@ -992,9 +992,9 @@ export default function DarkWebPage() {
 
   if (!summary) return null;
 
-  const totalEmailDanger   = summary.emails.filter((e) => e.status === "breached").length;
-  const totalDomainDanger  = summary.domains.filter((d) => d.status === "found").length;
-  const totalImpoDanger    = summary.impersonation.filter((i) => i.status === "threatened").length;
+  const totalEmailDanger   = (summary.emails ?? []).filter((e) => e.status === "breached").length;
+  const totalDomainDanger  = (summary.domains ?? []).filter((d) => d.status === "found").length;
+  const totalImpoDanger    = (summary.impersonation ?? []).filter((i) => i.status === "threatened").length;
   const overallDanger      = totalEmailDanger + totalDomainDanger + totalImpoDanger;
 
   return (
@@ -1152,19 +1152,19 @@ export default function DarkWebPage() {
           {
             label: "Emails afectados",
             value: totalEmailDanger,
-            total: summary.emails.length,
+            total: (summary.emails ?? []).length,
             danger: totalEmailDanger > 0,
           },
           {
             label: "Dominios expuestos",
             value: totalDomainDanger,
-            total: summary.domains.length,
+            total: (summary.domains ?? []).length,
             danger: totalDomainDanger > 0,
           },
           {
             label: "Dominios impostores",
             value: summary.impersonation_available ? totalImpoDanger : "—",
-            total: summary.impersonation.length,
+            total: (summary.impersonation ?? []).length,
             danger: summary.impersonation_available && totalImpoDanger > 0,
           },
         ].map((stat) => (
@@ -1212,7 +1212,7 @@ export default function DarkWebPage() {
             </div>
           ) : (
             <div>
-              {summary.emails.map((item) => (
+              {(summary.emails ?? []).map((item) => (
                 <EmailRow
                   key={item.id}
                   item={item}
@@ -1235,7 +1235,7 @@ export default function DarkWebPage() {
             </div>
           ) : (
             <div>
-              {summary.domains.map((item) => (
+              {(summary.domains ?? []).map((item) => (
                 <DomainRow
                   key={item.id}
                   item={item}
@@ -1260,7 +1260,7 @@ export default function DarkWebPage() {
             </div>
           ) : (
             <div>
-              {summary.impersonation.map((item) => (
+              {(summary.impersonation ?? []).map((item) => (
                 <DomainRow
                   key={item.id}
                   item={item}

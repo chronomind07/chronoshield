@@ -466,7 +466,7 @@ export default function HistoryPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const groups = data ? groupByDay(data.entries) : [];
+  const groups = data ? groupByDay(Array.isArray(data.entries) ? data.entries : []) : [];
 
   return (
     <div
