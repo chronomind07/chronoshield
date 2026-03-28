@@ -108,9 +108,9 @@ function CreditBadge({ credits }: { credits: Credits }) {
 
   return (
     <div style={{
-      background: "#1c1c1c",
-      border: "1px solid rgba(255,255,255,0.06)",
-      borderRadius: 12,
+      background: "#151515",
+      border: "0.8px solid #1a1a1a",
+      borderRadius: 16,
       padding: "18px 20px",
     }}>
       <div style={{
@@ -118,7 +118,7 @@ function CreditBadge({ credits }: { credits: Credits }) {
         fontSize: "0.62rem",
         textTransform: "uppercase" as const,
         letterSpacing: "0.12em",
-        color: "#52525b",
+        color: "#71717a",
         fontWeight: 600,
         marginBottom: 10,
       }}>
@@ -136,17 +136,17 @@ function CreditBadge({ credits }: { credits: Credits }) {
             }}>
               {credits.credits_available}
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#52525b" }}>/ {total}</span>
+            <span style={{ fontSize: "0.75rem", color: "#71717a" }}>/ {total}</span>
           </div>
-          <div style={{ height: 3, borderRadius: 3, overflow: "hidden", background: "rgba(255,255,255,0.06)" }}>
+          <div style={{ height: 3, borderRadius: 3, overflow: "hidden", background: "#262626" }}>
             <div
               style={{ height: "100%", borderRadius: 3, transition: "width 0.7s", width: `${pct * 100}%`, background: color }}
             />
           </div>
         </div>
         <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
-          <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.62rem", textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#52525b", fontWeight: 600 }}>Reset</div>
-          <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.72rem", color: "#a1a1aa", marginTop: 4 }}>{fmtDate(credits.reset_date)}</div>
+          <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.62rem", textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#71717a", fontWeight: 600 }}>Reset</div>
+          <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.72rem", color: "#b3b4b5", marginTop: 4 }}>{fmtDate(credits.reset_date)}</div>
         </div>
       </div>
     </div>
@@ -158,25 +158,25 @@ type ItemStatus = "breached" | "found" | "threatened" | "clean" | "never_scanned
 
 function StatusPill({ status }: { status: ItemStatus }) {
   const map: Record<ItemStatus, { label: string; color: string; bg: string; border: string }> = {
-    breached:      { label: "FILTRADO",      color: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.15)" },
-    found:         { label: "DETECTADO",     color: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.15)" },
-    threatened:    { label: "AMENAZA",       color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.15)" },
-    clean:         { label: "LIMPIO",        color: "#3ecf8e", bg: "rgba(62,207,142,0.08)",  border: "rgba(62,207,142,0.15)" },
-    never_scanned: { label: "SIN ESCANEAR", color: "#52525b", bg: "rgba(82,82,91,0.10)",    border: "rgba(82,82,91,0.15)" },
+    breached:      { label: "FILTRADO",      color: "#ef4444", bg: "rgba(239,68,68,0.08)",        border: "rgba(239,68,68,0.2)" },
+    found:         { label: "DETECTADO",     color: "#ef4444", bg: "rgba(239,68,68,0.08)",        border: "rgba(239,68,68,0.2)" },
+    threatened:    { label: "AMENAZA",       color: "#f59e0b", bg: "rgba(245,158,11,0.08)",       border: "rgba(245,158,11,0.2)" },
+    clean:         { label: "LIMPIO",        color: "#3ecf8e", bg: "rgba(62,207,142,0.10)",       border: "rgba(62,207,142,0.2)" },
+    never_scanned: { label: "SIN ESCANEAR", color: "#71717a", bg: "rgba(113,113,122,0.10)",      border: "rgba(113,113,122,0.15)" },
   };
   const s = map[status];
   return (
     <span style={{
       fontFamily: "var(--font-dm-mono)",
-      fontSize: "0.68rem",
+      fontSize: "11px",
       textTransform: "uppercase" as const,
       letterSpacing: "0.06em",
-      padding: "3px 8px",
+      padding: "2px 8px",
       borderRadius: 6,
       flexShrink: 0,
       color: s.color,
       background: s.bg,
-      border: `1px solid ${s.border}`,
+      border: `0.8px solid ${s.border}`,
     }}>
       {s.label}
     </span>
@@ -199,14 +199,14 @@ function ScanBtn({
         display: "flex",
         alignItems: "center",
         gap: 5,
-        fontWeight: 700,
+        fontWeight: 600,
         borderRadius: 8,
         transition: "all 0.15s",
         flexShrink: 0,
         cursor: scanning ? "not-allowed" : "pointer",
         opacity: scanning ? 0.5 : 1,
-        fontSize: small ? "0.72rem" : "0.78rem",
-        padding: small ? "5px 10px" : "9px 18px",
+        fontSize: small ? "0.72rem" : "13px",
+        padding: small ? "5px 10px" : "8px 16px",
         background: "#3ecf8e",
         border: "none",
         color: "#000",
@@ -224,13 +224,13 @@ function BreachDetail({ record }: { record: BreachRecord }) {
   const hasPassword = !!(record.password || record.hashedPassword);
   return (
     <div style={{
-      borderRadius: 8,
+      borderRadius: 12,
       padding: "10px 14px",
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: "6px 16px",
-      background: "rgba(0,0,0,0.25)",
-      border: "1px solid rgba(255,255,255,0.06)",
+      background: "#1c1c1c",
+      border: "0.8px solid #1a1a1a",
     }}>
       {[
         { label: "Fuente",     val: record.breachName || record.source },
@@ -247,7 +247,7 @@ function BreachDetail({ record }: { record: BreachRecord }) {
             fontSize: "0.62rem",
             textTransform: "uppercase" as const,
             letterSpacing: "0.12em",
-            color: "#52525b",
+            color: "#71717a",
             fontWeight: 600,
           }}>{f.label}</div>
           <div style={{
@@ -255,7 +255,7 @@ function BreachDetail({ record }: { record: BreachRecord }) {
             fontSize: "0.72rem",
             marginTop: 2,
             wordBreak: "break-all" as const,
-            color: f.label === "Contraseña" && hasPassword ? "#ef4444" : "#f0f0f0",
+            color: f.label === "Contraseña" && hasPassword ? "#ef4444" : "#f5f5f5",
           }}>
             {f.val}
           </div>
@@ -294,10 +294,10 @@ function EmailRow({
 
   return (
     <div style={{
-      borderRadius: 12,
+      borderRadius: 16,
       overflow: "hidden",
-      background: "#1c1c1c",
-      border: `1px solid ${danger ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.06)"}`,
+      background: "#151515",
+      border: `0.8px solid ${danger ? "rgba(239,68,68,0.2)" : "#1a1a1a"}`,
       marginBottom: 8,
       transition: "border-color 0.15s",
     }}>
@@ -334,12 +334,12 @@ function EmailRow({
           <div style={{
             fontFamily: "var(--font-dm-mono)",
             fontSize: "0.82rem",
-            color: "#f0f0f0",
+            color: "#f5f5f5",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}>{item.email}</div>
-          <div style={{ fontSize: "0.72rem", color: "#52525b", marginTop: 3 }}>
+          <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 3 }}>
             {item.last_scan_at ? relTime(item.last_scan_at) : "Nunca escaneado"}
             {item.breach_count > 0 && (
               <span style={{ color: "#ef4444", marginLeft: 8 }}>
@@ -352,18 +352,18 @@ function EmailRow({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <StatusPill status={item.status} />
           <ScanBtn scanning={scanning} onClick={handleScan} small />
-          <span style={{ color: "#52525b", fontSize: "0.65rem", marginLeft: 2 }}>{expanded ? "▲" : "▼"}</span>
+          <span style={{ color: "#71717a", fontSize: "0.65rem", marginLeft: 2 }}>{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
 
       {expanded && item.latest_breaches.length > 0 && (
-        <div style={{ padding: "8px 18px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: "8px 18px 16px", borderTop: "0.8px solid #1a1a1a" }}>
           <div style={{
             fontFamily: "var(--font-dm-mono)",
             fontSize: "0.62rem",
             textTransform: "uppercase" as const,
             letterSpacing: "0.12em",
-            color: "#52525b",
+            color: "#71717a",
             fontWeight: 600,
             marginBottom: 8,
           }}>
@@ -378,7 +378,7 @@ function EmailRow({
       )}
 
       {expanded && item.latest_breaches.length === 0 && item.status !== "never_scanned" && (
-        <div style={{ padding: "12px 18px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" as const }}>
+        <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.78rem", color: "#3ecf8e" }}>
             ✓ Sin filtraciones detectadas
           </span>
@@ -386,8 +386,8 @@ function EmailRow({
       )}
 
       {expanded && item.status === "never_scanned" && (
-        <div style={{ padding: "12px 18px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" as const }}>
-          <span style={{ fontSize: "0.78rem", color: "#52525b" }}>Este email aún no ha sido escaneado</span>
+        <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
+          <span style={{ fontSize: "0.78rem", color: "#71717a" }}>Este email aún no ha sido escaneado</span>
         </div>
       )}
     </div>
@@ -434,10 +434,10 @@ function DomainRow({
 
   return (
     <div style={{
-      borderRadius: 12,
+      borderRadius: 16,
       overflow: "hidden",
-      background: "#1c1c1c",
-      border: `1px solid ${danger ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.06)"}`,
+      background: "#151515",
+      border: `0.8px solid ${danger ? "rgba(239,68,68,0.2)" : "#1a1a1a"}`,
       marginBottom: 8,
       transition: "border-color 0.15s",
     }}>
@@ -474,12 +474,12 @@ function DomainRow({
           <div style={{
             fontFamily: "var(--font-dm-mono)",
             fontSize: "0.82rem",
-            color: "#f0f0f0",
+            color: "#f5f5f5",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}>{item.domain}</div>
-          <div style={{ fontSize: "0.72rem", color: "#52525b", marginTop: 3 }}>
+          <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 3 }}>
             {item.last_scan_at ? relTime(item.last_scan_at) : "Nunca escaneado"}
             {count > 0 && (
               <span style={{ color: "#ef4444", marginLeft: 8 }}>
@@ -492,18 +492,18 @@ function DomainRow({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <StatusPill status={status} />
           <ScanBtn scanning={scanning} onClick={handleScan} small />
-          <span style={{ color: "#52525b", fontSize: "0.65rem", marginLeft: 2 }}>{expanded ? "▲" : "▼"}</span>
+          <span style={{ color: "#71717a", fontSize: "0.65rem", marginLeft: 2 }}>{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
 
       {expanded && results.length > 0 && (
-        <div style={{ padding: "8px 18px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: "8px 18px 16px", borderTop: "0.8px solid #1a1a1a" }}>
           <div style={{
             fontFamily: "var(--font-dm-mono)",
             fontSize: "0.62rem",
             textTransform: "uppercase" as const,
             letterSpacing: "0.12em",
-            color: "#52525b",
+            color: "#71717a",
             fontWeight: 600,
             marginBottom: 8,
           }}>
@@ -518,7 +518,7 @@ function DomainRow({
       )}
 
       {expanded && results.length === 0 && status !== "never_scanned" && (
-        <div style={{ padding: "12px 18px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" as const }}>
+        <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.78rem", color: "#3ecf8e" }}>
             ✓ {isImpersonation ? "Sin suplantaciones detectadas" : "Sin hallazgos en dark web"}
           </span>
@@ -526,8 +526,8 @@ function DomainRow({
       )}
 
       {expanded && status === "never_scanned" && (
-        <div style={{ padding: "12px 18px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" as const }}>
-          <span style={{ fontSize: "0.78rem", color: "#52525b" }}>Este dominio aún no ha sido escaneado</span>
+        <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
+          <span style={{ fontSize: "0.78rem", color: "#71717a" }}>Este dominio aún no ha sido escaneado</span>
         </div>
       )}
     </div>
@@ -545,16 +545,16 @@ function Section({
   children: React.ReactNode;
 }) {
   const borderColor = locked
-    ? "rgba(255,255,255,0.06)"
+    ? "#1a1a1a"
     : totalDanger > 0
-    ? "rgba(239,68,68,0.15)"
-    : "rgba(255,255,255,0.06)";
+    ? "rgba(239,68,68,0.2)"
+    : "#1a1a1a";
 
   return (
     <div style={{
-      borderRadius: 12,
-      background: "#111111",
-      border: `1px solid ${borderColor}`,
+      borderRadius: 16,
+      background: "#151515",
+      border: `0.8px solid ${borderColor}`,
       marginBottom: 12,
       overflow: "hidden",
     }}>
@@ -564,7 +564,7 @@ function Section({
         alignItems: "center",
         justifyContent: "space-between",
         padding: "16px 20px",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "0.8px solid #1a1a1a",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{
@@ -575,37 +575,37 @@ function Section({
             alignItems: "center",
             justifyContent: "center",
             fontSize: 14,
-            background: "rgba(255,255,255,0.04)",
-            color: "#a1a1aa",
+            background: "#262626",
+            color: "#b3b4b5",
           }}>{icon}</span>
-          <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#f0f0f0" }}>{title}</span>
+          <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#f5f5f5" }}>{title}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {locked ? (
             <span style={{
               fontFamily: "var(--font-dm-mono)",
-              fontSize: "0.68rem",
+              fontSize: "11px",
               textTransform: "uppercase" as const,
               letterSpacing: "0.06em",
-              padding: "3px 8px",
+              padding: "2px 8px",
               borderRadius: 6,
               color: "#f59e0b",
               background: "rgba(245,158,11,0.08)",
-              border: "1px solid rgba(245,158,11,0.15)",
+              border: "0.8px solid rgba(245,158,11,0.2)",
             }}>
               Solo Business
             </span>
           ) : (
             <span style={{
               fontFamily: "var(--font-dm-mono)",
-              fontSize: "0.68rem",
+              fontSize: "11px",
               textTransform: "uppercase" as const,
               letterSpacing: "0.06em",
-              padding: "3px 8px",
+              padding: "2px 8px",
               borderRadius: 6,
               ...(totalDanger > 0
-                ? { color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }
-                : { color: "#3ecf8e", background: "rgba(62,207,142,0.08)", border: "1px solid rgba(62,207,142,0.15)" })
+                ? { color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "0.8px solid rgba(239,68,68,0.2)" }
+                : { color: "#3ecf8e", background: "rgba(62,207,142,0.10)", border: "0.8px solid rgba(62,207,142,0.2)" })
             }}>
               {totalDanger > 0 ? `${totalDanger} hallazgos` : "Sin amenazas"}
             </span>
@@ -632,12 +632,12 @@ function Section({
               alignItems: "center",
               justifyContent: "center",
               fontSize: 18,
-              background: "rgba(255,255,255,0.04)",
-              color: "#52525b",
+              background: "#262626",
+              color: "#71717a",
             }}>🔒</div>
-            <p style={{ fontSize: "0.82rem", color: "#52525b" }}>
+            <p style={{ fontSize: "0.82rem", color: "#71717a" }}>
               Disponible en el plan{" "}
-              <span style={{ color: "#f0f0f0", fontWeight: 600 }}>Business</span>
+              <span style={{ color: "#f5f5f5", fontWeight: 600 }}>Business</span>
             </p>
           </div>
         ) : (
@@ -671,7 +671,7 @@ function ScanAllModal({
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
-        background: "rgba(0,0,0,0.75)",
+        background: "rgba(0,0,0,0.8)",
         backdropFilter: "blur(4px)",
       }}
       onClick={onClose}
@@ -680,10 +680,10 @@ function ScanAllModal({
         style={{
           width: "100%",
           maxWidth: 400,
-          borderRadius: 12,
+          borderRadius: 16,
           padding: 28,
-          background: "#161616",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "#151515",
+          border: "0.8px solid #1a1a1a",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -702,23 +702,23 @@ function ScanAllModal({
           {canAfford ? "⟳" : "⚠"}
         </div>
 
-        <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#f0f0f0", marginBottom: 6 }}>
+        <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>
           {canAfford ? "Escaneo general" : "Créditos insuficientes"}
         </h2>
 
         {canAfford ? (
           <>
-            <p style={{ fontSize: "0.8rem", color: "#52525b", marginBottom: 20, lineHeight: 1.6 }}>
+            <p style={{ fontSize: "0.8rem", color: "#71717a", marginBottom: 20, lineHeight: 1.6 }}>
               Este escaneo analizará todos tus activos y consumirá{" "}
-              <span style={{ color: "#f0f0f0", fontWeight: 600 }}>{cost} créditos</span>.
+              <span style={{ color: "#f5f5f5", fontWeight: 600 }}>{cost} créditos</span>.
             </p>
 
             <div style={{
-              borderRadius: 10,
+              borderRadius: 12,
               padding: "14px 16px",
               marginBottom: 18,
-              background: "#0a0a0a",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "#1c1c1c",
+              border: "0.8px solid #1a1a1a",
             }}>
               {[
                 { label: "Emails",       count: breakdown.emails,       icon: "✉" },
@@ -726,23 +726,23 @@ function ScanAllModal({
                 { label: "Suplantación", count: breakdown.impersonation, icon: "⊙" },
               ].filter((r) => r.count > 0).map((row) => (
                 <div key={row.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#52525b" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#71717a" }}>
                     <span>{row.icon}</span>
                     <span>{row.label}</span>
-                    <span style={{ color: "#f0f0f0" }}>× {row.count}</span>
+                    <span style={{ color: "#f5f5f5" }}>× {row.count}</span>
                   </div>
-                  <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.72rem", color: "#52525b" }}>{row.count} créd.</span>
+                  <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.72rem", color: "#71717a" }}>{row.count} créd.</span>
                 </div>
               ))}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: 4 }}>
-                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f0f0f0" }}>Total</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "0.8px solid #1a1a1a", marginTop: 4 }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f5f5f5" }}>Total</span>
                 <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.85rem", fontWeight: 700, color: "#3ecf8e" }}>{cost} créditos</span>
               </div>
             </div>
 
-            <p style={{ fontSize: "0.75rem", color: "#52525b", marginBottom: 20 }}>
+            <p style={{ fontSize: "0.75rem", color: "#71717a", marginBottom: 20 }}>
               Te quedarán{" "}
-              <span style={{ color: "#f0f0f0", fontWeight: 600 }}>{credits.credits_available - cost}</span>{" "}
+              <span style={{ color: "#f5f5f5", fontWeight: 600 }}>{credits.credits_available - cost}</span>{" "}
               créditos.
             </p>
 
@@ -750,8 +750,8 @@ function ScanAllModal({
               <button
                 onClick={onClose}
                 style={{
-                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600,
-                  color: "#a1a1aa", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer",
+                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "13px", fontWeight: 600,
+                  color: "#f5f5f5", background: "#151515", border: "0.8px solid #1a1a1a", cursor: "pointer",
                 }}
               >
                 Cancelar
@@ -759,7 +759,7 @@ function ScanAllModal({
               <button
                 onClick={onConfirm}
                 style={{
-                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 700,
+                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "13px", fontWeight: 600,
                   color: "#000", background: "#3ecf8e", border: "none", cursor: "pointer",
                 }}
               >
@@ -769,8 +769,8 @@ function ScanAllModal({
           </>
         ) : (
           <>
-            <p style={{ fontSize: "0.8rem", color: "#52525b", marginBottom: 20, lineHeight: 1.6 }}>
-              Necesitas <span style={{ color: "#f0f0f0", fontWeight: 600 }}>{cost} créditos</span> pero solo tienes{" "}
+            <p style={{ fontSize: "0.8rem", color: "#71717a", marginBottom: 20, lineHeight: 1.6 }}>
+              Necesitas <span style={{ color: "#f5f5f5", fontWeight: 600 }}>{cost} créditos</span> pero solo tienes{" "}
               <span style={{ color: "#ef4444", fontWeight: 600 }}>{credits.credits_available}</span>.
               Compra un pack para continuar.
             </p>
@@ -778,8 +778,8 @@ function ScanAllModal({
               <button
                 onClick={onClose}
                 style={{
-                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 600,
-                  color: "#a1a1aa", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer",
+                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "13px", fontWeight: 600,
+                  color: "#f5f5f5", background: "#151515", border: "0.8px solid #1a1a1a", cursor: "pointer",
                 }}
               >
                 Cancelar
@@ -787,7 +787,7 @@ function ScanAllModal({
               <button
                 onClick={onBuyCredits}
                 style={{
-                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 700,
+                  flex: 1, padding: "9px 0", borderRadius: 8, fontSize: "13px", fontWeight: 600,
                   color: "#000", background: "#3ecf8e", border: "none", cursor: "pointer",
                 }}
               >
@@ -825,7 +825,7 @@ function CreditPackModal({
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
-        background: "rgba(0,0,0,0.75)",
+        background: "rgba(0,0,0,0.8)",
         backdropFilter: "blur(4px)",
       }}
       onClick={onClose}
@@ -834,23 +834,23 @@ function CreditPackModal({
         style={{
           width: "100%",
           maxWidth: 420,
-          borderRadius: 12,
+          borderRadius: 16,
           padding: 28,
-          background: "#161616",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "#151515",
+          border: "0.8px solid #1a1a1a",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#f0f0f0", marginBottom: 4 }}>Comprar créditos</h2>
-            <p style={{ fontSize: "0.78rem", color: "#52525b" }}>
+            <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 4 }}>Comprar créditos</h2>
+            <p style={{ fontSize: "0.78rem", color: "#71717a" }}>
               Tienes {credits.credits_available} crédito{credits.credits_available !== 1 ? "s" : ""} disponible{credits.credits_available !== 1 ? "s" : ""}
             </p>
           </div>
           <button
             onClick={onClose}
-            style={{ color: "#52525b", fontSize: 20, lineHeight: 1, background: "none", border: "none", cursor: "pointer", padding: 4 }}
+            style={{ color: "#71717a", fontSize: 20, lineHeight: 1, background: "none", border: "none", cursor: "pointer", padding: 4 }}
           >×</button>
         </div>
 
@@ -864,12 +864,12 @@ function CreditPackModal({
                 alignItems: "center",
                 gap: 14,
                 padding: "14px 16px",
-                borderRadius: 10,
+                borderRadius: 12,
                 textAlign: "left" as const,
                 cursor: "pointer",
                 transition: "all 0.15s",
-                background: pack.popular ? "rgba(62,207,142,0.06)" : "#0a0a0a",
-                border: pack.popular ? "1px solid rgba(62,207,142,0.2)" : "1px solid rgba(255,255,255,0.06)",
+                background: pack.popular ? "rgba(62,207,142,0.06)" : "#1c1c1c",
+                border: pack.popular ? "0.8px solid rgba(62,207,142,0.2)" : "0.8px solid #1a1a1a",
               }}
             >
               <div style={{
@@ -882,37 +882,37 @@ function CreditPackModal({
                 fontWeight: 700,
                 fontSize: "0.85rem",
                 flexShrink: 0,
-                background: pack.popular ? "rgba(62,207,142,0.12)" : "rgba(255,255,255,0.04)",
-                color: pack.popular ? "#3ecf8e" : "#52525b",
+                background: pack.popular ? "rgba(62,207,142,0.12)" : "#262626",
+                color: pack.popular ? "#3ecf8e" : "#71717a",
                 fontFamily: "var(--font-dm-mono)",
               }}>
                 {pack.credits}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f0f0f0" }}>{pack.label}</span>
+                  <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f5f5f5" }}>{pack.label}</span>
                   {pack.popular && (
                     <span style={{
                       fontFamily: "var(--font-dm-mono)",
-                      fontSize: "0.68rem",
+                      fontSize: "11px",
                       padding: "2px 7px",
                       borderRadius: 6,
-                      background: "rgba(62,207,142,0.08)",
+                      background: "rgba(62,207,142,0.10)",
                       color: "#3ecf8e",
-                      border: "1px solid rgba(62,207,142,0.15)",
+                      border: "0.8px solid rgba(62,207,142,0.2)",
                     }}>
                       POPULAR
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: "0.75rem", color: "#52525b" }}>{pack.credits} créditos · {pack.per}</div>
+                <div style={{ fontSize: "0.75rem", color: "#71717a" }}>{pack.credits} créditos · {pack.per}</div>
               </div>
-              <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f0f0f0", flexShrink: 0 }}>{pack.price}</div>
+              <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", flexShrink: 0 }}>{pack.price}</div>
             </button>
           ))}
         </div>
 
-        <p style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#3a3a3a", textAlign: "center" as const }}>
+        <p style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a", textAlign: "center" as const }}>
           1 crédito = 1 escaneo (email, dominio o suplantación). Los créditos no caducan.
         </p>
       </div>
@@ -976,7 +976,7 @@ export default function DarkWebPage() {
         alignItems: "center",
         justifyContent: "center",
         minHeight: 256,
-        background: "#0a0a0a",
+        background: "#0b0b0b",
       }}>
         <div style={{
           width: 28,
@@ -1000,7 +1000,7 @@ export default function DarkWebPage() {
   return (
     <div style={{
       padding: "28px 32px 60px",
-      background: "#0a0a0a",
+      background: "#0b0b0b",
       minHeight: "100vh",
       fontFamily: "var(--font-dm-sans)",
     }}>
@@ -1026,10 +1026,10 @@ export default function DarkWebPage() {
       {/* Page header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap" as const, gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f0f0f0", marginBottom: 4 }}>
+          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 4 }}>
             Dark Web Monitoring
           </h1>
-          <p style={{ fontSize: "0.8rem", color: "#52525b" }}>
+          <p style={{ fontSize: "0.8rem", color: "#71717a" }}>
             Vigilancia de filtraciones · emails · dominios · suplantación de empresa
           </p>
         </div>
@@ -1041,12 +1041,12 @@ export default function DarkWebPage() {
               alignItems: "center",
               gap: 6,
               fontWeight: 600,
-              fontSize: "0.8rem",
-              padding: "9px 16px",
+              fontSize: "13px",
+              padding: "8px 16px",
               borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "#1c1c1c",
-              color: "#a1a1aa",
+              border: "0.8px solid #1a1a1a",
+              background: "#151515",
+              color: "#f5f5f5",
               cursor: "pointer",
               fontFamily: "var(--font-dm-mono)",
             }}
@@ -1061,10 +1061,10 @@ export default function DarkWebPage() {
               display: "flex",
               alignItems: "center",
               gap: 6,
-              fontWeight: 700,
-              fontSize: "0.8rem",
+              fontWeight: 600,
+              fontSize: "13px",
               color: "#000",
-              padding: "9px 18px",
+              padding: "8px 16px",
               borderRadius: 8,
               border: "none",
               cursor: scanningAll ? "not-allowed" : "pointer",
@@ -1084,10 +1084,10 @@ export default function DarkWebPage() {
         alignItems: "center",
         gap: 12,
         padding: "10px 16px",
-        borderRadius: 10,
+        borderRadius: 16,
         marginBottom: 20,
-        background: "#111111",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "#151515",
+        border: "0.8px solid #1a1a1a",
       }}>
         <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#3ecf8e", flexShrink: 0 }} />
         <span style={{
@@ -1099,14 +1099,14 @@ export default function DarkWebPage() {
         }}>Monitoreo activo</span>
         <div style={{ display: "flex", alignItems: "center", gap: 20, marginLeft: "auto" }}>
           {summary.last_scan_at && (
-            <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#52525b" }}>
-              Último: <span style={{ color: "#a1a1aa" }}>{relTime(summary.last_scan_at)}</span>
+            <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a" }}>
+              Último: <span style={{ color: "#b3b4b5" }}>{relTime(summary.last_scan_at)}</span>
             </span>
           )}
-          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#52525b" }}>
-            Auto: <span style={{ color: "#a1a1aa" }}>{summary.next_auto_scan}</span>
+          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a" }}>
+            Auto: <span style={{ color: "#b3b4b5" }}>{summary.next_auto_scan}</span>
           </span>
-          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.62rem", color: "#3a3a3a" }}>
+          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.62rem", color: "#71717a" }}>
             Los escaneos automáticos no consumen créditos
           </span>
         </div>
@@ -1119,10 +1119,10 @@ export default function DarkWebPage() {
           alignItems: "center",
           gap: 14,
           padding: "14px 18px",
-          borderRadius: 10,
+          borderRadius: 16,
           marginBottom: 20,
           background: "rgba(239,68,68,0.06)",
-          border: "1px solid rgba(239,68,68,0.15)",
+          border: "0.8px solid rgba(239,68,68,0.2)",
         }}>
           <div style={{
             width: 32,
@@ -1138,7 +1138,7 @@ export default function DarkWebPage() {
           }}>!</div>
           <div>
             <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "#ef4444" }}>Filtraciones detectadas</div>
-            <div style={{ fontSize: "0.78rem", color: "#52525b", marginTop: 2 }}>
+            <div style={{ fontSize: "0.78rem", color: "#71717a", marginTop: 2 }}>
               {overallDanger} activo{overallDanger !== 1 ? "s" : ""} con datos expuestos en la dark web. Revisa los detalles y actúa.
             </div>
           </div>
@@ -1169,17 +1169,17 @@ export default function DarkWebPage() {
           },
         ].map((stat) => (
           <div key={stat.label} style={{
-            borderRadius: 12,
+            borderRadius: 16,
             padding: "18px 20px",
-            background: "#1c1c1c",
-            border: `1px solid ${stat.danger ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.06)"}`,
+            background: "#151515",
+            border: `0.8px solid ${stat.danger ? "rgba(239,68,68,0.2)" : "#1a1a1a"}`,
           }}>
             <div style={{
               fontFamily: "var(--font-dm-mono)",
               fontSize: "0.62rem",
               textTransform: "uppercase" as const,
               letterSpacing: "0.12em",
-              color: "#52525b",
+              color: "#71717a",
               fontWeight: 600,
               marginBottom: 10,
             }}>{stat.label}</div>
@@ -1192,7 +1192,7 @@ export default function DarkWebPage() {
             }}>
               {stat.value}
             </div>
-            <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#52525b", marginTop: 6 }}>
+            <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a", marginTop: 6 }}>
               de {stat.total} monitorizados
             </div>
           </div>
@@ -1207,7 +1207,7 @@ export default function DarkWebPage() {
           totalDanger={totalEmailDanger}
         >
           {summary.emails.length === 0 ? (
-            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#52525b" }}>
+            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#71717a" }}>
               No tienes emails monitorizados. Añade emails desde el dashboard.
             </div>
           ) : (
@@ -1230,7 +1230,7 @@ export default function DarkWebPage() {
           totalDanger={totalDomainDanger}
         >
           {summary.domains.length === 0 ? (
-            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#52525b" }}>
+            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#71717a" }}>
               No tienes dominios registrados. Añade un dominio desde el dashboard.
             </div>
           ) : (
@@ -1255,7 +1255,7 @@ export default function DarkWebPage() {
           locked={!summary.impersonation_available}
         >
           {summary.impersonation.length === 0 ? (
-            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#52525b" }}>
+            <div style={{ padding: "24px 0", textAlign: "center" as const, fontSize: "0.82rem", color: "#71717a" }}>
               No hay dominios configurados para monitorización de suplantación.
             </div>
           ) : (
@@ -1272,6 +1272,12 @@ export default function DarkWebPage() {
             </div>
           )}
         </Section>
+      </div>
+
+      {/* Footer */}
+      <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16, padding: "12px 24px", display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>© 2026 • v1.0.0</span>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
       </div>
     </div>
   );

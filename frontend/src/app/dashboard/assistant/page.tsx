@@ -1,129 +1,220 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { mitigationApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface ChatMsg {
   role: "user" | "assistant";
   content: string;
+  timestamp?: Date;
 }
 
-// ── AI Orb (Aniq-UI replica with ChronoShield green) ─────────────────────────
-function AIOrb({ speaking }: { speaking: boolean }) {
-  return (
-    <div style={{ position: "relative", width: 180, height: 180 }}>
-      <svg
-        width="180" height="180" viewBox="0 0 180 180"
-        style={{ animation: `orbSpin ${speaking ? "3s" : "8s"} linear infinite` }}
-      >
-        <defs>
-          <clipPath id="orb-clip">
-            <circle cx="90" cy="90" r="84" />
-          </clipPath>
-          <radialGradient id="orb-bg" cx="38%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#0f2318" />
-            <stop offset="60%" stopColor="#071209" />
-            <stop offset="100%" stopColor="#030703" />
-          </radialGradient>
-          <radialGradient id="orb-inner-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(62,207,142,0.04)" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-
-        {/* Sphere body */}
-        <circle cx="90" cy="90" r="84" fill="url(#orb-bg)" />
-        <circle cx="90" cy="90" r="84" fill="url(#orb-inner-glow)" />
-
-        {/* Grid lines (globe wireframe) */}
-        <g clipPath="url(#orb-clip)" stroke="rgba(62,207,142,0.12)" strokeWidth="0.6" fill="none">
-          {/* Latitude lines */}
-          {[-54, -36, -18, 0, 18, 36, 54].map((offset, i) => (
-            <line key={`lat-${i}`} x1="6" y1={90 + offset} x2="174" y2={90 + offset} />
-          ))}
-          {/* Longitude lines */}
-          {[-54, -36, -18, 0, 18, 36, 54].map((offset, i) => (
-            <line key={`lon-${i}`} x1={90 + offset} y1="6" x2={90 + offset} y2="174" />
-          ))}
-        </g>
-
-        {/* Primary arc — bright accent */}
-        <circle
-          cx="90" cy="90" r="81"
-          fill="none"
-          stroke="#3ecf8e"
-          strokeWidth="2.5"
-          strokeDasharray="105 405"
-          strokeDashoffset="0"
-          strokeLinecap="round"
-        />
-
-        {/* Secondary arc — subtle white/silver */}
-        <circle
-          cx="90" cy="90" r="81"
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="1.5"
-          strokeDasharray="70 440"
-          strokeDashoffset="-220"
-          strokeLinecap="round"
-        />
-
-        {/* Outer ring */}
-        <circle cx="90" cy="90" r="87" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-        <circle cx="90" cy="90" r="84" fill="none" stroke="rgba(62,207,142,0.08)" strokeWidth="0.5" />
-      </svg>
-
-      {/* Center glow when speaking */}
-      {speaking && (
-        <div style={{
-          position: "absolute",
-          inset: "30%",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(62,207,142,0.15), transparent)",
-          animation: "orbGlow 1s ease-in-out infinite alternate",
-        }} />
-      )}
-    </div>
-  );
-}
-
-// ── Greeting ──────────────────────────────────────────────────────────────────
-function greetingText() {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function greetingText(): string {
   const h = new Date().getHours();
   if (h < 12) return "Buenos días";
   if (h < 20) return "Buenas tardes";
   return "Buenas noches";
 }
 
-// ── Message bubble ────────────────────────────────────────────────────────────
+function formatTime(date?: Date): string {
+  if (!date) return "";
+  return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+
+// ── AI Orb ────────────────────────────────────────────────────────────────────
+function AIOrb({ speaking = false }: { speaking?: boolean }) {
+  return (
+    <div style={{ width: 160, height: 160, position: "relative", margin: "0 auto 24px" }}>
+      <svg
+        viewBox="0 0 160 160"
+        width="160"
+        height="160"
+        style={{ overflow: "visible" }}
+      >
+        <defs>
+          {/* Dark sphere gradient */}
+          <radialGradient id="orbBg" cx="45%" cy="35%" r="60%">
+            <stop offset="0%" stopColor="#1a2820" />
+            <stop offset="50%" stopColor="#0d1a12" />
+            <stop offset="100%" stopColor="#050f09" />
+          </radialGradient>
+          {/* Clip to circle */}
+          <clipPath id="orbClip">
+            <circle cx="80" cy="80" r="72" />
+          </clipPath>
+          {/* Arc glow filter */}
+          <filter id="arcGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Outer subtle ring */}
+        <circle
+          cx="80" cy="80" r="76"
+          fill="none"
+          stroke="rgba(62,207,142,0.08)"
+          strokeWidth="1"
+        />
+
+        {/* Main sphere */}
+        <circle cx="80" cy="80" r="72" fill="url(#orbBg)" />
+
+        {/* Grid lines inside sphere (clipped) */}
+        <g clipPath="url(#orbClip)">
+          {[24, 36, 48, 60, 72, 84, 96, 108, 120, 132].map(y => (
+            <line
+              key={`h${y}`}
+              x1="8" y1={y} x2="152" y2={y}
+              stroke="rgba(62,207,142,0.12)"
+              strokeWidth="0.5"
+            />
+          ))}
+          {[24, 36, 48, 60, 72, 84, 96, 108, 120, 132].map(x => (
+            <line
+              key={`v${x}`}
+              x1={x} y1="8" x2={x} y2="152"
+              stroke="rgba(62,207,142,0.12)"
+              strokeWidth="0.5"
+            />
+          ))}
+          {/* Equator line (slightly brighter) */}
+          <ellipse
+            cx="80" cy="80" rx="72" ry="20"
+            fill="none"
+            stroke="rgba(62,207,142,0.18)"
+            strokeWidth="0.75"
+          />
+          {/* Meridian */}
+          <ellipse
+            cx="80" cy="80" rx="20" ry="72"
+            fill="none"
+            stroke="rgba(62,207,142,0.12)"
+            strokeWidth="0.5"
+          />
+        </g>
+
+        {/* Primary rotating arc group */}
+        <g
+          style={{
+            transformOrigin: "80px 80px",
+            animation: `orbSpin ${speaking ? "2s" : "8s"} linear infinite`,
+          }}
+        >
+          <circle
+            cx="80" cy="80" r="72"
+            fill="none"
+            stroke="#3ecf8e"
+            strokeWidth="2.5"
+            strokeDasharray="105 405"
+            strokeLinecap="round"
+            filter="url(#arcGlow)"
+          />
+          {/* Bright glow dot at arc leading edge */}
+          <circle cx="80" cy="8" r="3" fill="white" opacity="0.9" />
+        </g>
+
+        {/* Secondary dimmer arc (reverse) */}
+        <g
+          style={{
+            transformOrigin: "80px 80px",
+            animation: `orbSpin2 ${speaking ? "3s" : "12s"} linear infinite reverse`,
+          }}
+        >
+          <circle
+            cx="80" cy="80" r="72"
+            fill="none"
+            stroke="rgba(255,255,255,0.15)"
+            strokeWidth="1"
+            strokeDasharray="60 392"
+            strokeLinecap="round"
+          />
+        </g>
+
+        {/* Sphere highlight */}
+        <ellipse cx="65" cy="48" rx="16" ry="10" fill="rgba(255,255,255,0.04)" />
+      </svg>
+    </div>
+  );
+}
+
+// ── Typing dots ───────────────────────────────────────────────────────────────
+function TypingDots() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "4px 2px",
+      }}
+    >
+      {[0, 1, 2].map(i => (
+        <div
+          key={i}
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            background: "#3ecf8e",
+            animation: `dotBounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Chat bubble ───────────────────────────────────────────────────────────────
 function Bubble({ msg }: { msg: ChatMsg }) {
   const isUser = msg.role === "user";
   return (
-    <div style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start", marginBottom: 12 }}>
-      {!isUser && (
-        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(62,207,142,0.12)", border: "1px solid rgba(62,207,142,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginRight: 10, flexShrink: 0, marginTop: 2 }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round">
-            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-          </svg>
-        </div>
-      )}
-      <div style={{
-        maxWidth: "72%",
-        padding: "10px 14px",
-        borderRadius: isUser ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-        background: isUser ? "#3ecf8e" : "#1c1c1c",
-        border: isUser ? "none" : "1px solid rgba(255,255,255,0.06)",
-        color: isUser ? "#000" : "#f0f0f0",
-        fontSize: "0.85rem",
-        lineHeight: 1.55,
-        fontWeight: isUser ? 500 : 400,
-        whiteSpace: "pre-wrap",
-      }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: isUser ? "flex-end" : "flex-start",
+        marginBottom: 16,
+        animation: "msgFadeIn 0.2s ease-out",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: isUser ? "70%" : "80%",
+          padding: "10px 14px",
+          borderRadius: isUser ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+          background: isUser ? "#3ecf8e" : "#151515",
+          border: isUser ? "none" : "0.8px solid #1a1a1a",
+          color: isUser ? "#000000" : "#f5f5f5",
+          fontSize: 14,
+          lineHeight: 1.6,
+          fontWeight: isUser ? 500 : 400,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
         {msg.content}
       </div>
+      {msg.timestamp && (
+        <span
+          style={{
+            fontSize: 11,
+            color: "#71717a",
+            marginTop: 4,
+            paddingLeft: isUser ? 0 : 2,
+            paddingRight: isUser ? 2 : 0,
+          }}
+        >
+          {formatTime(msg.timestamp)}
+        </span>
+      )}
     </div>
   );
 }
@@ -134,12 +225,13 @@ export default function AssistantPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
-  const [usageLimit, setUsageLimit] = useState(10);
+  const [usageLimit, setUsageLimit] = useState(1000);
   const [username, setUsername] = useState<string | null>(null);
-  const [hasStarted, setHasStarted] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const hasMessages = messages.length > 0;
 
+  // ── Load username ────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user?.email) {
@@ -148,39 +240,71 @@ export default function AssistantPage() {
     });
   }, []);
 
+  // ── Auto-scroll ──────────────────────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  const sendMessage = async (text: string) => {
-    if (!text.trim() || sending) return;
-    const userMsg: ChatMsg = { role: "user", content: text.trim() };
-    setMessages(prev => [...prev, userMsg]);
-    setInput("");
-    setSending(true);
-    setHasStarted(true);
-    try {
-      const res = await mitigationApi.chat({
-        alert_id: undefined as unknown as string,
-        message: text.trim(),
-        conversation_history: messages,
-      });
-      const assistantMsg: ChatMsg = { role: "assistant", content: res.data.response };
-      setMessages(prev => [...prev, assistantMsg]);
-      setUsageCount(res.data.usage_count ?? usageCount + 1);
-      setUsageLimit(res.data.usage_limit ?? usageLimit);
-    } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 429) {
-        toast.error("Límite de uso alcanzado.");
-      } else {
-        toast.error("Error al conectar con el asistente.");
-      }
-    } finally {
-      setSending(false);
-    }
-  };
+  // ── Textarea auto-resize ─────────────────────────────────────────────────
+  const autoResize = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
+  }, []);
 
+  // ── Send message ─────────────────────────────────────────────────────────
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || sending) return;
+
+      const userMsg: ChatMsg = {
+        role: "user",
+        content: text.trim(),
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, userMsg]);
+      setInput("");
+      setSending(true);
+
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
+
+      try {
+        const history = messages.map(m => ({ role: m.role, content: m.content }));
+        const res = await mitigationApi.chat({
+          alert_id: undefined as unknown as string,
+          message: text.trim(),
+          conversation_history: history,
+        });
+
+        const assistantMsg: ChatMsg = {
+          role: "assistant",
+          content: res.data.response,
+          timestamp: new Date(),
+        };
+
+        setMessages(prev => [...prev, assistantMsg]);
+        setUsageCount(res.data.usage_count ?? usageCount + 1);
+        setUsageLimit(res.data.usage_limit ?? usageLimit);
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 429) {
+          toast.error("Límite de uso alcanzado.");
+        } else {
+          toast.error("Error al conectar con el asistente.");
+        }
+      } finally {
+        setSending(false);
+      }
+    },
+    [sending, messages, usageCount, usageLimit]
+  );
+
+  // ── Keyboard handler ─────────────────────────────────────────────────────
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -188,172 +312,433 @@ export default function AssistantPage() {
     }
   };
 
+  // ── Suggestion chips ─────────────────────────────────────────────────────
   const suggestions = [
-    "¿Cómo configuro correctamente DMARC?",
-    "¿Qué significa un score de seguridad bajo?",
-    "Explícame qué es SPF y por qué es importante",
-    "¿Cómo puedo mejorar la seguridad de mi dominio?",
+    "¿Cómo mejorar mi SPF/DKIM?",
+    "Analiza mi puntuación SSL",
+    "Qué significa una brecha Dark Web",
+    "Cómo proteger mis dominios",
   ];
 
-  return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
-      <style>{`
-        @keyframes orbSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes orbGlow { from { opacity: 0.5; } to { opacity: 1; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  const handleSuggestion = (text: string) => {
+    setInput(text);
+    textareaRef.current?.focus();
+  };
 
-        .assistant-grid-bg {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-          background-size: 48px 48px;
-          pointer-events: none;
+  // ── New chat ─────────────────────────────────────────────────────────────
+  const handleNewChat = () => {
+    setMessages([]);
+    setInput("");
+    setUsageCount(0);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  };
+
+  const canSend = input.trim().length > 0 && !sending;
+
+  return (
+    <div
+      style={{
+        height: "calc(100vh - 64px)",
+        background: "#0b0b0b",
+        backgroundImage:
+          "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+        backgroundSize: "48px 48px",
+        display: "flex",
+        flexDirection: "column",
+        padding: "0 24px",
+        overflow: "hidden",
+      }}
+    >
+      {/* ── Global keyframes ── */}
+      <style>{`
+        @keyframes orbSpin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
         }
-        .msg-input:focus { outline: none; border-color: rgba(62,207,142,0.3) !important; }
-        .msg-input::placeholder { color: #52525b; }
-        .suggestion-btn:hover { background: rgba(62,207,142,0.08) !important; border-color: rgba(62,207,142,0.2) !important; color: #f0f0f0 !important; }
+        @keyframes orbSpin2 {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes dotBounce {
+          0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+          40%            { transform: scale(1);   opacity: 1;   }
+        }
+        @keyframes msgFadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0);   }
+        }
+        @keyframes spinLoader {
+          to { transform: rotate(360deg); }
+        }
+        .chip-btn:hover {
+          background: #1c1c1c !important;
+          color: #f5f5f5 !important;
+          border-color: rgba(62,207,142,0.25) !important;
+        }
+        .icon-btn:hover {
+          background: rgba(255,255,255,0.06) !important;
+          color: #f5f5f5 !important;
+        }
+        .chat-textarea:focus {
+          outline: none;
+        }
+        .chat-textarea::placeholder {
+          color: #71717a;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
       `}</style>
 
-      {/* Background grid */}
-      <div className="assistant-grid-bg" />
+      {/* ── Topbar ─────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          height: 48,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "0.8px solid #1a1a1a",
+          flexShrink: 0,
+        }}
+      >
+        {/* Left — model chip */}
+        <div
+          style={{
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            borderRadius: 8,
+            padding: "6px 12px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            cursor: "default",
+            userSelect: "none",
+          }}
+        >
+          {/* Small AI icon */}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#3ecf8e" strokeWidth="2" />
+            <path d="M12 8v4l3 3" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span style={{ fontSize: 13, color: "#f5f5f5", fontWeight: 500 }}>
+            Claude Haiku
+          </span>
+          <span style={{ fontSize: 12, color: "#71717a" }}>▾</span>
+        </div>
 
-      {/* Content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", zIndex: 1 }}>
+        {/* Right — action buttons */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {/* History */}
+          <button
+            className="icon-btn"
+            title="Historial"
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 6,
+              borderRadius: 6,
+              color: "#71717a",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background 0.15s, color 0.15s",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </button>
 
-        {/* Center area — orb + greeting (shown when no messages) */}
-        {!hasStarted ? (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: 0 }}>
+          {/* New chat */}
+          <button
+            className="icon-btn"
+            title="Nueva conversación"
+            onClick={handleNewChat}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 6,
+              borderRadius: 6,
+              color: "#71717a",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginLeft: 4,
+              transition: "background 0.15s, color 0.15s",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Main content (flex-1, scrollable) ──────────────────────────────── */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          minHeight: 0,
+        }}
+      >
+        {/* Empty state — orb + greeting + chips */}
+        {!hasMessages ? (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingBottom: 24,
+            }}
+          >
             {/* Orb */}
-            <AIOrb speaking={false} />
+            <AIOrb speaking={sending} />
 
             {/* Greeting */}
-            <div style={{ marginTop: 24, textAlign: "center" }}>
-              <h2 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f0f0f0", letterSpacing: "-0.01em", margin: 0 }}>
-                {greetingText()}{username ? `, ${username}` : ""}.
+            <div style={{ textAlign: "center" }}>
+              <h2
+                style={{
+                  fontSize: "1.25rem",
+                  fontWeight: 600,
+                  color: "#f5f5f5",
+                  margin: 0,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {greetingText()}{username ? `, ${username}` : ""}
               </h2>
-              <p style={{ fontSize: "0.85rem", color: "#52525b", marginTop: 8, maxWidth: 400 }}>
-                Soy tu asistente de seguridad. Puedo analizar alertas, explicar vulnerabilidades y guiarte en la solución de problemas.
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#b3b4b5",
+                  marginTop: 8,
+                  marginBottom: 0,
+                }}
+              >
+                ¿Cómo puedo ayudarte con la seguridad hoy?
               </p>
             </div>
 
-            {/* Suggestions */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 24, justifyContent: "center", maxWidth: 640 }}>
-              {suggestions.map((s, i) => (
+            {/* Suggestion chips — 2×2 grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 8,
+                marginTop: 24,
+                width: "100%",
+                maxWidth: 560,
+              }}
+            >
+              {suggestions.map((chip, i) => (
                 <button
                   key={i}
-                  className="suggestion-btn"
-                  onClick={() => { setInput(s); inputRef.current?.focus(); }}
+                  className="chip-btn"
+                  onClick={() => handleSuggestion(chip)}
                   style={{
-                    padding: "8px 14px",
-                    background: "#1c1c1c",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 8,
-                    color: "#a1a1aa",
-                    fontSize: "0.78rem",
+                    background: "#151515",
+                    border: "0.8px solid #1a1a1a",
+                    borderRadius: 10,
+                    padding: "10px 14px",
+                    fontSize: 13,
+                    color: "#b3b4b5",
                     cursor: "pointer",
-                    transition: "all 0.15s",
+                    textAlign: "left",
+                    transition: "background 0.15s, color 0.15s, border-color 0.15s",
+                    lineHeight: 1.4,
                   }}
                 >
-                  {s}
+                  {chip}
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          /* Chat messages */
-          <div style={{ flex: 1, padding: "24px 32px", maxWidth: 800, width: "100%", margin: "0 auto" }}>
-            {messages.map((msg, i) => <Bubble key={i} msg={msg} />)}
+          /* Chat messages list */
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "20px 0 8px",
+              maxWidth: 680,
+              width: "100%",
+              alignSelf: "center",
+            }}
+          >
+            {messages.map((msg, i) => (
+              <Bubble key={i} msg={msg} />
+            ))}
+
+            {/* Typing indicator */}
             {sending && (
-              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(62,207,142,0.12)", border: "1px solid rgba(62,207,142,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginRight: 10, flexShrink: 0, marginTop: 2 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                </div>
-                <div style={{ padding: "10px 14px", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px 14px 14px 4px", display: "flex", alignItems: "center", gap: 5 }}>
-                  {[0, 1, 2].map(i => (
-                    <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#3ecf8e", animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
-                  ))}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  marginBottom: 16,
+                  animation: "msgFadeIn 0.2s ease-out",
+                }}
+              >
+                <div
+                  style={{
+                    background: "#151515",
+                    border: "0.8px solid #1a1a1a",
+                    borderRadius: "16px 16px 16px 4px",
+                    padding: "10px 14px",
+                  }}
+                >
+                  <TypingDots />
                 </div>
               </div>
             )}
+
             <div ref={bottomRef} />
           </div>
         )}
 
-        {/* Input area */}
-        <div style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(10,10,10,0.95)",
-          backdropFilter: "blur(12px)",
-          padding: "16px 24px",
-          position: "sticky",
-          bottom: 0,
-        }}>
-          <div style={{ maxWidth: 800, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 10, background: "#161616", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 14px" }}>
-              <textarea
-                ref={inputRef}
-                className="msg-input"
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Pregunta sobre seguridad, alertas, configuración DNS..."
-                rows={1}
-                disabled={sending}
-                style={{
-                  flex: 1, resize: "none", background: "none", border: "none",
-                  color: "#f0f0f0", fontSize: "0.875rem", lineHeight: 1.5,
-                  fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-                  maxHeight: 120, outline: "none", overflowY: "auto",
-                }}
-                onInput={e => {
-                  const t = e.target as HTMLTextAreaElement;
-                  t.style.height = "auto";
-                  t.style.height = Math.min(t.scrollHeight, 120) + "px";
-                }}
-              />
-              <button
-                onClick={() => sendMessage(input)}
-                disabled={!input.trim() || sending}
-                style={{
-                  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  background: input.trim() && !sending ? "#3ecf8e" : "rgba(255,255,255,0.04)",
-                  border: "none", borderRadius: 8, cursor: input.trim() && !sending ? "pointer" : "not-allowed",
-                  transition: "all 0.15s", color: input.trim() && !sending ? "#000" : "#3a3a3a",
-                }}
-              >
-                {sending ? (
-                  <div style={{ width: 14, height: 14, border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"/>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                  </svg>
-                )}
-              </button>
-            </div>
+        {/* ── Input bar (always at bottom) ──────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            flexShrink: 0,
+            paddingBottom: 4,
+          }}
+        >
+          <div
+            style={{
+              background: "#151515",
+              border: "0.8px solid #1a1a1a",
+              borderRadius: 16,
+              padding: "12px 16px",
+              display: "flex",
+              alignItems: "flex-end",
+              gap: 8,
+              margin: "16px 0 0 0",
+              maxWidth: 680,
+              width: "100%",
+            }}
+          >
+            <textarea
+              ref={textareaRef}
+              className="chat-textarea"
+              value={input}
+              onChange={e => {
+                setInput(e.target.value);
+                autoResize();
+              }}
+              onKeyDown={handleKeyDown}
+              onInput={autoResize}
+              placeholder="Pregúntame sobre seguridad..."
+              rows={1}
+              disabled={sending}
+              style={{
+                flex: 1,
+                resize: "none",
+                background: "transparent",
+                border: "none",
+                color: "#f5f5f5",
+                fontSize: 14,
+                lineHeight: 1.5,
+                fontFamily: "inherit",
+                maxHeight: 120,
+                outline: "none",
+                overflowY: "auto",
+              }}
+            />
 
-            {/* Usage indicator */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-              <p style={{ fontSize: "0.68rem", color: "#3a3a3a" }}>Shift+Enter para nueva línea</p>
-              {usageCount > 0 && (
-                <p style={{ fontSize: "0.68rem", color: "#3a3a3a", fontFamily: "var(--font-dm-mono)" }}>
-                  {usageCount}/{usageLimit} consultas
-                </p>
+            {/* Send button */}
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!canSend}
+              style={{
+                background: canSend ? "#3ecf8e" : "#262626",
+                color: canSend ? "#000000" : "#71717a",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: canSend ? "pointer" : "not-allowed",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 5,
+                transition: "background 0.15s, color 0.15s",
+                height: 32,
+                minWidth: 68,
+              }}
+            >
+              {sending ? (
+                <div
+                  style={{
+                    width: 13,
+                    height: 13,
+                    border: "2px solid currentColor",
+                    borderTopColor: "transparent",
+                    borderRadius: "50%",
+                    animation: "spinLoader 0.7s linear infinite",
+                  }}
+                />
+              ) : (
+                <>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                  Enviar
+                </>
               )}
-            </div>
+            </button>
+          </div>
+
+          {/* Usage counter + hint */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              maxWidth: 680,
+              width: "100%",
+              marginTop: 6,
+              marginBottom: 24,
+              padding: "0 2px",
+            }}
+          >
+            <span style={{ fontSize: 11, color: "#71717a" }}>
+              Shift+Enter para nueva línea
+            </span>
+            {usageCount > 0 && (
+              <span style={{ fontSize: 11, color: "#71717a" }}>
+                Tokens usados: {usageCount}/{usageLimit}
+              </span>
+            )}
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }

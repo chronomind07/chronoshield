@@ -62,11 +62,11 @@ function groupByDay(entries: HistoryEntry[]): { dayLabel: string; items: History
 }
 
 // ── Result badge ───────────────────────────────────────────────────────────────
-const RESULT_STYLE: Record<string, { color: string; bg: string }> = {
-  clean:    { color: "#3ecf8e", bg: "rgba(62,207,142,0.10)" },
-  findings: { color: "#ef4444", bg: "rgba(239,68,68,0.10)" },
-  ok:       { color: "#3b82f6", bg: "rgba(59,130,246,0.10)" },
-  info:     { color: "#52525b", bg: "rgba(82,82,91,0.10)" },
+const RESULT_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  clean:    { color: "#3ecf8e", bg: "rgba(62,207,142,0.10)",  border: "rgba(62,207,142,0.2)" },
+  findings: { color: "#ef4444", bg: "rgba(239,68,68,0.10)",   border: "rgba(239,68,68,0.2)" },
+  ok:       { color: "#3b82f6", bg: "rgba(59,130,246,0.10)",  border: "rgba(59,130,246,0.2)" },
+  info:     { color: "#b3b4b5", bg: "rgba(179,180,181,0.08)", border: "rgba(179,180,181,0.15)" },
 };
 
 function ResultBadge({ result, label }: { result: string; label: string }) {
@@ -75,15 +75,16 @@ function ResultBadge({ result, label }: { result: string; label: string }) {
     <span
       style={{
         fontFamily: "var(--font-dm-mono)",
-        fontSize: "0.68rem",
+        fontSize: "11px",
         textTransform: "uppercase" as const,
         letterSpacing: "0.06em",
-        padding: "3px 8px",
+        padding: "2px 8px",
         borderRadius: 6,
         fontWeight: 600,
         flexShrink: 0,
         color: s.color,
         background: s.bg,
+        border: `0.8px solid ${s.border}`,
       }}
     >
       {label}
@@ -92,10 +93,10 @@ function ResultBadge({ result, label }: { result: string; label: string }) {
 }
 
 // ── Origin badge ───────────────────────────────────────────────────────────────
-const ORIGIN_STYLE: Record<string, { color: string; bg: string }> = {
-  automatic: { color: "#52525b", bg: "rgba(82,82,91,0.08)" },
-  manual:    { color: "#3b82f6", bg: "rgba(59,130,246,0.08)" },
-  system:    { color: "#a855f7", bg: "rgba(168,85,247,0.08)" },
+const ORIGIN_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  automatic: { color: "#b3b4b5", bg: "rgba(179,180,181,0.08)", border: "rgba(179,180,181,0.12)" },
+  manual:    { color: "#3b82f6", bg: "rgba(59,130,246,0.08)",  border: "rgba(59,130,246,0.15)" },
+  system:    { color: "#a855f7", bg: "rgba(168,85,247,0.08)",  border: "rgba(168,85,247,0.15)" },
 };
 
 function OriginBadge({ origin, label }: { origin: string; label: string }) {
@@ -104,16 +105,16 @@ function OriginBadge({ origin, label }: { origin: string; label: string }) {
     <span
       style={{
         fontFamily: "var(--font-dm-mono)",
-        fontSize: "0.68rem",
+        fontSize: "11px",
         textTransform: "uppercase" as const,
         letterSpacing: "0.06em",
-        padding: "3px 8px",
+        padding: "2px 8px",
         borderRadius: 6,
         fontWeight: 600,
         flexShrink: 0,
         color: s.color,
         background: s.bg,
-        border: `1px solid ${s.color}25`,
+        border: `0.8px solid ${s.border}`,
       }}
     >
       {label}
@@ -132,12 +133,12 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
         alignItems: "center",
         gap: 14,
         padding: "13px 20px",
-        background: "#1c1c1c",
-        border: `1px solid ${isFindings ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.06)"}`,
-        borderRadius: 10,
+        background: "#151515",
+        border: `0.8px solid #1a1a1a`,
+        borderRadius: 16,
         marginBottom: 6,
         transition: "border-color 0.15s",
-        borderLeft: isFindings ? "3px solid rgba(239,68,68,0.5)" : "3px solid rgba(255,255,255,0.06)",
+        borderLeft: isFindings ? "3px solid rgba(239,68,68,0.5)" : "3px solid #1a1a1a",
       }}
     >
       {/* Icon */}
@@ -172,7 +173,7 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
             style={{
               fontSize: "0.85rem",
               fontWeight: 600,
-              color: "#f0f0f0",
+              color: "#f5f5f5",
               fontFamily: "var(--font-dm-sans)",
             }}
           >
@@ -184,7 +185,7 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
         <p
           style={{
             fontSize: "0.75rem",
-            color: "#52525b",
+            color: "#71717a",
             marginTop: 2,
             lineHeight: 1.5,
             display: "-webkit-box",
@@ -202,7 +203,7 @@ function EntryRow({ entry }: { entry: HistoryEntry }) {
         style={{
           fontFamily: "var(--font-dm-mono)",
           fontSize: "0.68rem",
-          color: "#52525b",
+          color: "#71717a",
           textAlign: "right",
           flexShrink: 0,
           whiteSpace: "nowrap",
@@ -227,18 +228,18 @@ function DayGroup({ dayLabel, items }: { dayLabel: string; items: HistoryEntry[]
             textTransform: "uppercase",
             letterSpacing: "0.12em",
             fontWeight: 600,
-            color: "#52525b",
+            color: "#71717a",
             whiteSpace: "nowrap",
           }}
         >
           {dayLabel}
         </span>
-        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+        <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
         <span
           style={{
             fontFamily: "var(--font-dm-mono)",
             fontSize: "0.6rem",
-            color: "#3f3f46",
+            color: "#71717a",
           }}
         >
           {items.length}
@@ -279,7 +280,7 @@ function EmptyState({ dateFilter }: { dateFilter: string }) {
           height: 52,
           borderRadius: 14,
           background: "rgba(59,130,246,0.06)",
-          border: "1px solid rgba(59,130,246,0.10)",
+          border: "0.8px solid rgba(59,130,246,0.15)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -293,13 +294,13 @@ function EmptyState({ dateFilter }: { dateFilter: string }) {
           style={{
             fontSize: "1rem",
             fontWeight: 700,
-            color: "#f0f0f0",
+            color: "#f5f5f5",
             marginBottom: 6,
           }}
         >
           Sin actividad
         </div>
-        <div style={{ fontSize: "0.82rem", color: "#52525b", maxWidth: 280, lineHeight: 1.6 }}>
+        <div style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 280, lineHeight: 1.6 }}>
           Tu historial de actividad {msg} aparecerá aquí. Los escaneos automáticos y eventos de
           seguridad quedarán registrados.
         </div>
@@ -346,14 +347,14 @@ function Pagination({
         justifyContent: "space-between",
         marginTop: 24,
         paddingTop: 18,
-        borderTop: "1px solid rgba(255,255,255,0.06)",
+        borderTop: "0.8px solid #1a1a1a",
       }}
     >
       <span
         style={{
           fontFamily: "var(--font-dm-mono)",
           fontSize: "0.68rem",
-          color: "#52525b",
+          color: "#71717a",
         }}
       >
         {showing} de {total} eventos
@@ -366,9 +367,9 @@ function Pagination({
           style={{
             padding: "6px 14px",
             borderRadius: 8,
-            background: "#1c1c1c",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#a1a1aa",
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            color: "#b3b4b5",
             fontSize: "0.78rem",
             fontWeight: 600,
             cursor: page <= 1 ? "not-allowed" : "pointer",
@@ -391,15 +392,15 @@ function Pagination({
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
+                borderRadius: 6,
                 fontFamily: "var(--font-dm-mono)",
                 fontSize: "0.75rem",
                 fontWeight: 600,
                 transition: "all 0.15s",
                 cursor: "pointer",
-                background: isActive ? "#3ecf8e" : "#1c1c1c",
-                color: isActive ? "#000" : "#52525b",
-                border: isActive ? "none" : "1px solid rgba(255,255,255,0.06)",
+                background: isActive ? "#3ecf8e" : "#151515",
+                color: isActive ? "#000" : "#71717a",
+                border: isActive ? "none" : "0.8px solid #1a1a1a",
               }}
             >
               {p}
@@ -413,9 +414,9 @@ function Pagination({
           style={{
             padding: "6px 14px",
             borderRadius: 8,
-            background: "#1c1c1c",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#a1a1aa",
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            color: "#b3b4b5",
             fontSize: "0.78rem",
             fontWeight: 600,
             cursor: page >= totalPages ? "not-allowed" : "pointer",
@@ -471,7 +472,7 @@ export default function HistoryPage() {
     <div
       style={{
         padding: "28px 32px 60px",
-        background: "#0a0a0a",
+        background: "#0b0b0b",
         minHeight: "100vh",
         fontFamily: "var(--font-dm-sans)",
       }}
@@ -490,7 +491,7 @@ export default function HistoryPage() {
             style={{
               fontSize: "1.4rem",
               fontWeight: 700,
-              color: "#f0f0f0",
+              color: "#f5f5f5",
               margin: 0,
               letterSpacing: "-0.01em",
             }}
@@ -499,7 +500,7 @@ export default function HistoryPage() {
           </h1>
           <p
             style={{
-              color: "#52525b",
+              color: "#71717a",
               fontSize: "0.8rem",
               marginTop: 5,
               margin: "5px 0 0",
@@ -513,7 +514,7 @@ export default function HistoryPage() {
             style={{
               fontFamily: "var(--font-dm-mono)",
               fontSize: "0.68rem",
-              color: "#52525b",
+              color: "#71717a",
               marginTop: 6,
             }}
           >
@@ -538,9 +539,9 @@ export default function HistoryPage() {
             display: "flex",
             gap: 4,
             padding: 4,
-            background: "#111111",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 10,
+            background: "#1c1c1c",
+            border: "0.8px solid #1a1a1a",
+            borderRadius: 8,
           }}
         >
           {DATE_FILTERS.map((f) => {
@@ -550,16 +551,16 @@ export default function HistoryPage() {
                 key={f.key}
                 onClick={() => setDateFilter(f.key)}
                 style={{
-                  padding: "6px 14px",
-                  borderRadius: 7,
-                  fontSize: "0.8rem",
+                  padding: "5px 12px",
+                  borderRadius: 6,
+                  fontSize: "13px",
                   fontWeight: 600,
                   transition: "all 0.15s",
                   cursor: "pointer",
-                  border: active ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+                  border: active ? "0.8px solid #1a1a1a" : "0.8px solid transparent",
                   fontFamily: "var(--font-dm-sans)",
-                  background: active ? "#1c1c1c" : "transparent",
-                  color: active ? "#f0f0f0" : "#52525b",
+                  background: active ? "#151515" : "transparent",
+                  color: active ? "#f5f5f5" : "#71717a",
                 }}
               >
                 {f.label}
@@ -573,26 +574,26 @@ export default function HistoryPage() {
           value={eventFilter}
           onChange={(e) => setEventFilter(e.target.value)}
           style={{
-            padding: "8px 12px",
+            padding: "10px 12px",
             borderRadius: 8,
-            fontSize: "0.8rem",
+            fontSize: "13px",
             outline: "none",
             cursor: "pointer",
             fontFamily: "var(--font-dm-sans)",
-            background: "#111111",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: eventFilter ? "#3ecf8e" : "#52525b",
+            background: "#1c1c1c",
+            border: "0.8px solid #1a1a1a",
+            color: eventFilter ? "#3ecf8e" : "#71717a",
             appearance: "none",
             WebkitAppearance: "none",
             paddingRight: "28px",
             backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2352525b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2371717a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "right 10px center",
           }}
         >
           {EVENT_FILTERS.map((f) => (
-            <option key={f.key} value={f.key} style={{ background: "#111111", color: "#f0f0f0" }}>
+            <option key={f.key} value={f.key} style={{ background: "#1c1c1c", color: "#f5f5f5" }}>
               {f.label}
             </option>
           ))}
@@ -639,6 +640,12 @@ export default function HistoryPage() {
           onPage={handlePage}
         />
       )}
+
+      {/* Footer */}
+      <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16, padding: "12px 24px", display: "flex", justifyContent: "space-between", marginTop: 40 }}>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>© 2026 • v1.0.0</span>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
+      </div>
     </div>
   );
 }

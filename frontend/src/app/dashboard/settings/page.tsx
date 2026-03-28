@@ -136,13 +136,13 @@ function fmtDate(iso: string) {
 // ── Plan Badge ─────────────────────────────────────────────────────────────────
 function PlanBadge({ plan }: { plan: string }) {
   const map: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    business: { label: "Business", color: "#3ecf8e", bg: "rgba(62,207,142,0.08)", border: "rgba(62,207,142,0.2)" },
-    starter:  { label: "Starter",  color: "#3ecf8e", bg: "rgba(62,207,142,0.06)", border: "rgba(62,207,142,0.15)" },
-    trial:    { label: "Trial",    color: "#71717a", bg: "rgba(113,113,122,0.08)", border: "rgba(113,113,122,0.18)" },
+    business: { label: "Business", color: "#3ecf8e", bg: "rgba(62,207,142,0.10)", border: "rgba(62,207,142,0.2)" },
+    starter:  { label: "Starter",  color: "#3ecf8e", bg: "rgba(62,207,142,0.08)", border: "rgba(62,207,142,0.15)" },
+    trial:    { label: "Trial",    color: "#71717a", bg: "rgba(113,113,122,0.08)", border: "rgba(113,113,122,0.15)" },
   };
   const s = map[plan] ?? map.trial;
   return (
-    <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.12em", padding: "3px 10px", borderRadius: 20, fontWeight: 700, color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
+    <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.12em", padding: "3px 10px", borderRadius: 20, fontWeight: 700, color: s.color, background: s.bg, border: `0.8px solid ${s.border}` }}>
       {s.label}
     </span>
   );
@@ -166,9 +166,9 @@ function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean; onCha
 // ── Section Card ───────────────────────────────────────────────────────────────
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
-      <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)" }}>{title}</div>
+    <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16, marginBottom: 12, overflow: "hidden" }}>
+      <div style={{ padding: "16px 24px", borderBottom: "0.8px solid #1a1a1a" }}>
+        <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)" }}>{title}</div>
       </div>
       <div style={{ padding: "0 24px" }}>{children}</div>
     </div>
@@ -178,10 +178,10 @@ function SectionCard({ title, children }: { title: string; children: React.React
 // ── Setting Row ────────────────────────────────────────────────────────────────
 function SettingRow({ label, help, children, last }: { label: string; help?: string; children: React.ReactNode; last?: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.04)", gap: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: last ? "none" : "0.8px solid #1a1a1a", gap: 16 }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)" }}>{label}</div>
-        {help && <div style={{ fontSize: "0.72rem", color: "#52525b", marginTop: 2, fontFamily: "var(--font-dm-sans)" }}>{help}</div>}
+        <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)" }}>{label}</div>
+        {help && <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 2, fontFamily: "var(--font-dm-sans)" }}>{help}</div>}
       </div>
       <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
@@ -197,9 +197,9 @@ function StyledInput({ value, onChange, placeholder, readOnly, type = "text" }: 
       onChange={onChange ? (e) => onChange(e.target.value) : undefined}
       readOnly={readOnly}
       placeholder={placeholder}
-      style={{ padding: "10px 14px", background: readOnly ? "rgba(255,255,255,0.02)" : "#161616", border: `1px solid ${readOnly ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"}`, borderRadius: 8, color: readOnly ? "#52525b" : "#f0f0f0", fontFamily: "var(--font-dm-sans)", fontSize: "0.84rem", outline: "none", transition: "border-color 0.2s", width: 240, boxSizing: "border-box" as const }}
-      onFocus={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(62,207,142,0.3)"; }}
-      onBlur={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+      style={{ padding: "10px 12px", background: readOnly ? "#1c1c1c" : "#1c1c1c", border: `0.8px solid ${readOnly ? "#1a1a1a" : "#1a1a1a"}`, borderRadius: 8, color: readOnly ? "#71717a" : "#f5f5f5", fontFamily: "var(--font-dm-sans)", fontSize: "13px", outline: "none", transition: "border-color 0.2s", width: 240, boxSizing: "border-box" as const }}
+      onFocus={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "rgba(62,207,142,0.4)"; }}
+      onBlur={readOnly ? undefined : (e) => { e.currentTarget.style.borderColor = "#1a1a1a"; }}
     />
   );
 }
@@ -207,7 +207,7 @@ function StyledInput({ value, onChange, placeholder, readOnly, type = "text" }: 
 // ── Primary Button ─────────────────────────────────────────────────────────────
 function PrimaryButton({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} disabled={disabled} style={{ padding: "9px 18px", background: "#3ecf8e", color: "#000", fontWeight: 700, fontSize: "0.82rem", borderRadius: 8, border: "none", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "opacity 0.2s", fontFamily: "var(--font-dm-sans)" }}>
+    <button onClick={onClick} disabled={disabled} style={{ padding: "8px 16px", background: "#3ecf8e", color: "#000", fontWeight: 600, fontSize: "13px", borderRadius: 8, border: "none", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "opacity 0.2s", fontFamily: "var(--font-dm-sans)" }}>
       {children}
     </button>
   );
@@ -216,7 +216,7 @@ function PrimaryButton({ onClick, disabled, children }: { onClick?: () => void; 
 // ── Secondary Button ───────────────────────────────────────────────────────────
 function SecondaryButton({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} disabled={disabled} style={{ padding: "9px 18px", background: "#1c1c1c", color: "#a1a1aa", fontWeight: 500, fontSize: "0.82rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "opacity 0.2s", fontFamily: "var(--font-dm-sans)" }}>
+    <button onClick={onClick} disabled={disabled} style={{ padding: "8px 16px", background: "#151515", color: "#f5f5f5", fontWeight: 500, fontSize: "13px", borderRadius: 8, border: "0.8px solid #1a1a1a", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, transition: "opacity 0.2s", fontFamily: "var(--font-dm-sans)" }}>
       {children}
     </button>
   );
@@ -235,25 +235,25 @@ function DeleteModal({ lang, onConfirm, onClose }: { lang: "es" | "en"; onConfir
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(10,10,10,0.88)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div style={{ width: "100%", maxWidth: 380, borderRadius: 12, padding: 28, background: "#1c1c1c", border: "1px solid rgba(239,68,68,0.2)" }} onClick={(e) => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div style={{ width: "100%", maxWidth: 380, borderRadius: 16, padding: 28, background: "#151515", border: "0.8px solid rgba(239,68,68,0.2)" }} onClick={(e) => e.stopPropagation()}>
         <div style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(239,68,68,0.08)", marginBottom: 18, fontSize: 18 }}>⚠️</div>
         <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#ef4444", marginBottom: 8, fontFamily: "var(--font-dm-sans)" }}>{t.deleteModal}</h2>
-        <p style={{ fontSize: "0.78rem", color: "#52525b", marginBottom: 20, lineHeight: 1.6, fontFamily: "var(--font-dm-sans)" }}>
-          {t.deleteModalDesc} <span style={{ fontFamily: "var(--font-dm-mono)", fontWeight: 700, color: "#f0f0f0" }}>ELIMINAR</span> {t.deleteModalConfirm}
+        <p style={{ fontSize: "0.78rem", color: "#71717a", marginBottom: 20, lineHeight: 1.6, fontFamily: "var(--font-dm-sans)" }}>
+          {t.deleteModalDesc} <span style={{ fontFamily: "var(--font-dm-mono)", fontWeight: 700, color: "#f5f5f5" }}>ELIMINAR</span> {t.deleteModalConfirm}
         </p>
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="ELIMINAR"
-          style={{ width: "100%", padding: "10px 14px", borderRadius: 8, fontSize: "0.84rem", fontFamily: "var(--font-dm-mono)", outline: "none", marginBottom: 16, boxSizing: "border-box" as const, background: "#161616", border: `1px solid ${text === "ELIMINAR" ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.08)"}`, color: "#f0f0f0", transition: "border-color 0.2s" }}
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: "13px", fontFamily: "var(--font-dm-mono)", outline: "none", marginBottom: 16, boxSizing: "border-box" as const, background: "#1c1c1c", border: `0.8px solid ${text === "ELIMINAR" ? "rgba(239,68,68,0.4)" : "#1a1a1a"}`, color: "#f5f5f5", transition: "border-color 0.2s" }}
         />
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 500, color: "#a1a1aa", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", fontFamily: "var(--font-dm-sans)" }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "13px", fontWeight: 500, color: "#f5f5f5", background: "#151515", border: "0.8px solid #1a1a1a", cursor: "pointer", fontFamily: "var(--font-dm-sans)" }}>
             Cancelar
           </button>
-          <button onClick={handleDelete} disabled={text !== "ELIMINAR" || deleting} style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "0.82rem", fontWeight: 700, color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", cursor: "pointer", opacity: (text !== "ELIMINAR" || deleting) ? 0.4 : 1, fontFamily: "var(--font-dm-sans)", transition: "opacity 0.2s" }}>
+          <button onClick={handleDelete} disabled={text !== "ELIMINAR" || deleting} style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: "13px", fontWeight: 700, color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "0.8px solid rgba(239,68,68,0.2)", cursor: "pointer", opacity: (text !== "ELIMINAR" || deleting) ? 0.4 : 1, fontFamily: "var(--font-dm-sans)", transition: "opacity 0.2s" }}>
             {deleting ? "Eliminando…" : t.deleteModalBtn}
           </button>
         </div>
@@ -262,11 +262,50 @@ function DeleteModal({ lang, onConfirm, onClose }: { lang: "es" | "en"; onConfir
   );
 }
 
+// ── Tab icons ──────────────────────────────────────────────────────────────────
+const TAB_ICONS: Record<Tab, string> = {
+  general:       "⊞",
+  account:       "◉",
+  subscription:  "◈",
+  notifications: "◎",
+};
+
 // ── Tab: General ──────────────────────────────────────────────────────────────
 function TabGeneral({ profile, lang, onChange, onSave, saving }: { profile: Profile; lang: "es" | "en"; onChange: (p: Partial<Profile>) => void; onSave: () => void; saving: boolean }) {
   const t = T[lang];
+
+  // Avatar initials
+  const initials = profile.full_name
+    ? profile.full_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+    : profile.email[0].toUpperCase();
+
   return (
     <div>
+      {/* Avatar row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+        <div style={{
+          width: 48,
+          height: 48,
+          borderRadius: "50%",
+          background: "#262626",
+          border: "0.8px solid #1a1a1a",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "var(--font-dm-mono)",
+          fontSize: "1rem",
+          fontWeight: 700,
+          color: "#b3b4b5",
+          flexShrink: 0,
+        }}>
+          {initials}
+        </div>
+        <div>
+          <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#f5f5f5" }}>{profile.full_name || "—"}</div>
+          <div style={{ fontSize: "0.75rem", color: "#71717a", marginTop: 2 }}>{profile.email}</div>
+        </div>
+      </div>
+
       <SectionCard title={t.tabs.general}>
         <SettingRow label={t.fullName}>
           <StyledInput value={profile.full_name} onChange={(v) => onChange({ full_name: v })} placeholder="Tu nombre" />
@@ -275,12 +314,12 @@ function TabGeneral({ profile, lang, onChange, onSave, saving }: { profile: Prof
           <StyledInput value={profile.email} readOnly />
         </SettingRow>
         <SettingRow label={t.language}>
-          <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", background: "#161616" }}>
+          <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: "0.8px solid #1a1a1a", background: "#1c1c1c" }}>
             {(["es", "en"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => onChange({ language: l })}
-                style={{ padding: "9px 16px", fontSize: "0.82rem", fontWeight: 600, border: "none", cursor: "pointer", transition: "all 0.15s", color: lang === l ? "#3ecf8e" : "#52525b", background: lang === l ? "rgba(62,207,142,0.1)" : "transparent", fontFamily: "var(--font-dm-sans)" }}
+                style={{ padding: "9px 16px", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer", transition: "all 0.15s", color: lang === l ? "#3ecf8e" : "#71717a", background: lang === l ? "rgba(62,207,142,0.1)" : "transparent", fontFamily: "var(--font-dm-sans)" }}
               >
                 {l === "es" ? "ES " + t.langEs : "EN " + t.langEn}
               </button>
@@ -291,7 +330,7 @@ function TabGeneral({ profile, lang, onChange, onSave, saving }: { profile: Prof
           <select
             value={profile.timezone}
             onChange={(e) => onChange({ timezone: e.target.value })}
-            style={{ padding: "10px 14px", background: "#161616", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)", fontSize: "0.84rem", outline: "none", width: 240, cursor: "pointer" }}
+            style={{ padding: "10px 12px", background: "#1c1c1c", border: "0.8px solid #1a1a1a", borderRadius: 8, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)", fontSize: "13px", outline: "none", width: 240, cursor: "pointer" }}
           >
             {TIMEZONES.map((tz) => (
               <option key={tz} value={tz} style={{ background: "#1c1c1c" }}>{tz}</option>
@@ -344,35 +383,35 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: { profile: Profile; 
       <SectionCard title={t.orgId}>
         <div style={{ padding: "16px 0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-            <code style={{ flex: 1, fontFamily: "var(--font-dm-mono)", fontSize: "0.78rem", color: "#a1a1aa", padding: "9px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, background: "#161616", border: "1px solid rgba(255,255,255,0.06)", minWidth: 0 }}>
+            <code style={{ flex: 1, fontFamily: "var(--font-dm-mono)", fontSize: "0.78rem", color: "#b3b4b5", padding: "9px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, background: "#1c1c1c", border: "0.8px solid #1a1a1a", minWidth: 0 }}>
               {profile.org_id}
             </code>
             <button
               onClick={() => { navigator.clipboard.writeText(profile.org_id); toast.success("Copiado"); }}
-              style={{ padding: "9px 14px", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600, color: "#a1a1aa", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", flexShrink: 0, fontFamily: "var(--font-dm-sans)" }}
+              style={{ padding: "8px 14px", borderRadius: 8, fontSize: "13px", fontWeight: 600, color: "#f5f5f5", background: "#151515", border: "0.8px solid #1a1a1a", cursor: "pointer", flexShrink: 0, fontFamily: "var(--font-dm-sans)" }}
             >
               Copiar
             </button>
           </div>
-          <p style={{ fontSize: "0.72rem", color: "#52525b", fontFamily: "var(--font-dm-sans)", margin: 0 }}>{t.orgIdHelp}</p>
+          <p style={{ fontSize: "0.72rem", color: "#71717a", fontFamily: "var(--font-dm-sans)", margin: 0 }}>{t.orgIdHelp}</p>
         </div>
       </SectionCard>
 
       {/* Sessions */}
       <SectionCard title={t.activeSessions}>
-        <div style={{ padding: "16px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, marginBottom: 14, background: "#161616", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: "16px 0", borderBottom: "0.8px solid #1a1a1a" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, marginBottom: 14, background: "#1c1c1c", border: "0.8px solid #1a1a1a" }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, background: "rgba(62,207,142,0.06)", flexShrink: 0 }}>💻</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)" }}>{t.currentDevice}</div>
-              <div style={{ fontSize: "0.72rem", color: "#52525b", marginTop: 2, fontFamily: "var(--font-dm-sans)" }}>{new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</div>
+              <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)" }}>{t.currentDevice}</div>
+              <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 2, fontFamily: "var(--font-dm-sans)" }}>{new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</div>
             </div>
-            <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 20, background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.15)", letterSpacing: "0.08em" }}>ACTIVA</span>
+            <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", padding: "2px 8px", borderRadius: 6, background: "rgba(62,207,142,0.10)", color: "#3ecf8e", border: "0.8px solid rgba(62,207,142,0.2)", letterSpacing: "0.08em" }}>ACTIVA</span>
           </div>
           <button
             onClick={handleSignOutOthers}
             disabled={soLoading}
-            style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", fontWeight: 600, padding: "9px 16px", borderRadius: 8, cursor: "pointer", color: "#f59e0b", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", opacity: soLoading ? 0.5 : 1, fontFamily: "var(--font-dm-sans)", transition: "opacity 0.2s" }}
+            style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "13px", fontWeight: 600, padding: "8px 16px", borderRadius: 8, cursor: "pointer", color: "#f59e0b", background: "rgba(245,158,11,0.06)", border: "0.8px solid rgba(245,158,11,0.15)", opacity: soLoading ? 0.5 : 1, fontFamily: "var(--font-dm-sans)", transition: "opacity 0.2s" }}
           >
             {soLoading ? "⟳ " : "⊘ "}{t.signOutOthers}
           </button>
@@ -380,7 +419,7 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: { profile: Profile; 
 
         {/* Change password */}
         <div style={{ padding: "16px 0 20px" }}>
-          <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f0f0f0", marginBottom: 14, fontFamily: "var(--font-dm-sans)" }}>{t.changePassword}</div>
+          <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f5f5f5", marginBottom: 14, fontFamily: "var(--font-dm-sans)" }}>{t.changePassword}</div>
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
             {[
               { key: "current", label: t.currentPw },
@@ -388,21 +427,21 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: { profile: Profile; 
               { key: "confirm", label: t.confirmPw },
             ].map((f) => (
               <div key={f.key}>
-                <label style={{ fontSize: "0.72rem", color: "#52525b", display: "block", marginBottom: 5, fontFamily: "var(--font-dm-sans)" }}>{f.label}</label>
+                <label style={{ fontSize: "0.72rem", color: "#71717a", display: "block", marginBottom: 5, fontFamily: "var(--font-dm-sans)" }}>{f.label}</label>
                 <input
                   type="password"
                   value={pw[f.key as keyof typeof pw]}
                   onChange={(e) => setPw((p) => ({ ...p, [f.key]: e.target.value }))}
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 8, fontSize: "0.84rem", outline: "none", boxSizing: "border-box" as const, background: "#161616", border: "1px solid rgba(255,255,255,0.08)", color: "#f0f0f0", fontFamily: "var(--font-dm-sans)", transition: "border-color 0.2s" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(62,207,142,0.3)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: "13px", outline: "none", boxSizing: "border-box" as const, background: "#1c1c1c", border: "0.8px solid #1a1a1a", color: "#f5f5f5", fontFamily: "var(--font-dm-sans)", transition: "border-color 0.2s" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(62,207,142,0.4)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "#1a1a1a"; }}
                 />
               </div>
             ))}
             <button
               onClick={handleChangePw}
               disabled={pwSaving || !pw.current || !pw.new || !pw.confirm}
-              style={{ alignSelf: "flex-start", marginTop: 4, padding: "9px 20px", borderRadius: 8, fontSize: "0.82rem", fontWeight: 700, color: "#000", background: "#3ecf8e", border: "none", cursor: "pointer", opacity: (pwSaving || !pw.current || !pw.new || !pw.confirm) ? 0.4 : 1, fontFamily: "var(--font-dm-sans)", transition: "opacity 0.2s" }}
+              style={{ alignSelf: "flex-start", marginTop: 4, padding: "8px 16px", borderRadius: 8, fontSize: "13px", fontWeight: 600, color: "#000", background: "#3ecf8e", border: "none", cursor: "pointer", opacity: (pwSaving || !pw.current || !pw.new || !pw.confirm) ? 0.4 : 1, fontFamily: "var(--font-dm-sans)", transition: "opacity 0.2s" }}
             >
               {pwSaving ? "Actualizando…" : t.updatePw}
             </button>
@@ -413,18 +452,18 @@ function TabAccount({ profile, lang, onSignOut, onDelete }: { profile: Profile; 
       {/* Sign out */}
       <SectionCard title={t.signOut}>
         <div style={{ padding: "16px 0" }}>
-          <p style={{ fontSize: "0.78rem", color: "#52525b", marginBottom: 14, fontFamily: "var(--font-dm-sans)", margin: "0 0 14px" }}>{t.signOutDesc}</p>
+          <p style={{ fontSize: "0.78rem", color: "#71717a", marginBottom: 14, fontFamily: "var(--font-dm-sans)", margin: "0 0 14px" }}>{t.signOutDesc}</p>
           <SecondaryButton onClick={onSignOut}>Cerrar sesión</SecondaryButton>
         </div>
       </SectionCard>
 
       {/* Danger zone */}
-      <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)", borderRadius: 12, padding: "20px 24px", marginTop: 4 }}>
+      <div style={{ background: "rgba(239,68,68,0.04)", border: "0.8px solid rgba(239,68,68,0.2)", borderRadius: 16, padding: "20px 24px", marginTop: 4 }}>
         <div style={{ fontSize: "0.84rem", fontWeight: 700, color: "#ef4444", marginBottom: 6, fontFamily: "var(--font-dm-sans)" }}>{t.dangerZone}</div>
-        <div style={{ fontSize: "0.78rem", color: "#52525b", marginBottom: 16, lineHeight: 1.6, maxWidth: 480, fontFamily: "var(--font-dm-sans)" }}>{t.deleteDesc}</div>
+        <div style={{ fontSize: "0.78rem", color: "#71717a", marginBottom: 16, lineHeight: 1.6, maxWidth: 480, fontFamily: "var(--font-dm-sans)" }}>{t.deleteDesc}</div>
         <button
           onClick={onDelete}
-          style={{ padding: "9px 18px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 8, color: "#ef4444", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-dm-sans)" }}
+          style={{ padding: "8px 16px", background: "rgba(239,68,68,0.08)", border: "0.8px solid rgba(239,68,68,0.2)", borderRadius: 8, color: "#ef4444", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-dm-sans)" }}
         >
           {t.deleteBtn}
         </button>
@@ -461,27 +500,27 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
   return (
     <div>
       {/* Plan card */}
-      <div style={{ background: "#1c1c1c", border: "1px solid rgba(62,207,142,0.12)", borderRadius: 12, padding: "22px 24px", marginBottom: 12 }}>
-        <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "#52525b", marginBottom: 10, fontFamily: "var(--font-dm-mono)", textTransform: "uppercase" as const, letterSpacing: "0.1em" }}>{t.currentPlan}</div>
+      <div style={{ background: "#151515", border: "0.8px solid rgba(62,207,142,0.2)", borderRadius: 16, padding: "22px 24px", marginBottom: 12 }}>
+        <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "#71717a", marginBottom: 10, fontFamily: "var(--font-dm-mono)", textTransform: "uppercase" as const, letterSpacing: "0.1em" }}>{t.currentPlan}</div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <span style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)" }}>
+              <span style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)" }}>
                 {info.plan.charAt(0).toUpperCase() + info.plan.slice(1)}
               </span>
               <PlanBadge plan={info.plan} />
               {info.cancel_at_period_end && (
-                <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 20, color: "#f59e0b", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)" }}>
+                <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 20, color: "#f59e0b", background: "rgba(245,158,11,0.08)", border: "0.8px solid rgba(245,158,11,0.15)" }}>
                   {t.cancelNote}
                 </span>
               )}
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#a1a1aa", fontFamily: "var(--font-dm-sans)" }}>
+            <div style={{ fontSize: "0.82rem", color: "#b3b4b5", fontFamily: "var(--font-dm-sans)" }}>
               {info.plan === "business" ? "59€/mes" : info.plan === "starter" ? "29€/mes" : "—"}
             </div>
             {info.current_period_end && (
-              <div style={{ fontSize: "0.78rem", color: "#52525b", marginTop: 6, fontFamily: "var(--font-dm-sans)" }}>
-                {t.renewal}: <span style={{ color: "#a1a1aa" }}>{fmtDate(info.current_period_end)}</span>
+              <div style={{ fontSize: "0.78rem", color: "#71717a", marginTop: 6, fontFamily: "var(--font-dm-sans)" }}>
+                {t.renewal}: <span style={{ color: "#b3b4b5" }}>{fmtDate(info.current_period_end)}</span>
               </div>
             )}
           </div>
@@ -499,15 +538,15 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
                 <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "1.8rem", fontWeight: 700, color: creditColor, lineHeight: 1 }}>{info.credits_available}</span>
-                <span style={{ fontSize: "0.82rem", color: "#52525b", fontFamily: "var(--font-dm-sans)" }}>/ {totalCredits}</span>
+                <span style={{ fontSize: "0.82rem", color: "#71717a", fontFamily: "var(--font-dm-sans)" }}>/ {totalCredits}</span>
               </div>
-              <div style={{ height: 4, borderRadius: 4, overflow: "hidden", background: "rgba(255,255,255,0.05)" }}>
+              <div style={{ height: 4, borderRadius: 4, overflow: "hidden", background: "#262626" }}>
                 <div style={{ height: "100%", borderRadius: 4, transition: "width 0.7s", width: `${creditPct * 100}%`, background: creditColor }} />
               </div>
             </div>
             <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
-              <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#52525b", marginBottom: 4 }}>{t.creditsReset}</div>
-              <div style={{ fontSize: "0.82rem", color: "#a1a1aa", fontFamily: "var(--font-dm-sans)" }}>{info.credits_reset_date || "—"}</div>
+              <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#71717a", marginBottom: 4 }}>{t.creditsReset}</div>
+              <div style={{ fontSize: "0.82rem", color: "#b3b4b5", fontFamily: "var(--font-dm-sans)" }}>{info.credits_reset_date || "—"}</div>
             </div>
           </div>
         </div>
@@ -517,21 +556,21 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
       <SectionCard title={t.billingHistory}>
         <div style={{ padding: "8px 0" }}>
           {info.billing_history.length === 0 ? (
-            <p style={{ fontSize: "0.82rem", color: "#52525b", padding: "10px 0", fontFamily: "var(--font-dm-sans)", margin: 0 }}>{t.noBilling}</p>
+            <p style={{ fontSize: "0.82rem", color: "#71717a", padding: "10px 0", fontFamily: "var(--font-dm-sans)", margin: 0 }}>{t.noBilling}</p>
           ) : (
             <div>
               {info.billing_history.map((inv, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: i < info.billing_history.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", gap: 12 }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: i < info.billing_history.length - 1 ? "0.8px solid #1a1a1a" : "none", gap: 12 }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)" }}>{inv.description}</div>
-                    <div style={{ fontSize: "0.72rem", color: "#52525b", marginTop: 2, fontFamily: "var(--font-dm-sans)" }}>{fmtDate(inv.date)}</div>
+                    <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)" }}>{inv.description}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 2, fontFamily: "var(--font-dm-sans)" }}>{fmtDate(inv.date)}</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                     <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.9rem", fontWeight: 700, color: "#3ecf8e" }}>
                       {inv.amount.toFixed(2)} {inv.currency}
                     </span>
                     {inv.invoice_url && (
-                      <a href={inv.invoice_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.72rem", fontWeight: 600, padding: "3px 10px", borderRadius: 6, color: "#a1a1aa", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", textDecoration: "none", fontFamily: "var(--font-dm-sans)" }}>
+                      <a href={inv.invoice_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.72rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, color: "#b3b4b5", background: "#262626", border: "0.8px solid #1a1a1a", textDecoration: "none", fontFamily: "var(--font-dm-sans)" }}>
                         PDF
                       </a>
                     )}
@@ -560,17 +599,17 @@ function TabNotifications({ prefs, lang, onChange, onSave, saving }: { prefs: No
     <div>
       <SectionCard title={t.notifTitle}>
         {mainToggles.map((item, idx) => (
-          <div key={item.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: idx < mainToggles.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", gap: 16 }}>
+          <div key={item.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: idx < mainToggles.length - 1 ? "0.8px solid #1a1a1a" : "none", gap: 16 }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                <span style={{ fontSize: "0.82rem", fontWeight: 500, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)" }}>{item.label}</span>
+                <span style={{ fontSize: "0.82rem", fontWeight: 500, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)" }}>{item.label}</span>
                 {item.alwaysOn && (
-                  <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", padding: "2px 7px", borderRadius: 4, background: "rgba(62,207,142,0.08)", color: "#3ecf8e", border: "1px solid rgba(62,207,142,0.15)", letterSpacing: "0.08em" }}>
+                  <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "11px", padding: "2px 7px", borderRadius: 6, background: "rgba(62,207,142,0.10)", color: "#3ecf8e", border: "0.8px solid rgba(62,207,142,0.2)", letterSpacing: "0.08em" }}>
                     RECOMENDADO
                   </span>
                 )}
               </div>
-              <p style={{ fontSize: "0.72rem", color: "#52525b", lineHeight: 1.5, margin: 0, fontFamily: "var(--font-dm-sans)" }}>{item.desc}</p>
+              <p style={{ fontSize: "0.72rem", color: "#71717a", lineHeight: 1.5, margin: 0, fontFamily: "var(--font-dm-sans)" }}>{item.desc}</p>
             </div>
             <ToggleSwitch checked={prefs[item.key as keyof NotifPrefs]} onChange={(v) => onChange({ [item.key]: v })} />
           </div>
@@ -657,7 +696,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 256, background: "#0a0a0a" }}>
+      <div style={{ padding: 40, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 256, background: "#0b0b0b" }}>
         <div style={{ width: 26, height: 26, border: "2px solid #3ecf8e", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       </div>
     );
@@ -673,44 +712,83 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div style={{ padding: "28px 32px 60px", background: "#0a0a0a", minHeight: "100vh", fontFamily: "var(--font-dm-sans)", maxWidth: 820, margin: "0 auto" }}>
+    <div style={{ padding: "28px 32px 60px", background: "#0b0b0b", minHeight: "100vh", fontFamily: "var(--font-dm-sans)" }}>
       {showDelete && (
         <DeleteModal lang={lang} onConfirm={handleDeleteAccount} onClose={() => setShowDelete(false)} />
       )}
 
       {/* Page header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f0f0f0", fontFamily: "var(--font-dm-sans)", margin: "0 0 4px" }}>{t.title}</h1>
-        <p style={{ color: "#52525b", fontSize: "0.8rem", fontFamily: "var(--font-dm-sans)", margin: 0 }}>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", fontFamily: "var(--font-dm-sans)", margin: "0 0 4px" }}>{t.title}</h1>
+        <p style={{ color: "#71717a", fontSize: "0.8rem", fontFamily: "var(--font-dm-sans)", margin: 0 }}>
           {profile.email}{profile.company_name ? ` · ${profile.company_name}` : ""}
         </p>
       </div>
 
-      {/* Pill tab bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 2, marginBottom: 24, padding: "4px", background: "#161616", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", width: "fit-content" }}>
-        {TABS.map((tb) => (
-          <button
-            key={tb.key}
-            onClick={() => setTab(tb.key)}
-            style={{ padding: "7px 16px", fontSize: "0.82rem", fontWeight: 600, borderRadius: 7, border: "none", cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)", color: tab === tb.key ? "#3ecf8e" : "#52525b", background: tab === tb.key ? "rgba(62,207,142,0.1)" : "transparent" }}
-          >
-            {tb.label}
-          </button>
-        ))}
+      {/* Two-column layout: vertical tab list + content */}
+      <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+        {/* Left: vertical tab list */}
+        <div style={{
+          width: 200,
+          flexShrink: 0,
+          background: "#151515",
+          border: "0.8px solid #1a1a1a",
+          borderRadius: 16,
+          padding: 8,
+        }}>
+          {TABS.map((tb) => {
+            const active = tab === tb.key;
+            return (
+              <button
+                key={tb.key}
+                onClick={() => setTab(tb.key)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "9px 12px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  borderRadius: 8,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  fontFamily: "var(--font-dm-sans)",
+                  textAlign: "left" as const,
+                  color: active ? "#f5f5f5" : "#b3b4b5",
+                  background: active ? "rgba(240,240,240,0.18)" : "transparent",
+                  marginBottom: 2,
+                }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{ fontSize: "0.85rem", color: active ? "#f5f5f5" : "#71717a" }}>{TAB_ICONS[tb.key]}</span>
+                {tb.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right: tab content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {tab === "general" && (
+            <TabGeneral profile={profile} lang={lang} onChange={(p) => setProfile((prev) => prev ? { ...prev, ...p } : prev)} onSave={handleSaveProfile} saving={saving} />
+          )}
+          {tab === "account" && (
+            <TabAccount profile={profile} lang={lang} onSignOut={handleSignOut} onDelete={() => setShowDelete(true)} />
+          )}
+          {tab === "subscription" && <TabSubscription info={subInfo} lang={lang} />}
+          {tab === "notifications" && (
+            <TabNotifications prefs={notifs} lang={lang} onChange={(p) => setNotifs((prev) => prev ? { ...prev, ...p } : prev)} onSave={handleSaveNotifs} saving={saving} />
+          )}
+        </div>
       </div>
 
-      {/* Tab content */}
-      <div>
-        {tab === "general" && (
-          <TabGeneral profile={profile} lang={lang} onChange={(p) => setProfile((prev) => prev ? { ...prev, ...p } : prev)} onSave={handleSaveProfile} saving={saving} />
-        )}
-        {tab === "account" && (
-          <TabAccount profile={profile} lang={lang} onSignOut={handleSignOut} onDelete={() => setShowDelete(true)} />
-        )}
-        {tab === "subscription" && <TabSubscription info={subInfo} lang={lang} />}
-        {tab === "notifications" && (
-          <TabNotifications prefs={notifs} lang={lang} onChange={(p) => setNotifs((prev) => prev ? { ...prev, ...p } : prev)} onSave={handleSaveNotifs} saving={saving} />
-        )}
+      {/* Footer */}
+      <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16, padding: "12px 24px", display: "flex", justifyContent: "space-between", marginTop: 40 }}>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>© 2026 • v1.0.0</span>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
       </div>
     </div>
   );

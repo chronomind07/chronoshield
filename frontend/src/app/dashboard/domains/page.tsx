@@ -48,16 +48,30 @@ function scoreColor(score: number): string {
 
 function ScorePill({ score }: { score: number }) {
   const color = scoreColor(score);
+  const isGreen = color === "#3ecf8e";
+  const isYellow = color === "#f59e0b";
+  const bg = isGreen
+    ? "rgba(62,207,142,0.1)"
+    : isYellow
+    ? "rgba(245,158,11,0.1)"
+    : "rgba(239,68,68,0.1)";
+  const border = isGreen
+    ? "0.8px solid rgba(62,207,142,0.2)"
+    : isYellow
+    ? "0.8px solid rgba(245,158,11,0.2)"
+    : "0.8px solid rgba(239,68,68,0.2)";
+
   return (
     <span
       style={{
         fontFamily: "var(--font-dm-mono, monospace)",
-        fontSize: "0.78rem",
-        fontWeight: 700,
-        padding: "3px 10px",
+        fontSize: "11px",
+        fontWeight: 500,
+        padding: "2px 8px",
         borderRadius: 6,
         color,
-        background: `${color}18`,
+        background: bg,
+        border,
         letterSpacing: "0.01em",
       }}
     >
@@ -73,19 +87,25 @@ function StatusChip({ status, labelMap }: {
   labelMap: Record<string, StatusDef>;
 }) {
   if (!status) return null;
-  const s: StatusDef = labelMap[status] ?? { label: status, color: "#52525b", bg: "rgba(255,255,255,0.05)" };
+  const s: StatusDef = labelMap[status] ?? { label: status, color: "#71717a", bg: "rgba(255,255,255,0.05)" };
+  const borderColor = s.color === "#3ecf8e"
+    ? "rgba(62,207,142,0.2)"
+    : s.color === "#f59e0b"
+    ? "rgba(245,158,11,0.2)"
+    : s.color === "#ef4444"
+    ? "rgba(239,68,68,0.2)"
+    : "rgba(113,113,122,0.2)";
   return (
     <span
       style={{
         fontFamily: "var(--font-dm-mono, monospace)",
-        fontSize: "0.62rem",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        letterSpacing: "0.06em",
-        padding: "3px 8px",
+        fontSize: "11px",
+        fontWeight: 500,
+        padding: "2px 8px",
         borderRadius: 6,
         color: s.color,
         background: s.bg,
+        border: `0.8px solid ${borderColor}`,
       }}
     >
       {s.label}
@@ -114,7 +134,7 @@ const STATUS_LABELS: Record<string, StatusDef> = {
   // Legacy / compatibility values
   pass:    { label: "Pass",     color: "#3ecf8e", bg: "rgba(62,207,142,0.10)"  },
   fail:    { label: "Fail",     color: "#ef4444", bg: "rgba(239,68,68,0.10)"   },
-  none:    { label: "N/A",      color: "#52525b", bg: "rgba(255,255,255,0.05)" },
+  none:    { label: "N/A",      color: "#71717a", bg: "rgba(255,255,255,0.05)" },
 };
 
 function relTime(iso: string): string {
@@ -162,8 +182,15 @@ function getRecommendations(d: Domain): { icon: string; text: string }[] {
 function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () => void }) {
   const recs = getRecommendations(domain);
 
-  const secRow = (label: string, status: string | null) => {
+  const secRow = (label: string, status: string | null, isLast = false) => {
     const s = STATUS_LABELS[status ?? "none"] ?? STATUS_LABELS["none"];
+    const borderColor = s.color === "#3ecf8e"
+      ? "rgba(62,207,142,0.2)"
+      : s.color === "#f59e0b"
+      ? "rgba(245,158,11,0.2)"
+      : s.color === "#ef4444"
+      ? "rgba(239,68,68,0.2)"
+      : "rgba(113,113,122,0.2)";
     return (
       <div
         style={{
@@ -171,14 +198,14 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
           alignItems: "center",
           justifyContent: "space-between",
           padding: "9px 0",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          borderBottom: isLast ? "none" : "0.8px solid #1a1a1a",
         }}
       >
         <span
           style={{
             fontFamily: "var(--font-dm-mono, monospace)",
             fontSize: "0.75rem",
-            color: "#52525b",
+            color: "#71717a",
           }}
         >
           {label}
@@ -186,14 +213,13 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
         <span
           style={{
             fontFamily: "var(--font-dm-mono, monospace)",
-            fontSize: "0.62rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            padding: "3px 8px",
+            fontSize: "11px",
+            fontWeight: 500,
+            padding: "2px 8px",
             borderRadius: 6,
             color: s.color,
             background: s.bg,
+            border: `0.8px solid ${borderColor}`,
           }}
         >
           {s.label}
@@ -220,9 +246,9 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
     >
       <div
         style={{
-          background: "#161616",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 14,
+          background: "#151515",
+          border: "0.8px solid #1a1a1a",
+          borderRadius: 16,
           width: "100%",
           maxWidth: 480,
           boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
@@ -236,17 +262,16 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             alignItems: "center",
             justifyContent: "space-between",
             padding: "18px 22px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "0.8px solid #1a1a1a",
           }}
         >
           <div>
             <span
               style={{
-                fontFamily: "var(--font-dm-mono, monospace)",
                 fontSize: "0.62rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "#52525b",
+                color: "#71717a",
                 fontWeight: 600,
                 display: "block",
                 marginBottom: 4,
@@ -259,7 +284,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 fontSize: "1.1rem",
                 fontWeight: 700,
                 letterSpacing: "-0.01em",
-                color: "#f0f0f0",
+                color: "#f5f5f5",
                 margin: 0,
               }}
             >
@@ -284,7 +309,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                   style={{
                     fontFamily: "var(--font-dm-mono, monospace)",
                     fontSize: "0.6rem",
-                    color: "#52525b",
+                    color: "#71717a",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     marginTop: 3,
@@ -300,15 +325,15 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#52525b",
+                color: "#71717a",
                 padding: 6,
                 borderRadius: 6,
                 transition: "color 0.15s",
                 display: "flex",
                 alignItems: "center",
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#f0f0f0")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+              onMouseEnter={e => (e.currentTarget.style.color = "#f5f5f5")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
             >
               <svg viewBox="0 0 16 16" fill="none" style={{ width: 15, height: 15 }}>
                 <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -325,7 +350,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
               style={{
                 fontFamily: "var(--font-dm-mono, monospace)",
                 fontSize: "0.72rem",
-                color: "#52525b",
+                color: "#71717a",
                 margin: 0,
               }}
             >
@@ -336,19 +361,18 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
           {/* SSL card */}
           <div
             style={{
-              borderRadius: 10,
+              borderRadius: 12,
               padding: "14px 16px",
               background: "#1c1c1c",
-              border: "1px solid rgba(255,255,255,0.06)",
+              border: "0.8px solid #1a1a1a",
             }}
           >
             <span
               style={{
-                fontFamily: "var(--font-dm-mono, monospace)",
                 fontSize: "0.62rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "#52525b",
+                color: "#71717a",
                 fontWeight: 600,
                 display: "block",
                 marginBottom: 10,
@@ -361,7 +385,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 style={{
                   fontSize: "0.875rem",
                   fontWeight: 600,
-                  color: domain.ssl_status === "valid" ? "#3ecf8e" : domain.ssl_status ? "#ef4444" : "#52525b",
+                  color: domain.ssl_status === "valid" ? "#3ecf8e" : domain.ssl_status ? "#ef4444" : "#71717a",
                 }}
               >
                 {domain.ssl_status === "valid" ? "Válido" :
@@ -373,31 +397,52 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                   style={{
                     fontFamily: "var(--font-dm-mono, monospace)",
                     fontSize: "0.75rem",
-                    color: "#52525b",
+                    color: "#71717a",
                   }}
                 >
                   {domain.ssl_days_remaining} días restantes
                 </span>
               )}
             </div>
+            {domain.security_score !== null && (
+              <div style={{ marginTop: 12 }}>
+                <div
+                  style={{
+                    height: 4,
+                    borderRadius: 2,
+                    background: "#262626",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${Math.min(100, domain.security_score)}%`,
+                      background: "#3ecf8e",
+                      borderRadius: 2,
+                      transition: "width 0.5s ease",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Uptime card */}
           <div
             style={{
-              borderRadius: 10,
+              borderRadius: 12,
               padding: "14px 16px",
               background: "#1c1c1c",
-              border: "1px solid rgba(255,255,255,0.06)",
+              border: "0.8px solid #1a1a1a",
             }}
           >
             <span
               style={{
-                fontFamily: "var(--font-dm-mono, monospace)",
                 fontSize: "0.62rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "#52525b",
+                color: "#71717a",
                 fontWeight: 600,
                 display: "block",
                 marginBottom: 10,
@@ -410,7 +455,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 style={{
                   fontSize: "0.875rem",
                   fontWeight: 600,
-                  color: domain.uptime_status === "up" ? "#3ecf8e" : domain.uptime_status ? "#ef4444" : "#52525b",
+                  color: domain.uptime_status === "up" ? "#3ecf8e" : domain.uptime_status ? "#ef4444" : "#71717a",
                 }}
               >
                 {domain.uptime_status === "up" ? "Online" :
@@ -422,7 +467,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                   style={{
                     fontFamily: "var(--font-dm-mono, monospace)",
                     fontSize: "0.75rem",
-                    color: "#52525b",
+                    color: "#71717a",
                   }}
                 >
                   {domain.last_response_ms} ms
@@ -434,19 +479,18 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
           {/* Email Security card */}
           <div
             style={{
-              borderRadius: 10,
+              borderRadius: 12,
               padding: "14px 16px",
               background: "#1c1c1c",
-              border: "1px solid rgba(255,255,255,0.06)",
+              border: "0.8px solid #1a1a1a",
             }}
           >
             <span
               style={{
-                fontFamily: "var(--font-dm-mono, monospace)",
                 fontSize: "0.62rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "#52525b",
+                color: "#71717a",
                 fontWeight: 600,
                 display: "block",
                 marginBottom: 6,
@@ -456,22 +500,21 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             </span>
             {secRow("SPF",   domain.spf_status)}
             {secRow("DKIM",  domain.dkim_status)}
-            {secRow("DMARC", domain.dmarc_status)}
+            {secRow("DMARC", domain.dmarc_status, true)}
           </div>
 
           {/* Recommendations */}
           {recs.length > 0 ? (
             <div
               style={{
-                borderRadius: 10,
+                borderRadius: 12,
                 padding: "14px 16px",
                 background: "#1c1c1c",
-                border: "1px solid rgba(255,255,255,0.06)",
+                border: "0.8px solid #1a1a1a",
               }}
             >
               <span
                 style={{
-                  fontFamily: "var(--font-dm-mono, monospace)",
                   fontSize: "0.62rem",
                   textTransform: "uppercase",
                   letterSpacing: "0.12em",
@@ -516,7 +559,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                         }}
                       />
                     </div>
-                    <p style={{ fontSize: "0.78rem", color: "#a1a1aa", lineHeight: 1.6, margin: 0 }}>{r.text}</p>
+                    <p style={{ fontSize: "0.78rem", color: "#b3b4b5", lineHeight: 1.6, margin: 0 }}>{r.text}</p>
                   </div>
                 ))}
               </div>
@@ -527,10 +570,10 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                borderRadius: 10,
+                borderRadius: 12,
                 padding: "12px 14px",
                 background: "rgba(62,207,142,0.05)",
-                border: "1px solid rgba(62,207,142,0.10)",
+                border: "0.8px solid rgba(62,207,142,0.2)",
               }}
             >
               <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}>
@@ -606,7 +649,7 @@ export default function DomainsPage() {
       const res = await domainsApi.scan(id);
       const remaining = res.data?.credits_remaining;
 
-      toast("Escaneando dominio...", { icon: "🔍", duration: 13000 });
+      toast("Escaneando dominio...", { duration: 13000 });
 
       // Wait for the background scan to complete (~12 s)
       await new Promise((resolve) => setTimeout(resolve, 12000));
@@ -669,8 +712,8 @@ export default function DomainsPage() {
   return (
     <div
       style={{
-        background: "#0a0a0a",
-        padding: "28px 32px 60px",
+        background: "#0b0b0b",
+        padding: "0 0 40px 0",
         minHeight: "100vh",
         fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
         position: "relative",
@@ -682,20 +725,12 @@ export default function DomainsPage() {
       {selected    && <DomainDetailPanel domain={selected} onClose={() => setSelected(null)} />}
 
       {/* Page Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 24 }}>
         <div>
-          <h1
-            style={{
-              fontSize: "1.4rem",
-              fontWeight: 700,
-              color: "#f0f0f0",
-              letterSpacing: "-0.01em",
-              margin: 0,
-            }}
-          >
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>
             {techMode ? "Domain Monitor" : "Tus webs"}
           </h1>
-          <p style={{ color: "#52525b", fontSize: "0.8rem", marginTop: 4, marginBottom: 0 }}>
+          <p style={{ fontSize: "0.875rem", color: "#b3b4b5", marginTop: 4, marginBottom: 0 }}>
             {techMode
               ? "SSL, uptime & security score per domain"
               : "Comprueba que tus webs funcionan y están protegidas"}
@@ -707,28 +742,25 @@ export default function DomainsPage() {
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            padding: "9px 18px",
+            background: "#151515",
+            color: "#f5f5f5",
+            border: "0.8px solid #1a1a1a",
             borderRadius: 8,
-            background: "#1c1c1c",
-            color: "#a1a1aa",
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            border: "1px solid rgba(255,255,255,0.06)",
+            padding: "8px 16px",
+            fontSize: "13px",
             cursor: "pointer",
-            transition: "all 0.15s",
             fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
             flexShrink: 0,
             marginTop: 2,
+            transition: "all 0.15s",
           }}
           onMouseEnter={e => {
             e.currentTarget.style.color = "#3ecf8e";
             e.currentTarget.style.borderColor = "rgba(62,207,142,0.2)";
-            e.currentTarget.style.background = "#242424";
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.color = "#a1a1aa";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-            e.currentTarget.style.background = "#1c1c1c";
+            e.currentTarget.style.color = "#f5f5f5";
+            e.currentTarget.style.borderColor = "#1a1a1a";
           }}
         >
           <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
@@ -741,23 +773,23 @@ export default function DomainsPage() {
       {/* Add domain card */}
       <div
         style={{
-          background: "#1c1c1c",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 12,
-          padding: "20px",
+          background: "#151515",
+          border: "0.8px solid #1a1a1a",
+          borderRadius: 16,
+          padding: "16px",
           marginBottom: 10,
         }}
       >
         <span
           style={{
-            fontFamily: "var(--font-dm-mono, monospace)",
             fontSize: "0.62rem",
-            textTransform: "uppercase",
             letterSpacing: "0.12em",
-            color: "#52525b",
+            color: "#71717a",
             fontWeight: 600,
+            textTransform: "uppercase",
+            marginBottom: 8,
+            padding: "16px 0 6px 0",
             display: "block",
-            marginBottom: 12,
           }}
         >
           {techMode ? "Add domain" : "Añadir web"}
@@ -771,18 +803,18 @@ export default function DomainsPage() {
             disabled={adding}
             style={{
               flex: 1,
-              padding: "10px 14px",
-              background: "#161616",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "#1c1c1c",
+              border: "0.8px solid #1a1a1a",
               borderRadius: 8,
-              color: "#f0f0f0",
-              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-              fontSize: "0.875rem",
+              padding: "10px 12px",
+              color: "#f5f5f5",
+              fontSize: "13px",
               outline: "none",
+              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
               transition: "border-color 0.15s",
             }}
-            onFocus={e => (e.currentTarget.style.borderColor = "rgba(62,207,142,0.3)")}
-            onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+            onFocus={e => (e.currentTarget.style.borderColor = "#3ecf8e")}
+            onBlur={e => (e.currentTarget.style.borderColor = "#1a1a1a")}
           />
           <button
             type="submit"
@@ -791,18 +823,18 @@ export default function DomainsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              padding: "9px 18px",
-              borderRadius: 8,
               background: "#3ecf8e",
               color: "#000",
-              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-              fontSize: "0.875rem",
-              fontWeight: 700,
+              borderRadius: 8,
+              padding: "8px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
               border: "none",
               cursor: adding || !newDomain.trim() ? "not-allowed" : "pointer",
               opacity: adding || !newDomain.trim() ? 0.45 : 1,
               transition: "opacity 0.15s",
               whiteSpace: "nowrap",
+              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
             }}
           >
             <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
@@ -818,7 +850,7 @@ export default function DomainsPage() {
         style={{
           fontFamily: "var(--font-dm-mono, monospace)",
           fontSize: "0.7rem",
-          color: "#3a3a3a",
+          color: "#71717a",
           marginBottom: 20,
           marginTop: 8,
         }}
@@ -843,10 +875,10 @@ export default function DomainsPage() {
       ) : domains.length === 0 ? (
         <div
           style={{
-            background: "#1c1c1c",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 12,
-            padding: "20px",
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            borderRadius: 16,
+            padding: "16px",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "56px 0", textAlign: "center" }}>
@@ -856,7 +888,7 @@ export default function DomainsPage() {
                 height: 48,
                 borderRadius: 12,
                 background: "rgba(62,207,142,0.06)",
-                border: "1px solid rgba(62,207,142,0.10)",
+                border: "0.8px solid rgba(62,207,142,0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -869,191 +901,182 @@ export default function DomainsPage() {
               </svg>
             </div>
             <div>
-              <p
-                style={{
-                  fontSize: "0.95rem",
-                  fontWeight: 700,
-                  color: "#f0f0f0",
-                  margin: "0 0 6px",
-                }}
-              >
+              <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f5f5f5", margin: "0 0 6px" }}>
                 Sin dominios
               </p>
-              <p style={{ fontSize: "0.82rem", color: "#52525b", maxWidth: 300, margin: 0 }}>
+              <p style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 300, margin: 0 }}>
                 {techMode ? "Add your first domain to start monitoring." : "Añade tu web para empezar a vigilarla."}
               </p>
             </div>
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {domains.map((d) => {
+        <div
+          style={{
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          {domains.map((d, idx) => {
             const barColor = domainBarColor(d);
+            const isLast = idx === domains.length - 1;
             return (
               <div
                 key={d.id}
                 style={{
-                  position: "relative",
-                  background: "#1c1c1c",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 12,
-                  padding: "14px 18px",
-                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 16px",
+                  borderBottom: isLast ? "none" : "0.8px solid #1a1a1a",
                   cursor: "pointer",
-                  transition: "background 0.15s, border-color 0.15s",
+                  transition: "background 0.15s",
+                  position: "relative",
+                  overflow: "hidden",
                 }}
                 onClick={() => setSelected(d)}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = "#242424";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = "#1c1c1c";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
               >
-                {/* Bottom color bar */}
+                {/* Left color indicator */}
                 <div
                   style={{
                     position: "absolute",
-                    bottom: 0,
                     left: 0,
-                    right: 0,
-                    height: 2,
+                    top: 0,
+                    bottom: 0,
+                    width: 2,
                     backgroundColor: BAR_COLORS[barColor],
                   }}
                 />
 
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  {/* Left: domain name + last scan */}
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-mono, monospace)",
-                        fontSize: "0.875rem",
-                        fontWeight: 600,
-                        color: "#f0f0f0",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        margin: 0,
-                      }}
-                    >
-                      {d.domain}
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-dm-mono, monospace)",
-                        fontSize: "0.68rem",
-                        color: "#3a3a3a",
-                        marginTop: 3,
-                        marginBottom: 0,
-                      }}
-                    >
-                      {d.last_scanned_at
-                        ? `${techMode ? "Last scan" : "Último scan"}: ${relTime(d.last_scanned_at)}`
-                        : (techMode ? "Never scanned" : "Sin revisar aún")}
-                    </p>
-                  </div>
-
-                  {/* Right: status chips + score + actions */}
-                  <div
+                {/* Left: domain name + last scan */}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      flexShrink: 0,
-                      flexWrap: "wrap",
-                      justifyContent: "flex-end",
+                      fontFamily: "var(--font-dm-mono, monospace)",
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      color: "#f5f5f5",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      margin: 0,
                     }}
                   >
-                    <StatusChip status={d.uptime_status} labelMap={UPTIME_LABELS} />
-                    <StatusChip status={d.ssl_status}    labelMap={SSL_LABELS}    />
-                    {d.security_score !== null && <ScorePill score={d.security_score} />}
+                    {d.domain}
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-mono, monospace)",
+                      fontSize: "0.68rem",
+                      color: "#71717a",
+                      marginTop: 3,
+                      marginBottom: 0,
+                    }}
+                  >
+                    {d.last_scanned_at
+                      ? `${techMode ? "Last scan" : "Último scan"}: ${relTime(d.last_scanned_at)}`
+                      : (techMode ? "Never scanned" : "Sin revisar aún")}
+                  </p>
+                </div>
 
-                    {/* Scan button */}
-                    <button
-                      onClick={(e) => handleScan(e, d.id)}
-                      disabled={scanning === d.id}
-                      title="Escanear (1 crédito)"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 5,
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        background: "#111111",
-                        color: scanning === d.id ? "#3ecf8e" : "#a1a1aa",
-                        fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-                        fontSize: "0.8rem",
-                        fontWeight: 600,
-                        border: "1px solid rgba(255,255,255,0.06)",
-                        cursor: scanning === d.id ? "not-allowed" : "pointer",
-                        opacity: scanning === d.id ? 0.6 : 1,
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={e2 => {
-                        if (scanning !== d.id) {
-                          e2.currentTarget.style.color = "#3ecf8e";
-                          e2.currentTarget.style.borderColor = "rgba(62,207,142,0.2)";
-                        }
-                      }}
-                      onMouseLeave={e2 => {
-                        e2.currentTarget.style.color = "#a1a1aa";
-                        e2.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                      }}
-                    >
-                      <svg
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        style={{ width: 12, height: 12 }}
-                        className={scanning === d.id ? "animate-spin" : ""}
-                      >
-                        <path
-                          d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor"/>
-                      </svg>
-                      {techMode ? "Scan" : "Revisar"}
-                    </button>
+                {/* Right: status chips + score + actions */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    flexShrink: 0,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <StatusChip status={d.uptime_status} labelMap={UPTIME_LABELS} />
+                  <StatusChip status={d.ssl_status}    labelMap={SSL_LABELS}    />
+                  {d.security_score !== null && <ScorePill score={d.security_score} />}
 
-                    {/* Delete button */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleRemove(d.id, d.domain); }}
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        background: "rgba(239,68,68,0.08)",
-                        color: "#ef4444",
-                        border: "1px solid rgba(239,68,68,0.15)",
-                        cursor: "pointer",
-                        transition: "background 0.15s",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                      onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.15)"; }}
-                      onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
+                  {/* Scan button */}
+                  <button
+                    onClick={(e) => handleScan(e, d.id)}
+                    disabled={scanning === d.id}
+                    title="Escanear (1 crédito)"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      background: "#3ecf8e",
+                      color: "#000",
+                      borderRadius: 8,
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      border: "none",
+                      cursor: scanning === d.id ? "not-allowed" : "pointer",
+                      opacity: scanning === d.id ? 0.6 : 1,
+                      transition: "opacity 0.15s",
+                      fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+                    }}
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      style={{ width: 12, height: 12 }}
+                      className={scanning === d.id ? "animate-spin" : ""}
                     >
-                      <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
-                        <path
-                          d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
-                          stroke="currentColor"
-                          strokeWidth="1.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                      <path
+                        d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor"/>
+                    </svg>
+                    {techMode ? "Scan" : "Revisar"}
+                  </button>
+
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRemove(d.id, d.domain); }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 8,
+                      background: "rgba(239,68,68,0.1)",
+                      color: "#ef4444",
+                      border: "0.8px solid rgba(239,68,68,0.2)",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      transition: "background 0.15s",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.18)"; }}
+                    onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
+                      <path
+                        d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* Footer */}
+      <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16, padding: "12px 24px", display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>© 2026 • v1.0.0</span>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
+      </div>
     </div>
   );
 }

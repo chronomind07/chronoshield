@@ -87,10 +87,27 @@ const IcoSettings = () => (
   </svg>
 );
 const IcoLogout = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
     <polyline points="16 17 21 12 16 7"/>
     <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+const IcoHome = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+);
+const IcoShield = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+const IcoBell = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
   </svg>
 );
 
@@ -105,20 +122,30 @@ function NavItem({ href, icon, label, active, badge }: {
         display: "flex",
         alignItems: "center",
         gap: 10,
-        padding: "8px 12px",
-        borderRadius: 8,
-        fontSize: "0.84rem",
-        fontWeight: 500,
+        padding: "10px 11px",
+        borderRadius: 6,
+        fontSize: 14,
+        fontWeight: active ? 500 : 400,
         textDecoration: "none",
         transition: "all 0.15s",
-        marginBottom: 2,
-        color: active ? "#f0f0f0" : "#52525b",
-        background: active ? "rgba(255,255,255,0.06)" : "transparent",
+        margin: "1px 8px",
+        color: active ? "#f5f5f5" : "#b3b4b5",
+        background: active ? "rgba(240,240,240,0.18)" : "transparent",
       }}
-      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#a1a1aa"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; } }}
-      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "#52525b"; e.currentTarget.style.background = "transparent"; } }}
+      onMouseEnter={e => {
+        if (!active) {
+          e.currentTarget.style.color = "#e5e5e5";
+          e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+        }
+      }}
+      onMouseLeave={e => {
+        if (!active) {
+          e.currentTarget.style.color = "#b3b4b5";
+          e.currentTarget.style.background = "transparent";
+        }
+      }}
     >
-      <span style={{ width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: active ? "#3ecf8e" : "currentColor" }}>
+      <span style={{ width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         {icon}
       </span>
       <span style={{ flex: 1 }}>{label}</span>
@@ -147,12 +174,12 @@ function NavSection({ label, children }: { label: string; children: React.ReactN
     <div style={{ marginBottom: 4 }}>
       <p style={{
         fontSize: "0.62rem",
-        fontFamily: "var(--font-dm-mono)",
         textTransform: "uppercase",
         letterSpacing: "0.12em",
-        color: "#3a3a3a",
-        padding: "12px 12px 6px",
+        color: "#71717a",
+        padding: "16px 16px 6px 16px",
         fontWeight: 600,
+        margin: 0,
       }}>
         {label}
       </p>
@@ -179,12 +206,13 @@ function AlertRow({ alert, onDismiss, onClose }: {
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
           fontSize: "0.78rem", fontWeight: 600, lineHeight: 1.3,
-          color: alert.is_unread ? "#f0f0f0" : "#a1a1aa",
+          color: alert.is_unread ? "#f5f5f5" : "#b3b4b5",
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          margin: 0,
         }}>
           {alert.title}
         </p>
-        <p style={{ fontSize: "0.68rem", color: "#52525b", marginTop: 2 }}>{relTime(alert.sent_at)}</p>
+        <p style={{ fontSize: "0.68rem", color: "#71717a", marginTop: 2, margin: "2px 0 0 0" }}>{relTime(alert.sent_at)}</p>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
           <Link href="/dashboard/alerts" onClick={onClose}
             style={{ fontSize: "0.68rem", fontWeight: 600, color: "#3ecf8e", padding: "3px 8px", background: "rgba(62,207,142,0.08)", border: "1px solid rgba(62,207,142,0.15)", borderRadius: 6, textDecoration: "none" }}>
@@ -194,7 +222,7 @@ function AlertRow({ alert, onDismiss, onClose }: {
             <button
               onClick={async (e) => { e.stopPropagation(); setDismissing(true); await onDismiss(alert.id); setDismissing(false); }}
               disabled={dismissing}
-              style={{ fontSize: "0.68rem", fontWeight: 500, color: "#52525b", padding: "3px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, cursor: "pointer" }}>
+              style={{ fontSize: "0.68rem", fontWeight: 500, color: "#71717a", padding: "3px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, cursor: "pointer" }}>
               {dismissing ? "…" : "Descartar"}
             </button>
           )}
@@ -228,15 +256,15 @@ function BuyCreditsModal({ creditsAvailable, onClose }: { creditsAvailable: numb
       style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(6px)" }}
       onClick={onClose}
     >
-      <div style={{ width: "100%", maxWidth: 400, background: "#161616", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 24 }} onClick={e => e.stopPropagation()}>
+      <div style={{ width: "100%", maxWidth: 400, background: "#151515", border: "1px solid #1a1a1a", borderRadius: 16, padding: 24 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#f0f0f0" }}>Comprar créditos</h2>
-            <p style={{ fontSize: "0.78rem", color: "#52525b", marginTop: 2 }}>
+            <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>Comprar créditos</h2>
+            <p style={{ fontSize: "0.78rem", color: "#71717a", marginTop: 2, margin: "2px 0 0 0" }}>
               {creditsAvailable !== null ? `${creditsAvailable} crédito${creditsAvailable !== 1 ? "s" : ""} disponible${creditsAvailable !== 1 ? "s" : ""}` : "Saldo de créditos"}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#52525b", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#71717a", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
           {PACKS.map(pack => (
@@ -244,24 +272,24 @@ function BuyCreditsModal({ creditsAvailable, onClose }: { creditsAvailable: numb
               style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, textAlign: "left",
                 background: pack.popular ? "rgba(62,207,142,0.04)" : "#1c1c1c",
-                border: pack.popular ? "1px solid rgba(62,207,142,0.2)" : "1px solid rgba(255,255,255,0.06)",
+                border: pack.popular ? "1px solid rgba(62,207,142,0.2)" : "1px solid #1a1a1a",
                 cursor: buying ? "not-allowed" : "pointer", opacity: buying ? 0.6 : 1, transition: "all 0.15s",
               }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.85rem", fontFamily: "var(--font-dm-mono)", background: pack.popular ? "rgba(62,207,142,0.12)" : "rgba(255,255,255,0.04)", color: pack.popular ? "#3ecf8e" : "#52525b", flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.85rem", fontFamily: "var(--font-dm-mono)", background: pack.popular ? "rgba(62,207,142,0.12)" : "rgba(255,255,255,0.04)", color: pack.popular ? "#3ecf8e" : "#71717a", flexShrink: 0 }}>
                 {buying === pack.key ? <span style={{ width: 14, height: 14, border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /> : pack.credits}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontWeight: 600, fontSize: "0.88rem", color: "#f0f0f0" }}>{pack.label}</span>
+                  <span style={{ fontWeight: 600, fontSize: "0.88rem", color: "#f5f5f5" }}>{pack.label}</span>
                   {pack.popular && <span style={{ fontSize: "0.6rem", padding: "2px 6px", borderRadius: 4, background: "rgba(62,207,142,0.1)", color: "#3ecf8e", fontFamily: "var(--font-dm-mono)", textTransform: "uppercase" }}>Popular</span>}
                 </div>
-                <div style={{ fontSize: "0.75rem", color: "#52525b" }}>{pack.credits} créditos · {pack.per}</div>
+                <div style={{ fontSize: "0.75rem", color: "#71717a" }}>{pack.credits} créditos · {pack.per}</div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f0f0", flexShrink: 0 }}>{pack.price}</div>
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f5f5f5", flexShrink: 0 }}>{pack.price}</div>
             </button>
           ))}
         </div>
-        <p style={{ fontSize: "0.72rem", color: "#52525b", textAlign: "center" }}>1 crédito = 1 escaneo. Los créditos no caducan.</p>
+        <p style={{ fontSize: "0.72rem", color: "#71717a", textAlign: "center", margin: 0 }}>1 crédito = 1 escaneo. Los créditos no caducan.</p>
       </div>
     </div>
   );
@@ -315,28 +343,27 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
         onClick={() => setOpen(o => !o)}
         style={{
           width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
-          background: open ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
-          border: `1px solid ${open ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)"}`,
-          borderRadius: 8, cursor: "pointer", transition: "all 0.15s",
+          background: "transparent",
+          border: "none",
+          borderRadius: 8, cursor: "pointer", transition: "color 0.15s",
+          color: open ? "#f5f5f5" : "#71717a",
+          padding: 0,
         }}
+        onMouseEnter={e => (e.currentTarget.style.color = "#f5f5f5")}
+        onMouseLeave={e => { if (!open) e.currentTarget.style.color = "#71717a"; }}
         aria-label="Notificaciones"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
+        <IcoBell />
         {unreadCount > 0 && (
-          <span style={{ position: "absolute", top: -5, right: -5, minWidth: 15, height: 15, background: "#ef4444", color: "#fff", fontSize: "0.58rem", fontWeight: 700, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", fontFamily: "var(--font-dm-mono)" }}>
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
+          <span style={{ position: "absolute", top: 2, right: 2, width: 6, height: 6, background: "#ef4444", borderRadius: "50%", display: "block" }} />
         )}
       </button>
 
       {open && (
-        <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 340, background: "#161616", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.5)", zIndex: 50 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 340, background: "#151515", border: "1px solid #1a1a1a", borderRadius: 12, overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.5)", zIndex: 50 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #1a1a1a" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#f0f0f0" }}>Notificaciones</span>
+              <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#f5f5f5" }}>Notificaciones</span>
               {unreadCount > 0 && <span style={{ fontSize: "0.6rem", fontWeight: 700, background: "#ef4444", color: "#fff", borderRadius: 6, padding: "1px 5px", fontFamily: "var(--font-dm-mono)" }}>{unreadCount}</span>}
             </div>
             {unreadCount > 0 && (
@@ -353,13 +380,13 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
             ) : alerts.length === 0 ? (
               <div style={{ padding: "32px 16px", textAlign: "center" }}>
                 <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>🛡</div>
-                <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f0f0f0" }}>Todo en orden</div>
-                <div style={{ fontSize: "0.72rem", color: "#52525b", marginTop: 4 }}>Sin alertas activas.</div>
+                <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f5f5f5" }}>Todo en orden</div>
+                <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 4 }}>Sin alertas activas.</div>
               </div>
             ) : alerts.map(a => <AlertRow key={a.id} alert={a} onDismiss={handleDismiss} onClose={() => setOpen(false)} />)}
           </div>
           {!loading && alerts.length > 0 && (
-            <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ padding: "10px 16px", borderTop: "1px solid #1a1a1a" }}>
               <Link href="/dashboard/alerts" onClick={() => setOpen(false)} style={{ fontSize: "0.78rem", fontWeight: 600, color: "#3ecf8e", textDecoration: "none", display: "block", textAlign: "center" }}>
                 Ver todas las alertas →
               </Link>
@@ -433,7 +460,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (checking) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ minHeight: "100vh", background: "#0b0b0b", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -446,7 +473,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isLowCredits = credits !== null && credits <= 5;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#0a0a0a", fontFamily: "var(--font-dm-sans, system-ui, sans-serif)" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#0b0b0b", fontFamily: "var(--font-dm-sans, system-ui, sans-serif)" }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         * { box-sizing: border-box; }
@@ -457,26 +484,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <aside style={{
-        position: "fixed", left: 0, top: 0, bottom: 0, width: 240,
+        position: "fixed", left: 0, top: 0, bottom: 0, width: 220,
         display: "flex", flexDirection: "column",
-        background: "#111111",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
-        zIndex: 30,
+        background: "#151515",
+        borderRight: "0.8px solid #1a1a1a",
+        zIndex: 40,
+        paddingBottom: 20,
       }}>
         {/* Brand */}
-        <div style={{ padding: "18px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: "#3ecf8e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-            <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f0f0f0", letterSpacing: "-0.01em" }}>ChronoShield</span>
+        <div style={{
+          height: 64,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 16px",
+          borderBottom: "0.8px solid #1a1a1a",
+          flexShrink: 0,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <IcoShield />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#f5f5f5", letterSpacing: "-0.01em" }}>ChronoShield</span>
           </div>
+          <button
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#71717a", padding: 4, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#f5f5f5")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
+            aria-label="Toggle menu"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
+        <nav style={{ flex: 1, overflowY: "auto" }}>
           <NavSection label="Principal">
             <NavItem href="/dashboard" icon={<IcoOverview />} label="Overview" active={pathname === "/dashboard"} />
             <NavItem href="/dashboard/assistant" icon={<IcoAssistant />} label="AI Assistant" active={pathname === "/dashboard/assistant"} />
@@ -496,23 +536,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* User footer */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", padding: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(62,207,142,0.12)", border: "1px solid rgba(62,207,142,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#3ecf8e", fontFamily: "var(--font-dm-mono)", flexShrink: 0 }}>
+        <div style={{ borderTop: "0.8px solid #1a1a1a", padding: "12px 12px 0 12px", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%",
+              background: "#262626",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11, fontWeight: 600, color: "#b3b4b5",
+              fontFamily: "var(--font-dm-mono)", flexShrink: 0,
+            }}>
               {initials}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f0f0f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 13, fontWeight: 400, color: "#f5f5f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {username}
-              </div>
-              <div style={{ fontSize: "0.65rem", color: "#52525b", fontFamily: "var(--font-dm-mono)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                Starter
               </div>
             </div>
             <button onClick={handleLogout} title="Cerrar sesión"
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#52525b", padding: 4, borderRadius: 6, display: "flex", transition: "color 0.15s" }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#71717a", padding: 4, borderRadius: 6, display: "flex", transition: "color 0.15s" }}
               onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
             >
               <IcoLogout />
             </button>
@@ -521,44 +564,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── Main area ─────────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, marginLeft: 240, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <div style={{ flex: 1, marginLeft: 220, minHeight: "100vh", background: "#0b0b0b" }}>
 
         {/* Topbar */}
         <header style={{
-          position: "sticky", top: 0, zIndex: 20,
-          height: 52, display: "flex", alignItems: "center",
+          position: "fixed", top: 0, left: 220, right: 0, zIndex: 30,
+          height: 64, display: "flex", alignItems: "center",
           padding: "0 24px",
-          background: "rgba(10,10,10,0.95)",
+          background: "rgba(11,11,11,0.85)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          borderBottom: "0.8px solid #1a1a1a",
           justifyContent: "space-between",
         }}>
           {/* Left: breadcrumb */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: "0.72rem", color: "#52525b" }}>Dashboard</span>
-            <span style={{ fontSize: "0.72rem", color: "#3a3a3a" }}>›</span>
-            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#a1a1aa" }}>{currentTitle}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ color: "#71717a", display: "flex", alignItems: "center" }}>
+              <IcoHome />
+            </span>
+            <span style={{ fontSize: 13, color: "#71717a" }}>Dashboard</span>
+            <span style={{ fontSize: 13, color: "#71717a" }}>›</span>
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#f5f5f5" }}>{currentTitle}</span>
           </div>
 
-          {/* Right: credits + bell */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Right: credits pill + bell */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {/* Credits pill */}
             <button
               onClick={() => setShowBuyModal(true)}
               style={{
-                display: "flex", alignItems: "center", gap: 6, height: 32, padding: "0 10px", borderRadius: 8,
-                background: isLowCredits ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.03)",
-                border: `1px solid ${isLowCredits ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.06)"}`,
+                display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 12px", borderRadius: 20,
+                background: "#151515",
+                border: "0.8px solid #1a1a1a",
                 cursor: "pointer", transition: "all 0.15s",
               }}
               title="Comprar créditos"
             >
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: isLowCredits ? "#f59e0b" : "#3ecf8e" }} />
-              <span style={{ fontSize: "0.78rem", fontWeight: 600, fontFamily: "var(--font-dm-mono)", color: isLowCredits ? "#f59e0b" : "#a1a1aa" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: isLowCredits ? "#f59e0b" : "#3ecf8e", flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 500, fontFamily: "var(--font-dm-mono)", color: isLowCredits ? "#f59e0b" : "#f5f5f5" }}>
                 {credits === null ? "—" : credits}
               </span>
-              <span style={{ fontSize: "0.62rem", color: "#52525b", fontFamily: "var(--font-dm-mono)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <span style={{ fontSize: 12, color: "#b3b4b5" }}>
                 créd.
               </span>
             </button>
@@ -569,7 +615,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main style={{ flex: 1 }}>
+        <main style={{ paddingTop: 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
           {children}
         </main>
 

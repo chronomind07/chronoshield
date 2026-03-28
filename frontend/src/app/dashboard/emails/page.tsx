@@ -69,9 +69,9 @@ function BreachDetailPanel({
     >
       <div
         style={{
-          background: "#161616",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 14,
+          background: "#151515",
+          border: "0.8px solid #1a1a1a",
+          borderRadius: 16,
           width: "100%",
           maxWidth: 480,
           boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
@@ -85,17 +85,16 @@ function BreachDetailPanel({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "18px 22px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "0.8px solid #1a1a1a",
           }}
         >
           <div>
             <span
               style={{
-                fontFamily: "var(--font-dm-mono, monospace)",
                 fontSize: "0.62rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "#52525b",
+                color: "#71717a",
                 fontWeight: 600,
                 display: "block",
                 marginBottom: 4,
@@ -108,7 +107,7 @@ function BreachDetailPanel({
                 fontSize: "1.1rem",
                 fontWeight: 700,
                 letterSpacing: "-0.01em",
-                color: "#f0f0f0",
+                color: "#f5f5f5",
                 maxWidth: 300,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -125,15 +124,15 @@ function BreachDetailPanel({
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "#52525b",
+              color: "#71717a",
               padding: 6,
               borderRadius: 6,
               transition: "color 0.15s",
               display: "flex",
               alignItems: "center",
             }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#f0f0f0")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+            onMouseEnter={e => (e.currentTarget.style.color = "#f5f5f5")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
           >
             <svg viewBox="0 0 16 16" fill="none" style={{ width: 15, height: 15 }}>
               <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -145,7 +144,7 @@ function BreachDetailPanel({
 
           {/* Last scan timestamp */}
           {email.latest_breach && (
-            <p style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.72rem", color: "#52525b", margin: 0 }}>
+            <p style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.72rem", color: "#71717a", margin: 0 }}>
               Último escaneo: {new Date(email.latest_breach.scanned_at).toLocaleString("es-ES")}
             </p>
           )}
@@ -161,7 +160,7 @@ function BreachDetailPanel({
               background: email.total_breaches === 0
                 ? "rgba(62,207,142,0.06)" : "rgba(239,68,68,0.06)",
               border: email.total_breaches === 0
-                ? "1px solid rgba(62,207,142,0.12)" : "1px solid rgba(239,68,68,0.12)",
+                ? "0.8px solid rgba(62,207,142,0.2)" : "0.8px solid rgba(239,68,68,0.2)",
             }}
           >
             <div
@@ -201,7 +200,7 @@ function BreachDetailPanel({
                   : `${email.total_breaches} brecha${email.total_breaches !== 1 ? "s" : ""} detectada${email.total_breaches !== 1 ? "s" : ""}`}
               </p>
               {email.total_breaches > 0 && (
-                <p style={{ fontSize: "0.75rem", color: "#a1a1aa", margin: 0 }}>
+                <p style={{ fontSize: "0.75rem", color: "#b3b4b5", margin: 0 }}>
                   Cambia las contraseñas asociadas a este email inmediatamente.
                 </p>
               )}
@@ -213,11 +212,10 @@ function BreachDetailPanel({
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span
                 style={{
-                  fontFamily: "var(--font-dm-mono, monospace)",
                   fontSize: "0.62rem",
                   textTransform: "uppercase",
                   letterSpacing: "0.12em",
-                  color: "#52525b",
+                  color: "#71717a",
                   fontWeight: 600,
                   marginBottom: 2,
                   display: "block",
@@ -236,7 +234,7 @@ function BreachDetailPanel({
                     justifyContent: "space-between",
                     gap: 12,
                     background: "#1c1c1c",
-                    border: "1px solid rgba(239,68,68,0.08)",
+                    border: "0.8px solid rgba(239,68,68,0.2)",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -259,14 +257,14 @@ function BreachDetailPanel({
                       {b.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <p style={{ fontSize: "0.83rem", fontWeight: 600, color: "#f0f0f0", margin: "0 0 1px" }}>{b.name}</p>
+                      <p style={{ fontSize: "0.83rem", fontWeight: 600, color: "#f5f5f5", margin: "0 0 1px" }}>{b.name}</p>
                       {b.date && (
-                        <p style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", color: "#52525b", margin: 0 }}>{b.date}</p>
+                        <p style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", color: "#71717a", margin: 0 }}>{b.date}</p>
                       )}
                     </div>
                   </div>
                   {b.count !== undefined && (
-                    <span style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.7rem", color: "#52525b", flexShrink: 0 }}>
+                    <span style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.7rem", color: "#71717a", flexShrink: 0 }}>
                       {b.count.toLocaleString()} reg.
                     </span>
                   )}
@@ -274,8 +272,8 @@ function BreachDetailPanel({
               ))}
             </div>
           ) : email.total_breaches > 0 ? (
-            <div style={{ borderRadius: 8, padding: 14, textAlign: "center", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <p style={{ fontSize: "0.78rem", color: "#52525b", margin: 0 }}>
+            <div style={{ borderRadius: 8, padding: 14, textAlign: "center", background: "#1c1c1c", border: "0.8px solid #1a1a1a" }}>
+              <p style={{ fontSize: "0.78rem", color: "#71717a", margin: 0 }}>
                 Detalles de las brechas no disponibles en este escaneo.
               </p>
             </div>
@@ -283,14 +281,13 @@ function BreachDetailPanel({
 
           {/* Recommendations if breached */}
           {email.total_breaches > 0 && (
-            <div style={{ borderRadius: 8, padding: "14px 16px", background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ borderRadius: 8, padding: "14px 16px", background: "#1c1c1c", border: "0.8px solid #1a1a1a" }}>
               <span
                 style={{
-                  fontFamily: "var(--font-dm-mono, monospace)",
                   fontSize: "0.62rem",
                   textTransform: "uppercase",
                   letterSpacing: "0.12em",
-                  color: "#52525b",
+                  color: "#71717a",
                   fontWeight: 600,
                   display: "block",
                   marginBottom: 10,
@@ -305,9 +302,18 @@ function BreachDetailPanel({
                   "Revisa si usabas la misma contraseña en otros servicios y cámbiala también.",
                   "Considera usar un gestor de contraseñas para crear contraseñas únicas.",
                 ].map((tip, i) => (
-                  <li key={i} style={{ display: "flex", gap: 8, fontSize: "0.78rem", color: "#a1a1aa" }}>
-                    <span style={{ fontFamily: "var(--font-dm-mono, monospace)", color: "#3ecf8e", flexShrink: 0, fontSize: "0.72rem" }}>{i + 1}.</span>
-                    {tip}
+                  <li key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: "#3ecf8e",
+                        flexShrink: 0,
+                        marginTop: 5,
+                      }}
+                    />
+                    <span style={{ fontSize: "0.78rem", color: "#b3b4b5", lineHeight: 1.6 }}>{tip}</span>
                   </li>
                 ))}
               </ul>
@@ -402,8 +408,8 @@ export default function EmailsPage() {
   return (
     <div
       style={{
-        background: "#0a0a0a",
-        padding: "28px 32px 60px",
+        background: "#0b0b0b",
+        padding: "0 0 40px 0",
         minHeight: "100vh",
         fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
         position: "relative",
@@ -415,21 +421,13 @@ export default function EmailsPage() {
       {selected    && <BreachDetailPanel email={selected} onClose={() => setSelected(null)} />}
 
       {/* Page Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 24 }}>
         <div>
-          <h1
-            style={{
-              fontSize: "1.4rem",
-              fontWeight: 700,
-              color: "#f0f0f0",
-              letterSpacing: "-0.01em",
-              margin: 0,
-            }}
-          >
-            Email Breach Monitor
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>
+            Emails Monitorizados
           </h1>
-          <p style={{ color: "#52525b", fontSize: "0.8rem", marginTop: 4, marginBottom: 0 }}>
-            Monitorización continua contra bases de datos de brechas conocidas
+          <p style={{ fontSize: "0.875rem", color: "#b3b4b5", marginTop: 4, marginBottom: 0 }}>
+            Gestiona y escanea tus emails
           </p>
         </div>
         <button
@@ -438,28 +436,25 @@ export default function EmailsPage() {
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            padding: "9px 18px",
+            background: "#151515",
+            color: "#f5f5f5",
+            border: "0.8px solid #1a1a1a",
             borderRadius: 8,
-            background: "#1c1c1c",
-            color: "#a1a1aa",
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            border: "1px solid rgba(255,255,255,0.06)",
+            padding: "8px 16px",
+            fontSize: "13px",
             cursor: "pointer",
-            transition: "all 0.15s",
             fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
             flexShrink: 0,
             marginTop: 2,
+            transition: "all 0.15s",
           }}
           onMouseEnter={e => {
             e.currentTarget.style.color = "#3ecf8e";
             e.currentTarget.style.borderColor = "rgba(62,207,142,0.2)";
-            e.currentTarget.style.background = "#242424";
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.color = "#a1a1aa";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-            e.currentTarget.style.background = "#1c1c1c";
+            e.currentTarget.style.color = "#f5f5f5";
+            e.currentTarget.style.borderColor = "#1a1a1a";
           }}
         >
           <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
@@ -472,23 +467,23 @@ export default function EmailsPage() {
       {/* Add email card */}
       <div
         style={{
-          background: "#1c1c1c",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 12,
-          padding: "20px",
+          background: "#151515",
+          border: "0.8px solid #1a1a1a",
+          borderRadius: 16,
+          padding: "16px",
           marginBottom: 10,
         }}
       >
         <span
           style={{
-            fontFamily: "var(--font-dm-mono, monospace)",
             fontSize: "0.62rem",
-            textTransform: "uppercase",
             letterSpacing: "0.12em",
-            color: "#52525b",
+            color: "#71717a",
             fontWeight: 600,
+            textTransform: "uppercase",
+            marginBottom: 8,
+            padding: "16px 0 6px 0",
             display: "block",
-            marginBottom: 12,
           }}
         >
           Añadir email
@@ -502,18 +497,18 @@ export default function EmailsPage() {
             disabled={adding}
             style={{
               flex: 1,
-              padding: "10px 14px",
-              background: "#161616",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "#1c1c1c",
+              border: "0.8px solid #1a1a1a",
               borderRadius: 8,
-              color: "#f0f0f0",
-              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-              fontSize: "0.875rem",
+              padding: "10px 12px",
+              color: "#f5f5f5",
+              fontSize: "13px",
               outline: "none",
+              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
               transition: "border-color 0.15s",
             }}
-            onFocus={e => (e.currentTarget.style.borderColor = "rgba(62,207,142,0.3)")}
-            onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+            onFocus={e => (e.currentTarget.style.borderColor = "#3ecf8e")}
+            onBlur={e => (e.currentTarget.style.borderColor = "#1a1a1a")}
           />
           <button
             type="submit"
@@ -522,18 +517,18 @@ export default function EmailsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              padding: "9px 18px",
-              borderRadius: 8,
               background: "#3ecf8e",
               color: "#000",
-              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-              fontSize: "0.875rem",
-              fontWeight: 700,
+              borderRadius: 8,
+              padding: "8px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
               border: "none",
               cursor: adding || !newEmail.trim() ? "not-allowed" : "pointer",
               opacity: adding || !newEmail.trim() ? 0.45 : 1,
               transition: "opacity 0.15s",
               whiteSpace: "nowrap",
+              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
             }}
           >
             <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
@@ -549,7 +544,7 @@ export default function EmailsPage() {
         style={{
           fontFamily: "var(--font-dm-mono, monospace)",
           fontSize: "0.7rem",
-          color: "#3a3a3a",
+          color: "#71717a",
           marginBottom: 20,
           marginTop: 8,
         }}
@@ -574,10 +569,10 @@ export default function EmailsPage() {
       ) : emails.length === 0 ? (
         <div
           style={{
-            background: "#1c1c1c",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 12,
-            padding: "20px",
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            borderRadius: 16,
+            padding: "16px",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "56px 0", textAlign: "center" }}>
@@ -587,7 +582,7 @@ export default function EmailsPage() {
                 height: 48,
                 borderRadius: 12,
                 background: "rgba(62,207,142,0.06)",
-                border: "1px solid rgba(62,207,142,0.1)",
+                border: "0.8px solid rgba(62,207,142,0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -599,242 +594,231 @@ export default function EmailsPage() {
               </svg>
             </div>
             <div>
-              <p
-                style={{
-                  fontSize: "0.95rem",
-                  fontWeight: 700,
-                  color: "#f0f0f0",
-                  margin: "0 0 6px",
-                }}
-              >
+              <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f5f5f5", margin: "0 0 6px" }}>
                 Sin emails monitorizados
               </p>
-              <p style={{ fontSize: "0.82rem", color: "#52525b", maxWidth: 300, margin: 0 }}>
+              <p style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 300, margin: 0 }}>
                 Añade direcciones de email para escanearlas contra bases de datos de brechas.
               </p>
             </div>
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {emails.map((e) => {
+        <div
+          style={{
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          {emails.map((e, idx) => {
             const barColor   = emailBarColor(e);
             const isBreached = e.total_breaches > 0;
             const isScanned  = !!e.latest_breach;
             const lastCheck  = e.latest_breach?.scanned_at;
             const initials   = e.email.slice(0, 2).toUpperCase();
+            const isLast     = idx === emails.length - 1;
 
             return (
               <div
                 key={e.id}
                 style={{
-                  position: "relative",
-                  background: "#1c1c1c",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 12,
-                  padding: "14px 18px",
-                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 16px",
+                  borderBottom: isLast ? "none" : "0.8px solid #1a1a1a",
                   cursor: "pointer",
-                  transition: "background 0.15s, border-color 0.15s",
+                  transition: "background 0.15s",
+                  position: "relative",
+                  overflow: "hidden",
                 }}
                 onClick={() => setSelected(e)}
-                onMouseEnter={e2 => {
-                  e2.currentTarget.style.background = "#242424";
-                  e2.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                }}
-                onMouseLeave={e2 => {
-                  e2.currentTarget.style.background = "#1c1c1c";
-                  e2.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                }}
+                onMouseEnter={e2 => { e2.currentTarget.style.background = "#1c1c1c"; }}
+                onMouseLeave={e2 => { e2.currentTarget.style.background = "transparent"; }}
               >
-                {/* Bottom color bar */}
+                {/* Left color indicator */}
                 <div
                   style={{
                     position: "absolute",
-                    bottom: 0,
                     left: 0,
-                    right: 0,
-                    height: 2,
+                    top: 0,
+                    bottom: 0,
+                    width: 2,
                     backgroundColor: barColor,
                   }}
                 />
 
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  {/* Avatar */}
-                  <div
+                {/* Avatar */}
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 8,
+                    background: "#0b0b0b",
+                    border: "0.8px solid #1a1a1a",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: "var(--font-dm-mono, monospace)",
+                    fontSize: "0.62rem",
+                    fontWeight: 700,
+                    color: "#71717a",
+                    flexShrink: 0,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {initials}
+                </div>
+
+                {/* Email + date */}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p
                     style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 8,
-                      background: "#111111",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                       fontFamily: "var(--font-dm-mono, monospace)",
-                      fontSize: "0.62rem",
-                      fontWeight: 700,
-                      color: "#52525b",
-                      flexShrink: 0,
-                      letterSpacing: "0.04em",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      color: "#f5f5f5",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      margin: 0,
                     }}
                   >
-                    {initials}
-                  </div>
+                    {e.email}
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-mono, monospace)",
+                      fontSize: "0.68rem",
+                      color: "#71717a",
+                      marginTop: 3,
+                      marginBottom: 0,
+                    }}
+                  >
+                    {lastCheck
+                      ? `Revisado: ${new Date(lastCheck).toLocaleString("es-ES")}`
+                      : "Pendiente primer escaneo"}
+                  </p>
+                </div>
 
-                  {/* Email + date */}
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p
+                {/* Right: badge + actions */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  {/* Breach badge */}
+                  {isScanned ? (
+                    <span
                       style={{
                         fontFamily: "var(--font-dm-mono, monospace)",
-                        fontSize: "0.85rem",
-                        fontWeight: 600,
-                        color: "#f0f0f0",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        margin: 0,
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        background: isBreached ? "rgba(239,68,68,0.1)" : "rgba(62,207,142,0.1)",
+                        color: isBreached ? "#ef4444" : "#3ecf8e",
+                        border: isBreached ? "0.8px solid rgba(239,68,68,0.2)" : "0.8px solid rgba(62,207,142,0.2)",
                       }}
                     >
-                      {e.email}
-                    </p>
-                    <p
+                      {isBreached
+                        ? `${e.total_breaches} breach${e.total_breaches !== 1 ? "es" : ""}`
+                        : "0 breaches"}
+                    </span>
+                  ) : (
+                    <span
                       style={{
                         fontFamily: "var(--font-dm-mono, monospace)",
-                        fontSize: "0.68rem",
-                        color: "#3a3a3a",
-                        marginTop: 3,
-                        marginBottom: 0,
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        background: "rgba(245,158,11,0.1)",
+                        color: "#f59e0b",
+                        border: "0.8px solid rgba(245,158,11,0.2)",
                       }}
                     >
-                      {lastCheck
-                        ? `Revisado: ${new Date(lastCheck).toLocaleString("es-ES")}`
-                        : "Pendiente primer escaneo"}
-                    </p>
-                  </div>
+                      Pending
+                    </span>
+                  )}
 
-                  {/* Right: badge + actions */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                    {/* Breach badge */}
-                    {isScanned ? (
-                      <span
-                        style={{
-                          fontFamily: "var(--font-dm-mono, monospace)",
-                          fontSize: "0.62rem",
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                          padding: "3px 8px",
-                          borderRadius: 6,
-                          background: isBreached ? "rgba(239,68,68,0.10)" : "rgba(62,207,142,0.10)",
-                          color: isBreached ? "#ef4444" : "#3ecf8e",
-                        }}
-                      >
-                        {isBreached
-                          ? `${e.total_breaches} breach${e.total_breaches !== 1 ? "es" : ""}`
-                          : "0 breaches"}
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          fontFamily: "var(--font-dm-mono, monospace)",
-                          fontSize: "0.62rem",
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                          padding: "3px 8px",
-                          borderRadius: 6,
-                          background: "rgba(255,255,255,0.05)",
-                          color: "#52525b",
-                        }}
-                      >
-                        Pending
-                      </span>
-                    )}
-
-                    {/* Scan button */}
-                    <button
-                      onClick={(ev) => handleScan(ev, e)}
-                      disabled={scanning === e.id}
-                      title="Escanear (1 crédito)"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 5,
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        background: "#111111",
-                        color: scanning === e.id ? "#3ecf8e" : "#a1a1aa",
-                        fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-                        fontSize: "0.8rem",
-                        fontWeight: 600,
-                        border: "1px solid rgba(255,255,255,0.06)",
-                        cursor: scanning === e.id ? "not-allowed" : "pointer",
-                        opacity: scanning === e.id ? 0.6 : 1,
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={e2 => {
-                        if (scanning !== e.id) {
-                          e2.currentTarget.style.color = "#3ecf8e";
-                          e2.currentTarget.style.borderColor = "rgba(62,207,142,0.2)";
-                        }
-                      }}
-                      onMouseLeave={e2 => {
-                        e2.currentTarget.style.color = "#a1a1aa";
-                        e2.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                      }}
+                  {/* Scan button */}
+                  <button
+                    onClick={(ev) => handleScan(ev, e)}
+                    disabled={scanning === e.id}
+                    title="Escanear (1 crédito)"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      background: "#3ecf8e",
+                      color: "#000",
+                      borderRadius: 8,
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      border: "none",
+                      cursor: scanning === e.id ? "not-allowed" : "pointer",
+                      opacity: scanning === e.id ? 0.6 : 1,
+                      transition: "opacity 0.15s",
+                      fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+                    }}
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      style={{ width: 12, height: 12 }}
+                      className={scanning === e.id ? "animate-spin" : ""}
                     >
-                      <svg
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        style={{ width: 12, height: 12 }}
-                        className={scanning === e.id ? "animate-spin" : ""}
-                      >
-                        <path
-                          d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor"/>
-                      </svg>
-                      Scan
-                    </button>
+                      <path
+                        d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor"/>
+                    </svg>
+                    Scan
+                  </button>
 
-                    {/* Delete button */}
-                    <button
-                      onClick={(ev) => { ev.stopPropagation(); handleRemove(e.id, e.email); }}
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        background: "rgba(239,68,68,0.08)",
-                        color: "#ef4444",
-                        border: "1px solid rgba(239,68,68,0.15)",
-                        cursor: "pointer",
-                        transition: "background 0.15s",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                      onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.15)"; }}
-                      onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
-                    >
-                      <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
-                        <path
-                          d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
-                          stroke="currentColor"
-                          strokeWidth="1.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                  {/* Delete button */}
+                  <button
+                    onClick={(ev) => { ev.stopPropagation(); handleRemove(e.id, e.email); }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 8,
+                      background: "rgba(239,68,68,0.1)",
+                      color: "#ef4444",
+                      border: "0.8px solid rgba(239,68,68,0.2)",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      transition: "background 0.15s",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.18)"; }}
+                    onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
+                      <path
+                        d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* Footer */}
+      <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16, padding: "12px 24px", display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>© 2026 • v1.0.0</span>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
+      </div>
     </div>
   );
 }

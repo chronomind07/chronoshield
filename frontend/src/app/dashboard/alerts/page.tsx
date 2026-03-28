@@ -56,29 +56,29 @@ function relTime(iso: string) {
 const SEV_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string; leftBorder: string }> = {
   critical: {
     color: "#ef4444",
-    bg: "rgba(239,68,68,0.04)",
-    border: "rgba(239,68,68,0.10)",
+    bg: "rgba(239,68,68,0.08)",
+    border: "rgba(239,68,68,0.15)",
     dot: "#ef4444",
     leftBorder: "#ef4444",
   },
   high: {
     color: "#ef4444",
-    bg: "rgba(239,68,68,0.04)",
-    border: "rgba(239,68,68,0.10)",
+    bg: "rgba(239,68,68,0.08)",
+    border: "rgba(239,68,68,0.15)",
     dot: "#ef4444",
     leftBorder: "#ef4444",
   },
   medium: {
     color: "#f59e0b",
-    bg: "rgba(245,158,11,0.04)",
-    border: "rgba(245,158,11,0.10)",
+    bg: "rgba(245,158,11,0.08)",
+    border: "rgba(245,158,11,0.15)",
     dot: "#f59e0b",
     leftBorder: "#f59e0b",
   },
   low: {
     color: "#3b82f6",
-    bg: "rgba(59,130,246,0.04)",
-    border: "rgba(59,130,246,0.10)",
+    bg: "rgba(59,130,246,0.08)",
+    border: "rgba(59,130,246,0.15)",
     dot: "#3b82f6",
     leftBorder: "#3b82f6",
   },
@@ -143,9 +143,9 @@ function MitigationChat({ alertId }: { alertId: string }) {
     <div
       style={{
         marginTop: 12,
-        borderRadius: 12,
-        background: "#161616",
-        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 16,
+        background: "#151515",
+        border: "0.8px solid #1a1a1a",
         overflow: "hidden",
       }}
     >
@@ -156,7 +156,7 @@ function MitigationChat({ alertId }: { alertId: string }) {
           alignItems: "center",
           gap: 10,
           padding: "10px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "0.8px solid #1a1a1a",
           background: "rgba(62,207,142,0.04)",
         }}
       >
@@ -206,7 +206,7 @@ function MitigationChat({ alertId }: { alertId: string }) {
             marginLeft: "auto",
             fontFamily: "var(--font-dm-mono)",
             fontSize: "0.6rem",
-            color: limitReached ? "#ef4444" : "#52525b",
+            color: limitReached ? "#ef4444" : "#71717a",
           }}
         >
           {usageCount}/{usageLimit} consultas
@@ -250,8 +250,8 @@ function MitigationChat({ alertId }: { alertId: string }) {
                     }
                   : {
                       background: "#1c1c1c",
-                      color: "#f0f0f0",
-                      border: "1px solid rgba(255,255,255,0.06)",
+                      color: "#f5f5f5",
+                      border: "0.8px solid #1a1a1a",
                     }),
               }}
             >
@@ -268,7 +268,7 @@ function MitigationChat({ alertId }: { alertId: string }) {
                 padding: "10px 14px",
                 borderRadius: "12px 12px 12px 4px",
                 background: "#1c1c1c",
-                border: "1px solid rgba(255,255,255,0.06)",
+                border: "0.8px solid #1a1a1a",
                 display: "flex",
                 gap: 5,
                 alignItems: "center",
@@ -297,7 +297,7 @@ function MitigationChat({ alertId }: { alertId: string }) {
         <div
           style={{
             padding: "12px 16px",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: "0.8px solid #1a1a1a",
             fontSize: "0.75rem",
             color: "#ef4444",
             textAlign: "center",
@@ -315,7 +315,7 @@ function MitigationChat({ alertId }: { alertId: string }) {
             display: "flex",
             gap: 8,
             padding: "10px 12px",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: "0.8px solid #1a1a1a",
           }}
         >
           <input
@@ -325,30 +325,30 @@ function MitigationChat({ alertId }: { alertId: string }) {
             disabled={sending}
             style={{
               flex: 1,
-              background: "#111111",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "#1c1c1c",
+              border: "0.8px solid #1a1a1a",
               borderRadius: 8,
-              padding: "7px 12px",
-              fontSize: "0.78rem",
-              color: "#f0f0f0",
+              padding: "10px 12px",
+              fontSize: "13px",
+              color: "#f5f5f5",
               outline: "none",
               fontFamily: "var(--font-dm-sans)",
               transition: "border-color 0.2s",
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(62,207,142,0.4)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "#1a1a1a")}
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
             style={{
-              padding: "7px 16px",
+              padding: "8px 16px",
               borderRadius: 8,
               background: "#3ecf8e",
               border: "none",
               color: "#000",
-              fontSize: "0.75rem",
-              fontWeight: 700,
+              fontSize: "13px",
+              fontWeight: 600,
               cursor: sending || !input.trim() ? "not-allowed" : "pointer",
               opacity: sending || !input.trim() ? 0.4 : 1,
               fontFamily: "var(--font-dm-sans)",
@@ -387,12 +387,12 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
   return (
     <div
       style={{
-        background: "#1c1c1c",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 12,
+        background: "#151515",
+        border: "0.8px solid #1a1a1a",
+        borderRadius: 16,
         marginBottom: 8,
         overflow: "hidden",
-        borderLeft: `3px solid ${alert.is_unread ? sev.leftBorder : "rgba(255,255,255,0.06)"}`,
+        borderLeft: `3px solid ${alert.is_unread ? sev.leftBorder : "#1a1a1a"}`,
         transition: "border-color 0.2s",
       }}
     >
@@ -430,15 +430,16 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               <span
                 style={{
                   fontFamily: "var(--font-dm-mono)",
-                  fontSize: "0.68rem",
+                  fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
-                  padding: "3px 8px",
+                  padding: "2px 8px",
                   borderRadius: 6,
                   fontWeight: 600,
                   flexShrink: 0,
                   color: sev.color,
                   background: sev.bg,
+                  border: `0.8px solid ${sev.border}`,
                 }}
               >
                 {alert.severity_label}
@@ -447,15 +448,16 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               <span
                 style={{
                   fontFamily: "var(--font-dm-mono)",
-                  fontSize: "0.62rem",
+                  fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
-                  padding: "3px 8px",
+                  padding: "2px 8px",
                   borderRadius: 6,
                   fontWeight: 600,
                   flexShrink: 0,
-                  color: "#52525b",
+                  color: "#71717a",
                   background: "rgba(255,255,255,0.04)",
+                  border: "0.8px solid #1a1a1a",
                 }}
               >
                 {alert.alert_type.replace(/_/g, " ")}
@@ -465,7 +467,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                 style={{
                   fontSize: "0.88rem",
                   fontWeight: 600,
-                  color: alert.is_unread ? "#f0f0f0" : "#71717a",
+                  color: alert.is_unread ? "#f5f5f5" : "#71717a",
                   lineHeight: 1.3,
                 }}
               >
@@ -478,7 +480,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                 style={{
                   fontFamily: "var(--font-dm-mono)",
                   fontSize: "0.65rem",
-                  color: "#52525b",
+                  color: "#71717a",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -495,7 +497,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                   }}
                 />
               )}
-              <span style={{ color: "#52525b", fontSize: "0.65rem" }}>{expanded ? "▲" : "▼"}</span>
+              <span style={{ color: "#71717a", fontSize: "0.65rem" }}>{expanded ? "▲" : "▼"}</span>
             </div>
           </div>
 
@@ -503,7 +505,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
           <p
             style={{
               fontSize: "0.78rem",
-              color: "#71717a",
+              color: "#b3b4b5",
               marginTop: 6,
               lineHeight: 1.55,
               display: "-webkit-box",
@@ -519,7 +521,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
 
       {/* Expanded detail */}
       {expanded && (
-        <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: "0 20px 20px", borderTop: "0.8px solid #1a1a1a" }}>
           {/* Human impact */}
           <div
             style={{
@@ -527,7 +529,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               borderRadius: 10,
               padding: "14px 16px",
               background: `rgba(${sev.color === "#ef4444" ? "239,68,68" : sev.color === "#f59e0b" ? "245,158,11" : "59,130,246"},0.06)`,
-              border: `1px solid rgba(${sev.color === "#ef4444" ? "239,68,68" : sev.color === "#f59e0b" ? "245,158,11" : "59,130,246"},0.12)`,
+              border: `0.8px solid rgba(${sev.color === "#ef4444" ? "239,68,68" : sev.color === "#f59e0b" ? "245,158,11" : "59,130,246"},0.15)`,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
@@ -544,7 +546,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                 Impacto en tu negocio
               </span>
             </div>
-            <p style={{ fontSize: "0.78rem", lineHeight: 1.6, color: "#a1a1aa", margin: 0 }}>{alert.human_impact}</p>
+            <p style={{ fontSize: "0.78rem", lineHeight: 1.6, color: "#b3b4b5", margin: 0 }}>{alert.human_impact}</p>
           </div>
 
           {/* Fix steps */}
@@ -554,7 +556,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               borderRadius: 10,
               padding: "14px 16px",
               background: "rgba(62,207,142,0.04)",
-              border: "1px solid rgba(62,207,142,0.10)",
+              border: "0.8px solid rgba(62,207,142,0.15)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -593,7 +595,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                   >
                     {i + 1}
                   </span>
-                  <span style={{ fontSize: "0.78rem", color: "#a1a1aa", lineHeight: 1.6 }}>{step}</span>
+                  <span style={{ fontSize: "0.78rem", color: "#b3b4b5", lineHeight: 1.6 }}>{step}</span>
                 </li>
               ))}
             </ol>
@@ -609,11 +611,11 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                 gap: 8,
                 padding: "8px 14px",
                 borderRadius: 8,
-                fontSize: "0.78rem",
+                fontSize: "13px",
                 fontWeight: 600,
-                background: showChat ? "rgba(62,207,142,0.12)" : "#1c1c1c",
-                border: `1px solid ${showChat ? "rgba(62,207,142,0.25)" : "rgba(255,255,255,0.06)"}`,
-                color: showChat ? "#3ecf8e" : "#a1a1aa",
+                background: showChat ? "rgba(62,207,142,0.12)" : "#151515",
+                border: `0.8px solid ${showChat ? "rgba(62,207,142,0.25)" : "#1a1a1a"}`,
+                color: showChat ? "#3ecf8e" : "#b3b4b5",
                 cursor: "pointer",
                 fontFamily: "var(--font-dm-sans)",
                 transition: "all 0.2s",
@@ -649,14 +651,14 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               justifyContent: "space-between",
               marginTop: 16,
               paddingTop: 14,
-              borderTop: "1px solid rgba(255,255,255,0.06)",
+              borderTop: "0.8px solid #1a1a1a",
             }}
           >
             <span
               style={{
                 fontFamily: "var(--font-dm-mono)",
                 fontSize: "0.65rem",
-                color: "#52525b",
+                color: "#71717a",
               }}
             >
               {fmtDate(alert.sent_at)}
@@ -669,16 +671,16 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  fontSize: "0.72rem",
+                  fontSize: "13px",
                   fontWeight: 600,
-                  padding: "5px 12px",
+                  padding: "8px 16px",
                   borderRadius: 8,
                   transition: "all 0.2s",
                   opacity: marking ? 0.5 : 1,
                   cursor: marking ? "not-allowed" : "pointer",
-                  background: "rgba(62,207,142,0.08)",
-                  color: "#3ecf8e",
-                  border: "1px solid rgba(62,207,142,0.15)",
+                  background: "#151515",
+                  color: "#f5f5f5",
+                  border: "0.8px solid #1a1a1a",
                   fontFamily: "var(--font-dm-sans)",
                 }}
               >
@@ -689,7 +691,7 @@ function AlertCard({ alert, onMarkRead }: { alert: Alert; onMarkRead: (id: strin
               <span
                 style={{
                   fontSize: "0.65rem",
-                  color: "#52525b",
+                  color: "#71717a",
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -744,7 +746,7 @@ function AlertGroup({
             textTransform: "uppercase",
             letterSpacing: "0.12em",
             fontWeight: 600,
-            color: "#52525b",
+            color: "#71717a",
           }}
         >
           {label}
@@ -757,11 +759,12 @@ function AlertGroup({
             borderRadius: 6,
             color,
             background: `${color}18`,
+            border: `0.8px solid ${color}30`,
           }}
         >
           {alerts.length}
         </span>
-        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+        <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
       </div>
       <div>
         {alerts.map((a) => (
@@ -791,7 +794,7 @@ function EmptyState() {
           height: 52,
           borderRadius: 14,
           background: "rgba(62,207,142,0.06)",
-          border: "1px solid rgba(62,207,142,0.10)",
+          border: "0.8px solid rgba(62,207,142,0.15)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -805,13 +808,13 @@ function EmptyState() {
           style={{
             fontSize: "1rem",
             fontWeight: 700,
-            color: "#f0f0f0",
+            color: "#f5f5f5",
             marginBottom: 6,
           }}
         >
           Todo está en orden
         </div>
-        <div style={{ fontSize: "0.82rem", color: "#52525b", maxWidth: 280, lineHeight: 1.6 }}>
+        <div style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 280, lineHeight: 1.6 }}>
           No tienes alertas activas. Tus sistemas están monitorizados y te avisaremos si se detecta
           cualquier problema.
         </div>
@@ -824,7 +827,7 @@ function EmptyState() {
           padding: "5px 14px",
           borderRadius: 20,
           background: "rgba(62,207,142,0.06)",
-          border: "1px solid rgba(62,207,142,0.12)",
+          border: "0.8px solid rgba(62,207,142,0.15)",
         }}
       >
         <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3ecf8e" }} />
@@ -868,9 +871,9 @@ function FilterBar({
         display: "flex",
         gap: 4,
         padding: 4,
-        background: "#111111",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 10,
+        background: "#1c1c1c",
+        border: "0.8px solid #1a1a1a",
+        borderRadius: 8,
         marginBottom: 24,
         width: "fit-content",
         flexWrap: "wrap",
@@ -886,16 +889,16 @@ function FilterBar({
               display: "flex",
               alignItems: "center",
               gap: 6,
-              padding: "6px 14px",
-              borderRadius: 7,
-              fontSize: "0.8rem",
+              padding: "5px 12px",
+              borderRadius: 6,
+              fontSize: "13px",
               fontWeight: 600,
               transition: "all 0.15s",
               cursor: "pointer",
-              border: active ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+              border: active ? "0.8px solid #1a1a1a" : "0.8px solid transparent",
               fontFamily: "var(--font-dm-sans)",
-              background: active ? "#1c1c1c" : "transparent",
-              color: active ? "#f0f0f0" : "#52525b",
+              background: active ? "#151515" : "transparent",
+              color: active ? "#f5f5f5" : "#71717a",
             }}
           >
             {f.label}
@@ -907,7 +910,7 @@ function FilterBar({
                   padding: "1px 5px",
                   borderRadius: 4,
                   background: active ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-                  color: active ? "#f0f0f0" : "#52525b",
+                  color: active ? "#f5f5f5" : "#71717a",
                 }}
               >
                 {f.count}
@@ -983,7 +986,7 @@ export default function AlertsPage() {
       <div
         style={{
           padding: "28px 32px 60px",
-          background: "#0a0a0a",
+          background: "#0b0b0b",
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
@@ -1030,7 +1033,7 @@ export default function AlertsPage() {
     <div
       style={{
         padding: "28px 32px 60px",
-        background: "#0a0a0a",
+        background: "#0b0b0b",
         minHeight: "100vh",
         fontFamily: "var(--font-dm-sans)",
       }}
@@ -1049,7 +1052,7 @@ export default function AlertsPage() {
             style={{
               fontSize: "1.4rem",
               fontWeight: 700,
-              color: "#f0f0f0",
+              color: "#f5f5f5",
               margin: 0,
               letterSpacing: "-0.01em",
             }}
@@ -1058,7 +1061,7 @@ export default function AlertsPage() {
           </h1>
           <p
             style={{
-              color: "#52525b",
+              color: "#71717a",
               fontSize: "0.8rem",
               marginTop: 5,
               margin: "5px 0 0",
@@ -1079,16 +1082,16 @@ export default function AlertsPage() {
               display: "flex",
               alignItems: "center",
               gap: 6,
-              fontSize: "0.78rem",
+              fontSize: "13px",
               fontWeight: 600,
               padding: "8px 16px",
               borderRadius: 8,
               transition: "opacity 0.2s",
               opacity: markingAll ? 0.5 : 1,
               cursor: markingAll ? "not-allowed" : "pointer",
-              background: "#1c1c1c",
-              color: "#a1a1aa",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "#151515",
+              color: "#f5f5f5",
+              border: "0.8px solid #1a1a1a",
               fontFamily: "var(--font-dm-sans)",
             }}
           >
@@ -1112,6 +1115,12 @@ export default function AlertsPage() {
           <AlertGroup label="Bajas"    color="#3b82f6" alerts={lows}      onMarkRead={handleMarkRead} />
         </div>
       )}
+
+      {/* Footer */}
+      <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16, padding: "12px 24px", display: "flex", justifyContent: "space-between", marginTop: 40 }}>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>© 2026 • v1.0.0</span>
+        <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
+      </div>
     </div>
   );
 }
