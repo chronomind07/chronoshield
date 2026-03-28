@@ -194,6 +194,10 @@ CREATE TABLE public.alerts (
 );
 -- Migration: ALTER TABLE public.alerts ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE;
 -- Migration: ALTER TABLE public.domains ADD COLUMN IF NOT EXISTS last_scanned_at TIMESTAMPTZ;
+-- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS spf_status TEXT;
+-- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dkim_status TEXT;
+-- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dmarc_status TEXT;
+-- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS last_email_sec_scan_at TIMESTAMPTZ;
 
 -- ============================================================
 -- NOTIFICATION PREFERENCES

@@ -27,3 +27,11 @@ class BreachResult(BaseModel):
 class EmailWithBreaches(EmailResponse):
     latest_breach: Optional[BreachResult] = None
     total_breaches: int = 0
+
+
+class EmailWithSecurity(EmailResponse):
+    """Email with DNS security check results (SPF/DKIM/DMARC)."""
+    spf_status: Optional[str] = None
+    dkim_status: Optional[str] = None
+    dmarc_status: Optional[str] = None
+    last_email_sec_scan_at: Optional[datetime] = None

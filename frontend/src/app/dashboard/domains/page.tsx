@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { domainsApi, alertsApi } from "@/lib/api";
+import { domainsApi } from "@/lib/api";
 import { useTechMode } from "@/lib/mode-context";
 import BuyCreditsModal from "@/components/BuyCreditsModal";
 import { toast } from "@/components/Toast";
@@ -25,20 +25,13 @@ interface Domain {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-type BarColor = "green" | "yellow" | "red" | "neutral";
-
-const BAR_COLORS: Record<BarColor, string> = {
-  green:   "#3ecf8e",
-  yellow:  "#f59e0b",
-  red:     "#ef4444",
-  neutral: "rgba(255,255,255,0.08)",
-};
-
-function domainBarColor(d: Domain): BarColor {
-  if (!d.ssl_status && !d.uptime_status) return "neutral";
-  if (d.uptime_status === "down" || d.uptime_status === "error") return "red";
-  if (d.ssl_status === "expired" || d.ssl_status === "error") return "yellow";
-  return "green";
+function domainBorderColor(d: Domain): string {
+  if (!d.last_scanned_at) return "#2a2a2a";
+  if (d.uptime_status === "down") return "#ef4444";
+  if (d.ssl_status && d.ssl_status !== "valid") return "#f59e0b";
+  if (d.security_score !== null && d.security_score >= 80) return "#3ecf8e";
+  if (d.security_score !== null && d.security_score >= 60) return "#f59e0b";
+  return "#ef4444";
 }
 
 function scoreColor(score: number): string {
@@ -179,13 +172,23 @@ function getRecommendations(d: Domain): { icon: string; text: string }[] {
   return recs;
 }
 
-// ── Domain Detail Panel ────────────────────────────────────────────────────────
-function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () => void }) {
-  const recs = getRecommendations(domain);
+// ── DomainCard ─────────────────────────────────────────────────────────────────
+interface DomainCardProps {
+  domain: Domain;
+  isExpanded: boolean;
+  isScanning: boolean;
+  onToggle: () => void;
+  onScan: (e: React.MouseEvent, id: string) => void;
+  onDelete: (id: string, name: string) => void;
+}
+
+function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDelete }: DomainCardProps) {
+  const recs = getRecommendations(d);
+  const borderColor = domainBorderColor(d);
 
   const secRow = (label: string, status: string | null, isLast = false) => {
     const s = STATUS_LABELS[status ?? "none"] ?? STATUS_LABELS["none"];
-    const borderColor = s.color === "#3ecf8e"
+    const chipBorder = s.color === "#3ecf8e"
       ? "rgba(62,207,142,0.2)"
       : s.color === "#f59e0b"
       ? "rgba(245,158,11,0.2)"
@@ -220,7 +223,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             borderRadius: 6,
             color: s.color,
             background: s.bg,
-            border: `0.8px solid ${borderColor}`,
+            border: `0.8px solid ${chipBorder}`,
           }}
         >
           {s.label}
@@ -232,121 +235,225 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.7)",
-        backdropFilter: "blur(6px)",
-        zIndex: 50,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
+        background: "#151515",
+        border: "0.8px solid #1a1a1a",
+        borderRadius: 10,
+        overflow: "hidden",
         fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
+      {/* Header row */}
       <div
         style={{
-          background: "#151515",
-          border: "0.8px solid #1a1a1a",
-          borderRadius: 16,
-          width: "100%",
-          maxWidth: 480,
-          boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "12px 16px",
+          position: "relative",
           overflow: "hidden",
+          cursor: "pointer",
+          transition: "background 0.15s",
         }}
+        onClick={onToggle}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#1c1c1c"; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
       >
-        {/* Header */}
+        {/* Left color border */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 2,
+            background: borderColor,
+          }}
+        />
+
+        {/* Domain icon */}
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            background: "rgba(62,207,142,0.08)",
+            border: "0.8px solid rgba(62,207,142,0.1)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" style={{ width: 16, height: 16 }}>
+            <circle cx="12" cy="12" r="10" stroke="#3ecf8e" strokeWidth="1.4" />
+            <path d="M12 2C12 2 8 7 8 12s4 10 4 10M12 2c0 0 4 5 4 10s-4 10-4 10" stroke="#3ecf8e" strokeWidth="1.2" />
+            <path d="M2 12h20" stroke="#3ecf8e" strokeWidth="1.2" />
+          </svg>
+        </div>
+
+        {/* Domain info */}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-mono, monospace)",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              color: "#f5f5f5",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              margin: 0,
+            }}
+          >
+            {d.domain}
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-mono, monospace)",
+              fontSize: "0.68rem",
+              color: "#71717a",
+              marginTop: 3,
+              marginBottom: 0,
+            }}
+          >
+            {d.last_scanned_at
+              ? `Último scan: ${relTime(d.last_scanned_at)}`
+              : "Sin escanear"}
+          </p>
+        </div>
+
+        {/* Badges area */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "18px 22px",
-            borderBottom: "0.8px solid #1a1a1a",
+            gap: 6,
+            flexShrink: 0,
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
           }}
+          onClick={e => e.stopPropagation()}
         >
-          <div>
-            <span
+          <StatusChip status={d.uptime_status} labelMap={UPTIME_LABELS} />
+          <StatusChip status={d.ssl_status}    labelMap={SSL_LABELS}    />
+          {d.security_score !== null && <ScorePill score={d.security_score} />}
+
+          {/* Scan button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onScan(e, d.id); }}
+            disabled={isScanning}
+            title="Escanear (1 crédito)"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              background: "#3ecf8e",
+              color: "#000",
+              borderRadius: 8,
+              padding: "8px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
+              border: "none",
+              cursor: isScanning ? "not-allowed" : "pointer",
+              opacity: isScanning ? 0.6 : 1,
+              transition: "opacity 0.15s",
+              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+            }}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              style={{ width: 12, height: 12 }}
+              className={isScanning ? "animate-spin" : ""}
+            >
+              <path
+                d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor" />
+            </svg>
+            Revisar
+          </button>
+
+          {/* Delete button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(d.id, d.domain); }}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              background: "rgba(239,68,68,0.1)",
+              color: "#ef4444",
+              border: "0.8px solid rgba(239,68,68,0.2)",
+              cursor: "pointer",
+              fontSize: "13px",
+              transition: "background 0.15s",
+              display: "flex",
+              alignItems: "center",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.18)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+          >
+            <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
+              <path
+                d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {/* Expand chevron */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 28,
+              height: 28,
+              color: "#71717a",
+              flexShrink: 0,
+            }}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
               style={{
-                fontSize: "0.62rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "#71717a",
-                fontWeight: 600,
-                display: "block",
-                marginBottom: 4,
+                width: 14,
+                height: 14,
+                transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s",
               }}
             >
-              Análisis
-            </span>
-            <h2
-              style={{
-                fontSize: "1.1rem",
-                fontWeight: 700,
-                letterSpacing: "-0.01em",
-                color: "#f5f5f5",
-                margin: 0,
-              }}
-            >
-              {domain.domain}
-            </h2>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {domain.security_score !== null && (
-              <div style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-dm-mono, monospace)",
-                    fontSize: "1.6rem",
-                    fontWeight: 700,
-                    color: scoreColor(domain.security_score),
-                    lineHeight: 1,
-                  }}
-                >
-                  {domain.security_score}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-dm-mono, monospace)",
-                    fontSize: "0.6rem",
-                    color: "#71717a",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    marginTop: 3,
-                  }}
-                >
-                  Score
-                </div>
-              </div>
-            )}
-            <button
-              onClick={onClose}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#71717a",
-                padding: 6,
-                borderRadius: 6,
-                transition: "color 0.15s",
-                display: "flex",
-                alignItems: "center",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#f5f5f5")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
-            >
-              <svg viewBox="0 0 16 16" fill="none" style={{ width: 15, height: 15 }}>
-                <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </button>
+              <path
+                d="M3 6l5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </div>
+      </div>
 
-        <div style={{ padding: "18px 22px", display: "flex", flexDirection: "column", gap: 12, maxHeight: "70vh", overflowY: "auto" }}>
-
-          {/* Last scan */}
-          {domain.last_scanned_at && (
+      {/* Expanded section */}
+      {isExpanded && (
+        <div
+          style={{
+            padding: 16,
+            borderTop: "0.8px solid #1a1a1a",
+            background: "rgba(255,255,255,0.01)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          {/* Last scan timestamp */}
+          {d.last_scanned_at && (
             <p
               style={{
                 fontFamily: "var(--font-dm-mono, monospace)",
@@ -355,7 +462,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 margin: 0,
               }}
             >
-              Último escaneo: {new Date(domain.last_scanned_at).toLocaleString("es-ES")}
+              Último escaneo: {new Date(d.last_scanned_at).toLocaleString("es-ES")}
             </p>
           )}
 
@@ -386,14 +493,14 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 style={{
                   fontSize: "0.875rem",
                   fontWeight: 600,
-                  color: domain.ssl_status === "valid" ? "#3ecf8e" : domain.ssl_status ? "#ef4444" : "#71717a",
+                  color: d.ssl_status === "valid" ? "#3ecf8e" : d.ssl_status ? "#ef4444" : "#71717a",
                 }}
               >
-                {domain.ssl_status === "valid" ? "Válido" :
-                 domain.ssl_status === "expired" ? "Caducado" :
-                 domain.ssl_status === "error" ? "Error" : "Sin datos"}
+                {d.ssl_status === "valid" ? "Válido" :
+                 d.ssl_status === "expired" ? "Caducado" :
+                 d.ssl_status === "error" ? "Error" : "Sin datos"}
               </span>
-              {domain.ssl_days_remaining !== null && (
+              {d.ssl_days_remaining !== null && (
                 <span
                   style={{
                     fontFamily: "var(--font-dm-mono, monospace)",
@@ -401,11 +508,11 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                     color: "#71717a",
                   }}
                 >
-                  {domain.ssl_days_remaining} días restantes
+                  {d.ssl_days_remaining} días restantes
                 </span>
               )}
             </div>
-            {domain.security_score !== null && (
+            {d.security_score !== null && (
               <div style={{ marginTop: 12 }}>
                 <div
                   style={{
@@ -418,7 +525,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                   <div
                     style={{
                       height: "100%",
-                      width: `${Math.min(100, domain.security_score)}%`,
+                      width: `${Math.min(100, d.security_score)}%`,
                       background: "#3ecf8e",
                       borderRadius: 2,
                       transition: "width 0.5s ease",
@@ -456,14 +563,14 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 style={{
                   fontSize: "0.875rem",
                   fontWeight: 600,
-                  color: domain.uptime_status === "up" ? "#3ecf8e" : domain.uptime_status ? "#ef4444" : "#71717a",
+                  color: d.uptime_status === "up" ? "#3ecf8e" : d.uptime_status ? "#ef4444" : "#71717a",
                 }}
               >
-                {domain.uptime_status === "up" ? "Online" :
-                 domain.uptime_status === "down" ? "Caído" :
-                 domain.uptime_status === "error" ? "Error" : "Sin datos"}
+                {d.uptime_status === "up" ? "Online" :
+                 d.uptime_status === "down" ? "Caído" :
+                 d.uptime_status === "error" ? "Error" : "Sin datos"}
               </span>
-              {domain.last_response_ms !== null && (
+              {d.last_response_ms !== null && (
                 <span
                   style={{
                     fontFamily: "var(--font-dm-mono, monospace)",
@@ -471,7 +578,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                     color: "#71717a",
                   }}
                 >
-                  {domain.last_response_ms} ms
+                  {d.last_response_ms} ms
                 </span>
               )}
             </div>
@@ -499,9 +606,9 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
             >
               Seguridad de Email
             </span>
-            {secRow("SPF",   domain.spf_status)}
-            {secRow("DKIM",  domain.dkim_status)}
-            {secRow("DMARC", domain.dmarc_status, true)}
+            {secRow("SPF",   d.spf_status)}
+            {secRow("DKIM",  d.dkim_status)}
+            {secRow("DMARC", d.dmarc_status, true)}
           </div>
 
           {/* Recommendations */}
@@ -565,7 +672,7 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
                 ))}
               </div>
             </div>
-          ) : domain.last_scanned_at ? (
+          ) : d.last_scanned_at ? (
             <div
               style={{
                 display: "flex",
@@ -578,16 +685,15 @@ function DomainDetailPanel({ domain, onClose }: { domain: Domain; onClose: () =>
               }}
             >
               <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}>
-                <path d="M3 8l3.5 3.5L13 4" stroke="#3ecf8e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 8l3.5 3.5L13 4" stroke="#3ecf8e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <p style={{ fontSize: "0.78rem", color: "#3ecf8e", margin: 0 }}>
                 Sin recomendaciones críticas. Tu dominio está bien configurado.
               </p>
             </div>
           ) : null}
-
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -601,7 +707,7 @@ export default function DomainsPage() {
   const [adding, setAdding]           = useState(false);
   const [newDomain, setNewDomain]     = useState("");
   const [scanning, setScanning]       = useState<string | null>(null);
-  const [selected, setSelected]       = useState<Domain | null>(null);
+  const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [showCredits, setShowCredits] = useState(false);
 
   const load = async () => {
@@ -638,6 +744,7 @@ export default function DomainsPage() {
     try {
       await domainsApi.remove(id);
       setDomains((prev) => prev.filter((d) => d.id !== id));
+      if (expandedId === id) setExpandedId(null);
       toast.success("Dominio eliminado");
     } catch {
       toast.error("Error al eliminar dominio");
@@ -661,11 +768,8 @@ export default function DomainsPage() {
       const freshDomains: Domain[] = Array.isArray(freshRes.data) ? freshRes.data : (freshRes.data?.data ?? []);
       setDomains(freshDomains);
 
-      // If the detail panel is open for this domain, update it with fresh data
-      if (selected?.id === id) {
-        const updated = freshDomains.find((d) => d.id === id);
-        if (updated) setSelected(updated);
-      }
+      // Keep card expanded with fresh data if it was already expanded
+      // (expandedId state stays the same; the domain data is updated in place)
 
       decrementCredits(1);
       refreshCredits();
@@ -727,7 +831,6 @@ export default function DomainsPage() {
     >
       {/* Modals */}
       {showCredits && <BuyCreditsModal onClose={() => setShowCredits(false)} />}
-      {selected    && <DomainDetailPanel domain={selected} onClose={() => setSelected(null)} />}
 
       {/* Page Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 24 }}>
@@ -769,7 +872,7 @@ export default function DomainsPage() {
           }}
         >
           <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
-            <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           Comprar créditos
         </button>
@@ -843,7 +946,7 @@ export default function DomainsPage() {
             }}
           >
             <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
-              <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
             {adding ? "Añadiendo..." : "Añadir"}
           </button>
@@ -900,9 +1003,9 @@ export default function DomainsPage() {
               }}
             >
               <svg viewBox="0 0 24 24" fill="none" style={{ width: 22, height: 22 }}>
-                <circle cx="12" cy="12" r="10" stroke="#3ecf8e" strokeWidth="1.4"/>
-                <path d="M12 2C12 2 8 7 8 12s4 10 4 10M12 2c0 0 4 5 4 10s-4 10-4 10" stroke="#3ecf8e" strokeWidth="1.2"/>
-                <path d="M2 12h20" stroke="#3ecf8e" strokeWidth="1.2"/>
+                <circle cx="12" cy="12" r="10" stroke="#3ecf8e" strokeWidth="1.4" />
+                <path d="M12 2C12 2 8 7 8 12s4 10 4 10M12 2c0 0 4 5 4 10s-4 10-4 10" stroke="#3ecf8e" strokeWidth="1.2" />
+                <path d="M2 12h20" stroke="#3ecf8e" strokeWidth="1.2" />
               </svg>
             </div>
             <div>
@@ -916,164 +1019,18 @@ export default function DomainsPage() {
           </div>
         </div>
       ) : (
-        <div
-          style={{
-            background: "#151515",
-            border: "0.8px solid #1a1a1a",
-            borderRadius: 16,
-            overflow: "hidden",
-          }}
-        >
-          {domains.map((d, idx) => {
-            const barColor = domainBarColor(d);
-            const isLast = idx === domains.length - 1;
-            return (
-              <div
-                key={d.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "12px 16px",
-                  borderBottom: isLast ? "none" : "0.8px solid #1a1a1a",
-                  cursor: "pointer",
-                  transition: "background 0.15s",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-                onClick={() => setSelected(d)}
-                onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-              >
-                {/* Left color indicator */}
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 2,
-                    backgroundColor: BAR_COLORS[barColor],
-                  }}
-                />
-
-                {/* Left: domain name + last scan */}
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-mono, monospace)",
-                      fontSize: "0.875rem",
-                      fontWeight: 600,
-                      color: "#f5f5f5",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      margin: 0,
-                    }}
-                  >
-                    {d.domain}
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-mono, monospace)",
-                      fontSize: "0.68rem",
-                      color: "#71717a",
-                      marginTop: 3,
-                      marginBottom: 0,
-                    }}
-                  >
-                    {d.last_scanned_at
-                      ? `${techMode ? "Last scan" : "Último scan"}: ${relTime(d.last_scanned_at)}`
-                      : (techMode ? "Never scanned" : "Sin revisar aún")}
-                  </p>
-                </div>
-
-                {/* Right: status chips + score + actions */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    flexShrink: 0,
-                    flexWrap: "wrap",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <StatusChip status={d.uptime_status} labelMap={UPTIME_LABELS} />
-                  <StatusChip status={d.ssl_status}    labelMap={SSL_LABELS}    />
-                  {d.security_score !== null && <ScorePill score={d.security_score} />}
-
-                  {/* Scan button */}
-                  <button
-                    onClick={(e) => handleScan(e, d.id)}
-                    disabled={scanning === d.id}
-                    title="Escanear (1 crédito)"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      background: "#3ecf8e",
-                      color: "#000",
-                      borderRadius: 8,
-                      padding: "8px 16px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      border: "none",
-                      cursor: scanning === d.id ? "not-allowed" : "pointer",
-                      opacity: scanning === d.id ? 0.6 : 1,
-                      transition: "opacity 0.15s",
-                      fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-                    }}
-                  >
-                    <svg
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      style={{ width: 12, height: 12 }}
-                      className={scanning === d.id ? "animate-spin" : ""}
-                    >
-                      <path
-                        d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                      <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor"/>
-                    </svg>
-                    {techMode ? "Scan" : "Revisar"}
-                  </button>
-
-                  {/* Delete button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleRemove(d.id, d.domain); }}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: 8,
-                      background: "rgba(239,68,68,0.1)",
-                      color: "#ef4444",
-                      border: "0.8px solid rgba(239,68,68,0.2)",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      transition: "background 0.15s",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                    onMouseEnter={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.18)"; }}
-                    onMouseLeave={e2 => { e2.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
-                  >
-                    <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
-                      <path
-                        d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {domains.map((d) => (
+            <DomainCard
+              key={d.id}
+              domain={d}
+              isExpanded={expandedId === d.id}
+              isScanning={scanning === d.id}
+              onToggle={() => setExpandedId(expandedId === d.id ? null : d.id)}
+              onScan={handleScan}
+              onDelete={handleRemove}
+            />
+          ))}
         </div>
       )}
 
