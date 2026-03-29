@@ -294,6 +294,44 @@ function TabPills({ tabs, active, onChange }: {
   );
 }
 
+// ── Single-domain Score Ring (used in Trends tab) ─────────────────────────────
+function DomainScoreRing({ score, label }: { score: number; label: string }) {
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * Math.max(0, Math.min(100, score)) / 100;
+  const gap = circ - dash;
+  const color = score >= 80 ? "#3ecf8e" : score >= 60 ? "#f59e0b" : "#ef4444";
+  // Trim label: show last two dot-separated parts (e.g. "chronoshield.eu")
+  const parts = label.split(".");
+  const shortLabel = parts.length > 2 ? parts.slice(-2).join(".") : label;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 70 }}>
+      <div style={{ position: "relative", width: 68, height: 68 }}>
+        <svg width="68" height="68" viewBox="0 0 68 68" style={{ transform: "rotate(-90deg)", display: "block" }}>
+          <circle cx="34" cy="34" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+          <circle
+            cx="34" cy="34" r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth="7"
+            strokeLinecap="butt"
+            strokeDasharray={`${dash} ${gap}`}
+            style={{ transition: "stroke-dasharray 0.8s cubic-bezier(0.16,1,0.3,1)" }}
+          />
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.9rem", fontWeight: 700, color: "#f5f5f5", lineHeight: 1 }}>
+            {score > 0 ? score : "—"}
+          </span>
+        </div>
+      </div>
+      <span style={{ fontSize: 10, color: "#b3b4b5", textAlign: "center", maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {shortLabel}
+      </span>
+    </div>
+  );
+}
+
 // ── Card wrapper ───────────────────────────────────────────────────────────────
 const cardStyle: React.CSSProperties = {
   background: "#151515",
@@ -696,74 +734,116 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* Donut chart */}
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-              <MultiRingDonut
-                ssl={sslScore}
-                email={emailSecScore}
-                uptime={uptimeScore}
-                darkweb={darkwebScore}
-                score={avg}
-              />
-            </div>
+            {/* ── Performance tab: global donut + metric rows ── */}
+            {insightTab === "Performance" && (
+              <>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+                  <MultiRingDonut
+                    ssl={sslScore}
+                    email={emailSecScore}
+                    uptime={uptimeScore}
+                    darkweb={darkwebScore}
+                    score={avg}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {/* SSL */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(62,207,142,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>SSL</div>
+                      <div style={{ fontSize: 11, color: "#71717a" }}>Overall SSL health</div>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#3ecf8e", fontFamily: "var(--font-dm-mono)" }}>{sslScore}%</span>
+                  </div>
+                  {/* Email Security */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>Email Security</div>
+                      <div style={{ fontSize: 11, color: "#71717a" }}>SPF/DKIM/DMARC</div>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#3b82f6", fontFamily: "var(--font-dm-mono)" }}>{emailSecScore}%</span>
+                  </div>
+                  {/* Uptime */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>Uptime</div>
+                      <div style={{ fontSize: 11, color: "#71717a" }}>Disponibilidad 30d</div>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#f59e0b", fontFamily: "var(--font-dm-mono)" }}>{uptimeScore}%</span>
+                  </div>
+                  {/* Dark Web */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>Dark Web</div>
+                      <div style={{ fontSize: 11, color: "#71717a" }}>Brechas detectadas</div>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#ef4444", fontFamily: "var(--font-dm-mono)" }}>
+                      {summary?.breached_emails ?? 0} brechas
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
 
-            {/* Metric rows */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* SSL */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(62,207,142,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: "#b3b4b5" }}>SSL</div>
-                  <div style={{ fontSize: 11, color: "#71717a" }}>Overall SSL health</div>
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#3ecf8e", fontFamily: "var(--font-dm-mono)" }}>{sslScore}%</span>
-              </div>
-              {/* Email Security */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
-                  </svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: "#b3b4b5" }}>Email Security</div>
-                  <div style={{ fontSize: 11, color: "#71717a" }}>SPF/DKIM/DMARC</div>
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#3b82f6", fontFamily: "var(--font-dm-mono)" }}>{emailSecScore}%</span>
-              </div>
-              {/* Uptime */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                  </svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: "#b3b4b5" }}>Uptime</div>
-                  <div style={{ fontSize: 11, color: "#71717a" }}>Disponibilidad 30d</div>
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#f59e0b", fontFamily: "var(--font-dm-mono)" }}>{uptimeScore}%</span>
-              </div>
-              {/* Dark Web */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: "#b3b4b5" }}>Dark Web</div>
-                  <div style={{ fontSize: 11, color: "#71717a" }}>Brechas detectadas</div>
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#ef4444", fontFamily: "var(--font-dm-mono)" }}>
-                  {summary?.breached_emails ?? 0} brechas
-                </span>
-              </div>
-            </div>
+            {/* ── Trends tab: one score ring per domain ── */}
+            {insightTab === "Trends" && (
+              <>
+                {domains.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "32px 0", color: "#71717a", fontSize: 13 }}>
+                    No hay dominios configurados
+                  </div>
+                ) : (
+                  <>
+                    <div style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 16,
+                      justifyContent: domains.length <= 3 ? "center" : "flex-start",
+                      padding: "8px 0 16px",
+                    }}>
+                      {domains.map(d => (
+                        <DomainScoreRing
+                          key={d.id}
+                          score={d.security_score != null ? Math.round(d.security_score) : 0}
+                          label={d.domain}
+                        />
+                      ))}
+                    </div>
+                    <div style={{ borderTop: "0.8px solid #1a1a1a", paddingTop: 12 }}>
+                      <div style={{ fontSize: 11, color: "#71717a", marginBottom: 6 }}>Leyenda</div>
+                      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                        {[["#3ecf8e", "≥80 Seguro"], ["#f59e0b", "60–79 Aviso"], ["#ef4444", "<60 Crítico"]].map(([c, l]) => (
+                          <div key={l} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: c }} />
+                            <span style={{ fontSize: 10, color: "#b3b4b5" }}>{l}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           {/* ── Actividad de Escaneo ── */}

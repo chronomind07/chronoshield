@@ -40,12 +40,14 @@ def _get_all_active_emails():
 @celery_app.task(name="app.workers.tasks.scan_ssl_all_domains", bind=True, max_retries=2)
 def scan_ssl_all_domains(self):
     from app.workers.ssl.scanner import scan_ssl
+    from app.services.score_calculator import calculate_domain_score
 
     domains = _get_all_active_domains()
     logger.info("SSL scan started", count=len(domains))
     for d in domains:
         try:
             scan_ssl(d["id"], d["domain"], d["user_id"])
+            calculate_domain_score(d["id"], d["user_id"])
         except Exception as e:
             logger.error("SSL scan failed", domain=d["domain"], error=str(e))
 
@@ -57,12 +59,14 @@ def scan_ssl_all_domains(self):
 @celery_app.task(name="app.workers.tasks.scan_uptime_all_domains", bind=True, max_retries=2)
 def scan_uptime_all_domains(self):
     from app.workers.uptime.scanner import scan_uptime
+    from app.services.score_calculator import calculate_domain_score
 
     domains = _get_all_active_domains()
     logger.info("Uptime scan started", count=len(domains))
     for d in domains:
         try:
             scan_uptime(d["id"], d["domain"], d["user_id"])
+            calculate_domain_score(d["id"], d["user_id"])
         except Exception as e:
             logger.error("Uptime scan failed", domain=d["domain"], error=str(e))
 
@@ -74,12 +78,14 @@ def scan_uptime_all_domains(self):
 @celery_app.task(name="app.workers.tasks.scan_email_security_all_domains", bind=True, max_retries=2)
 def scan_email_security_all_domains(self):
     from app.workers.email_security.scanner import scan_email_security
+    from app.services.score_calculator import calculate_domain_score
 
     domains = _get_all_active_domains()
     logger.info("Email security scan started", count=len(domains))
     for d in domains:
         try:
             scan_email_security(d["id"], d["domain"], d["user_id"])
+            calculate_domain_score(d["id"], d["user_id"])
         except Exception as e:
             logger.error("Email security scan failed", domain=d["domain"], error=str(e))
 

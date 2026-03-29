@@ -57,16 +57,23 @@ async def get_dashboard_summary(
     )
     down_count = len({r["domain_id"] for r in down_domains})
 
-    # Breached emails
-    breached = (
-        db.table("breach_results")
-        .select("email_id")
+    # Breached queries — read from dark_web_results (current scanner).
+    # Use only the latest result per query_value; count those with total_results > 0.
+    dw_rows = (
+        db.table("dark_web_results")
+        .select("query_value,total_results,scanned_at")
         .eq("user_id", user_id)
-        .gt("breaches_found", 0)
+        .in_("scan_type", ["email_breach", "domain_breach"])
+        .order("scanned_at", desc=True)
         .execute()
         .data
-    )
-    breached_count = len({r["email_id"] for r in breached})
+    ) or []
+    seen_dw: dict = {}
+    for r in dw_rows:
+        qv = r["query_value"]
+        if qv not in seen_dw:
+            seen_dw[qv] = r
+    breached_count = sum(1 for r in seen_dw.values() if (r.get("total_results") or 0) > 0)
 
     # Average scores — use only the LATEST score per domain (avoid stale historical averages)
     all_scores = (

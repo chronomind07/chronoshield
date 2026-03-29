@@ -93,22 +93,28 @@ def calculate_domain_score(domain_id: str, user_id: str) -> dict:
         valid_count = sum(1 for c in checks if c == "valid")
         email_sec_score = int((valid_count / 3) * 100)
 
-    # Breach score for associated emails (30%) — domain-level: use full user breach score
-    breach_results = (
-        db.table("breach_results")
-        .select("breaches_found")
+    # Breach score (30%) — read from dark_web_results (current scanner).
+    # Use only the most-recent result per query_value so old scans don't
+    # permanently drag down the score once breaches are cleaned up.
+    dw_rows = (
+        db.table("dark_web_results")
+        .select("query_value,total_results,scanned_at")
         .eq("user_id", user_id)
+        .in_("scan_type", ["email_breach", "domain_breach"])
         .order("scanned_at", desc=True)
-        .limit(50)
         .execute()
         .data
-    )
+    ) or []
+    # Keep only the latest row per query_value
+    seen_dw: dict = {}
+    for r in dw_rows:
+        qv = r["query_value"]
+        if qv not in seen_dw:
+            seen_dw[qv] = r
+    total_breaches = sum(r.get("total_results", 0) or 0 for r in seen_dw.values())
     breach_score = 100
-    if breach_results:
-        total_breaches = sum(r["breaches_found"] for r in breach_results)
-        if total_breaches == 0:
-            breach_score = 100
-        elif total_breaches <= 2:
+    if total_breaches > 0:
+        if total_breaches <= 2:
             breach_score = 70
         elif total_breaches <= 5:
             breach_score = 40
