@@ -276,7 +276,6 @@ export default function AssistantPage() {
       try {
         const history = messages.map(m => ({ role: m.role, content: m.content }));
         const res = await mitigationApi.chat({
-          alert_id: undefined as unknown as string,
           message: text.trim(),
           conversation_history: history,
         });
@@ -312,15 +311,51 @@ export default function AssistantPage() {
     }
   };
 
+  // ── Analyze alerts ───────────────────────────────────────────────────────
+  const analyzeAlerts = useCallback(async () => {
+    if (sending) return;
+    setSending(true);
+    const userMsg: ChatMsg = { role: "user", content: "Analiza mis alertas activas", timestamp: new Date() };
+    setMessages(prev => [...prev, userMsg]);
+
+    try {
+      const summaryRes = await mitigationApi.alertsSummary();
+      const summary = summaryRes.data.summary as string;
+
+      const res = await mitigationApi.chat({
+        message: summary + "\n\nPor favor, analiza estas alertas y dime cuáles son las más urgentes y cómo resolverlas.",
+        conversation_history: [],
+      });
+
+      const assistantMsg: ChatMsg = { role: "assistant", content: res.data.response, timestamp: new Date() };
+      setMessages(prev => [...prev, assistantMsg]);
+      setUsageCount(res.data.usage_count ?? usageCount + 1);
+      setUsageLimit(res.data.usage_limit ?? usageLimit);
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 429) {
+        toast.error("Límite de uso alcanzado.");
+      } else {
+        toast.error("Error al analizar alertas.");
+      }
+    } finally {
+      setSending(false);
+    }
+  }, [sending, usageCount, usageLimit]);
+
   // ── Suggestion chips ─────────────────────────────────────────────────────
   const suggestions = [
     "¿Cómo mejorar mi SPF/DKIM?",
     "Analiza mi puntuación SSL",
     "Qué significa una brecha Dark Web",
-    "Cómo proteger mis dominios",
+    "📊 Analizar mis alertas",
   ];
 
   const handleSuggestion = (text: string) => {
+    if (text === "📊 Analizar mis alertas") {
+      analyzeAlerts();
+      return;
+    }
     setInput(text);
     textareaRef.current?.focus();
   };

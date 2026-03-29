@@ -1,5 +1,6 @@
+from collections import Counter
 from datetime import date
-from typing import List
+from typing import List, Optional
 
 import anthropic
 import structlog
@@ -45,7 +46,7 @@ class ChatMessage(BaseModel):
 
 
 class MitigationChatRequest(BaseModel):
-    alert_id: str
+    alert_id: Optional[str] = None   # None when called from general assistant
     message: str
     conversation_history: List[ChatMessage] = []
 
@@ -113,22 +114,22 @@ async def mitigation_chat(
     # 3. Increment usage immediately (before the AI call to avoid race conditions)
     _get_and_increment_usage(db, user_id, current_count, month_start)
 
-    # 4. Fetch alert context — real columns: alert_type, severity, title, message, domain_id
-    #    Never use .single() — use .execute() + check data to avoid ValidationError
-    alert_res = (
-        db.table("alerts")
-        .select("alert_type, severity, title, message, domain_id")
-        .eq("id", req.alert_id)
-        .eq("user_id", user_id)
-        .execute()
-    )
-    if not alert_res.data:
-        raise HTTPException(status_code=404, detail="Alerta no encontrada")
+    # 4. Fetch alert context (only if alert_id provided)
+    alert_context = ""
+    if req.alert_id:
+        alert_res = (
+            db.table("alerts")
+            .select("alert_type, severity, title, message, domain_id")
+            .eq("id", req.alert_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not alert_res.data:
+            raise HTTPException(status_code=404, detail="Alerta no encontrada")
 
-    alert = alert_res.data[0]
-    logger.info("mitigation_chat: alert fetched", alert_id=req.alert_id, alert_data=alert)
+        alert = alert_res.data[0]
+        logger.info("mitigation_chat: alert fetched", alert_id=req.alert_id, alert_data=alert)
 
-    try:
         # Resolve domain name via separate query if domain_id present
         domain_name: str | None = None
         if alert.get("domain_id"):
@@ -150,16 +151,17 @@ async def mitigation_chat(
             + (f"\n- Dominio afectado: {domain_name}" if domain_name else "")
         )
 
+    try:
         # 5. Build messages — keep only last 6 history messages to minimise tokens
         history = req.conversation_history[-6:]
         messages: list[dict] = []
 
         if not history:
-            # First turn: inject alert context together with user message
-            messages.append({
-                "role": "user",
-                "content": f"{alert_context}\n\nPregunta: {req.message}",
-            })
+            if alert_context:
+                content = f"{alert_context}\n\nPregunta: {req.message}"
+            else:
+                content = req.message
+            messages.append({"role": "user", "content": content})
         else:
             for msg in history:
                 messages.append({"role": msg.role, "content": msg.content})
@@ -212,3 +214,38 @@ async def get_mitigation_usage(
     current_count: int = (usage_res.data[0]["count"] if usage_res.data else 0)
 
     return {"usage_count": current_count, "usage_limit": limit, "plan": plan}
+
+
+@router.get("/alerts-summary")
+async def get_alerts_summary(
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """Return a compact summary of active alerts for use as AI context."""
+    rows = (
+        db.table("alerts")
+        .select("alert_type, severity, title")
+        .eq("user_id", user_id)
+        .is_("read_at", "null")
+        .neq("archived", True)
+        .order("sent_at", desc=True)
+        .limit(50)
+        .execute()
+        .data or []
+    )
+
+    if not rows:
+        return {"summary": "No hay alertas activas actualmente.", "count": 0}
+
+    by_severity = Counter(r.get("severity", "low") for r in rows)
+    by_type = Counter(r.get("alert_type", "unknown") for r in rows)
+
+    lines = [f"El usuario tiene {len(rows)} alerta(s) activa(s):"]
+    for sev in ["critical", "high", "medium", "low"]:
+        if by_severity.get(sev):
+            lines.append(f"- {by_severity[sev]} alerta(s) de severidad {sev}")
+    lines.append("Tipos de alertas:")
+    for atype, count in by_type.most_common():
+        lines.append(f"- {atype.replace('_', ' ')}: {count}")
+
+    return {"summary": "\n".join(lines), "count": len(rows)}

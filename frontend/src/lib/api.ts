@@ -63,6 +63,8 @@ export const alertsApi = {
   markAllRead: () => api.patch("/alerts/read-all"),
   archiveAlert: (id: string) => api.delete(`/alerts/${id}`),
   archiveResolved: () => api.delete("/alerts"),
+  delete: (id: string) => api.delete(`/alerts/${id}`),
+  deleteResolved: () => api.delete("/alerts"),
 };
 
 // History endpoints
@@ -127,11 +129,12 @@ export const contactApi = {
 // Mitigation AI assistant endpoints
 export const mitigationApi = {
   chat: (data: {
-    alert_id: string;
+    alert_id?: string;
     message: string;
     conversation_history: { role: string; content: string }[];
   }) => api.post("/mitigation/chat", data),
   usage: () => api.get("/mitigation/usage"),
+  alertsSummary: () => api.get("/mitigation/alerts-summary"),
 };
 
 export { supabase };

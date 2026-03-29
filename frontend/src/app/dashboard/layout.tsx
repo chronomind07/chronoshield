@@ -191,10 +191,11 @@ function NavSection({ label, children }: { label: string; children: React.ReactN
 }
 
 // ── Alert row ─────────────────────────────────────────────────────────────────
-function AlertRow({ alert, onDismiss, onClose }: {
-  alert: AlertItem; onDismiss: (id: string) => void; onClose: () => void;
+function AlertRow({ alert, onDismiss, onDelete, onClose }: {
+  alert: AlertItem; onDismiss: (id: string) => void; onDelete: (id: string) => void; onClose: () => void;
 }) {
   const [dismissing, setDismissing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const c = SEV_COLOR[alert.severity] ?? "#3b82f6";
 
   return (
@@ -228,6 +229,24 @@ function AlertRow({ alert, onDismiss, onClose }: {
               {dismissing ? "…" : "Descartar"}
             </button>
           )}
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              setDeleting(true);
+              await onDelete(alert.id);
+              setDeleting(false);
+            }}
+            disabled={deleting}
+            title="Eliminar notificación"
+            style={{
+              fontSize: "0.68rem", fontWeight: 500, color: "#71717a",
+              padding: "3px 7px", background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6,
+              cursor: "pointer", display: "flex", alignItems: "center",
+            }}
+          >
+            {deleting ? "…" : "✕"}
+          </button>
         </div>
       </div>
     </div>
@@ -331,6 +350,14 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
     } catch { /* silent */ }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await alertsApi.delete(id);
+      setAlerts(prev => prev.filter(a => a.id !== id));
+      setUnreadCount(prev => Math.max(0, prev - (alerts.find(a => a.id === id)?.is_unread ? 1 : 0)));
+    } catch { /* silent */ }
+  };
+
   const handleMarkAllRead = async () => {
     try {
       await alertsApi.markAllRead();
@@ -368,11 +395,23 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
               <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#f5f5f5" }}>Notificaciones</span>
               {unreadCount > 0 && <span style={{ fontSize: "0.6rem", fontWeight: 700, background: "#ef4444", color: "#fff", borderRadius: 6, padding: "1px 5px", fontFamily: "var(--font-dm-mono)" }}>{unreadCount}</span>}
             </div>
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} style={{ fontSize: "0.72rem", fontWeight: 600, color: "#3ecf8e", background: "none", border: "none", cursor: "pointer" }}>
-                Marcar leídas
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {unreadCount > 0 && (
+                <button onClick={handleMarkAllRead} style={{ fontSize: "0.72rem", fontWeight: 600, color: "#3ecf8e", background: "none", border: "none", cursor: "pointer" }}>
+                  Marcar leídas
+                </button>
+              )}
+              <button onClick={async () => {
+                try {
+                  const { alertsApi: api } = await import("@/lib/api");
+                  await api.deleteResolved();
+                  setAlerts([]);
+                  setUnreadCount(0);
+                } catch { /* silent */ }
+              }} style={{ fontSize: "0.72rem", fontWeight: 600, color: "#71717a", background: "none", border: "none", cursor: "pointer" }}>
+                Borrar todas
               </button>
-            )}
+            </div>
           </div>
           <div style={{ maxHeight: 360, overflowY: "auto" }}>
             {loading ? (
@@ -385,7 +424,7 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
                 <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f5f5f5" }}>Todo en orden</div>
                 <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 4 }}>Sin alertas activas.</div>
               </div>
-            ) : alerts.map(a => <AlertRow key={a.id} alert={a} onDismiss={handleDismiss} onClose={() => setOpen(false)} />)}
+            ) : alerts.map(a => <AlertRow key={a.id} alert={a} onDismiss={handleDismiss} onDelete={handleDelete} onClose={() => setOpen(false)} />)}
           </div>
           {!loading && alerts.length > 0 && (
             <div style={{ padding: "10px 16px", borderTop: "1px solid #1a1a1a" }}>
