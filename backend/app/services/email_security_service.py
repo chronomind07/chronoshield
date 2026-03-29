@@ -37,15 +37,24 @@ _LIFETIME = 12  # seconds total for a single resolve() call
 
 def _make_resolver() -> dns.resolver.Resolver:
     """
-    Create a fresh DNS resolver with no cache for every scan.
-    Avoids stale NXDOMAIN/timeout entries being reused in long-lived workers.
+    Create a fresh DNS resolver with explicit public nameservers for every scan.
+
+    Two reasons for explicit nameservers:
+    1. Railway (and similar PaaS) assigns different internal DNS servers to each
+       container. The Celery worker container and the FastAPI web container may
+       resolve the same hostname differently — or one container's upstream resolver
+       may have a cached NXDOMAIN that the other doesn't.
+    2. A new Resolver() reads /etc/resolv.conf which may point to a PaaS-internal
+       resolver with aggressive negative-caching TTLs.
+
+    Pinning to Google (8.8.8.8 / 8.8.4.4) and Cloudflare (1.1.1.1 / 1.0.0.1)
+    ensures both containers query the same well-known public resolvers and get
+    consistent, authoritative answers regardless of the container's network config.
     """
     r = dns.resolver.Resolver()
+    r.nameservers = ["8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1"]
     r.timeout  = _TIMEOUT
     r.lifetime = _LIFETIME
-    # Explicitly disable caching so each query hits DNS fresh.
-    # Creating a new resolver per call already avoids cross-scan cache pollution.
-    # No need to touch r.cache — the fresh object has its own empty cache.
     return r
 
 
