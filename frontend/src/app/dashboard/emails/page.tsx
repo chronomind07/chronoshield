@@ -828,23 +828,19 @@ export default function EmailsPage() {
         {/* ── Footer ──────────────────────────────────────────────────────────── */}
         <div
           style={{
-            marginTop: "60px",
-            paddingTop: "20px",
-            borderTop: "0.8px solid #1a1a1a",
+            background: "#151515",
+            border: "0.8px solid #1a1a1a",
+            borderRadius: 16,
+            padding: "12px 24px",
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            justifyContent: "center",
+            marginTop: 16,
           }}
         >
-          <span
-            style={{
-              fontFamily: "var(--font-dm-mono)",
-              fontSize: "11px",
-              color: "#2a2a2a",
-              letterSpacing: "0.02em",
-            }}
-          >
-            © 2026 ChronoShield • v1.0.0
+          <span style={{ fontSize: "12px", color: "#71717a" }}>© 2026 • v1.0.0</span>
+          <span style={{ fontSize: "12px", color: "#71717a" }}>
+            by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span>
           </span>
         </div>
       </div>

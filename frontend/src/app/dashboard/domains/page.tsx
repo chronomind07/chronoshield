@@ -131,6 +131,53 @@ const STATUS_LABELS: Record<string, StatusDef> = {
   none:    { label: "N/A",      color: "#71717a", bg: "rgba(255,255,255,0.05)" },
 };
 
+// ── Badge maps for header chips ───────────────────────────────────────────────
+const SSL_BADGE_MAP: Record<string, StatusDef> = {
+  valid:   { label: "OK",    color: "#3ecf8e", bg: "rgba(62,207,142,0.10)"  },
+  expired: { label: "Venc.", color: "#f59e0b", bg: "rgba(245,158,11,0.10)"  },
+  error:   { label: "Error", color: "#ef4444", bg: "rgba(239,68,68,0.10)"   },
+};
+
+const UPTIME_BADGE_MAP: Record<string, StatusDef> = {
+  up:    { label: "Online", color: "#3ecf8e", bg: "rgba(62,207,142,0.10)"  },
+  down:  { label: "Caída",  color: "#ef4444", bg: "rgba(239,68,68,0.10)"   },
+  error: { label: "Error",  color: "#f59e0b", bg: "rgba(245,158,11,0.10)"  },
+};
+
+function getDomainOverallStatus(d: Domain): { label: string; color: string; bg: string; border: string } {
+  if (!d.last_scanned_at) {
+    return { label: "Sin escanear", color: "#71717a", bg: "rgba(113,113,122,0.10)", border: "rgba(113,113,122,0.2)" };
+  }
+  const bc = domainBorderColor(d);
+  if (bc === "#3ecf8e") {
+    return { label: "Protegido", color: "#3ecf8e", bg: "rgba(62,207,142,0.10)", border: "rgba(62,207,142,0.2)" };
+  }
+  if (bc === "#ef4444") {
+    return { label: "Atención",  color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.2)"  };
+  }
+  return { label: "Atención", color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.2)" };
+}
+
+function DomainDnsBadge({ label, status, statusMap }: {
+  label: string;
+  status: string | null;
+  statusMap?: Record<string, StatusDef>;
+}) {
+  const map = statusMap ?? STATUS_LABELS;
+  const s: StatusDef = status ? (map[status] ?? { label: status, color: "#71717a", bg: "rgba(113,113,122,0.10)" }) : { label: "—", color: "#71717a", bg: "rgba(113,113,122,0.10)" };
+  const borderColor =
+    s.color === "#3ecf8e" ? "rgba(62,207,142,0.2)"  :
+    s.color === "#f59e0b" ? "rgba(245,158,11,0.2)"  :
+    s.color === "#ef4444" ? "rgba(239,68,68,0.2)"   :
+    "rgba(113,113,122,0.2)";
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 7px", borderRadius: "5px", background: s.bg, border: `0.8px solid ${borderColor}`, fontFamily: "var(--font-dm-mono, monospace)", fontSize: "11px", fontWeight: 500, color: s.color, whiteSpace: "nowrap" }}>
+      <span style={{ color: "#71717a", fontWeight: 400 }}>{label}</span>
+      <span>{s.label}</span>
+    </span>
+  );
+}
+
 function relTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
@@ -334,8 +381,21 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
           }}
           onClick={e => e.stopPropagation()}
         >
-          <StatusChip status={d.uptime_status} labelMap={UPTIME_LABELS} />
-          <StatusChip status={d.ssl_status}    labelMap={SSL_LABELS}    />
+          {/* Individual DNS + SSL + Uptime badges */}
+          <DomainDnsBadge label="SPF"   status={d.spf_status}    />
+          <DomainDnsBadge label="DKIM"  status={d.dkim_status}   />
+          <DomainDnsBadge label="DMARC" status={d.dmarc_status}  />
+          <DomainDnsBadge label="SSL"   status={d.ssl_status}    statusMap={SSL_BADGE_MAP}    />
+          <DomainDnsBadge label="Web"   status={d.uptime_status} statusMap={UPTIME_BADGE_MAP} />
+          {/* Overall status badge */}
+          {(() => {
+            const os = getDomainOverallStatus(d);
+            return (
+              <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: "6px", background: os.bg, border: `0.8px solid ${os.border}`, fontFamily: "var(--font-dm-sans, system-ui, sans-serif)", fontSize: "11px", fontWeight: 600, color: os.color, whiteSpace: "nowrap", letterSpacing: "0.01em" }}>
+                {os.label}
+              </span>
+            );
+          })()}
           {d.security_score !== null && <ScorePill score={d.security_score} />}
 
           {/* Scan button */}
