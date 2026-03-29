@@ -8,7 +8,6 @@ This prevents stale NXDOMAIN/timeout results from being reused across
 scans (a known issue when running inside long-lived Celery worker processes).
 """
 import dns.resolver
-import dns.cache
 import structlog
 
 logger = structlog.get_logger()
@@ -45,7 +44,8 @@ def _make_resolver() -> dns.resolver.Resolver:
     r.timeout  = _TIMEOUT
     r.lifetime = _LIFETIME
     # Explicitly disable caching so each query hits DNS fresh.
-    r.cache = None
+    # Creating a new resolver per call already avoids cross-scan cache pollution.
+    # No need to touch r.cache — the fresh object has its own empty cache.
     return r
 
 
