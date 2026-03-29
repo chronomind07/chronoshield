@@ -218,7 +218,7 @@ async def get_history(
     if not category or category == "domain":
         ssl_q = (
             db.table("ssl_results")
-            .select("id,domain_id,status,expires_at,scanned_at")
+            .select("id,domain_id,status,valid_until,scanned_at")
             .eq("user_id", user_id)
         )
         if date_filter and cutoff:
@@ -265,7 +265,7 @@ async def get_history(
                 status_label=score_label,
                 details={
                     "ssl_status": r.get("status"),
-                    "ssl_expires_at": r.get("expires_at"),
+                    "ssl_valid_until": r.get("valid_until"),
                     "overall_score": overall,
                     "grade": grade,
                 },

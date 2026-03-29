@@ -7,7 +7,9 @@ import httpx
 import base64
 import time
 
-bearer_scheme = HTTPBearer()
+bearer_scheme = HTTPBearer(auto_error=False)
+# auto_error=False: returns None instead of raising 403 when Authorization header
+# is missing. We raise 401 explicitly below so the client gets the correct status.
 
 # Cache de JWKS para no llamar al endpoint en cada request
 _jwks_cache: dict | None = None
@@ -27,9 +29,11 @@ async def _get_jwks() -> dict:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ):
     """Validate Supabase JWT (ES256 or HS256) and return user payload."""
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     token = credentials.credentials
     try:
         # Detectar algoritmo del header sin verificar
