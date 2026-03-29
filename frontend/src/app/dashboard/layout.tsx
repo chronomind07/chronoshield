@@ -352,10 +352,12 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
 
   const handleDelete = async (id: string) => {
     try {
-      const wasUnread = alerts.find(a => a.id === id)?.is_unread ?? false;
+      const alert = alerts.find(a => a.id === id);
       await alertsApi.delete(id);
       setAlerts(prev => prev.filter(a => a.id !== id));
-      setUnreadCount(Math.max(0, unreadAlerts - (wasUnread ? 1 : 0)));
+      if (alert?.is_unread) {
+        setUnreadCount(Math.max(0, unreadCount - 1));
+      }
     } catch { /* silent */ }
   };
 
