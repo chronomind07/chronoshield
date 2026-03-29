@@ -229,12 +229,7 @@ async def list_alerts(
             )
         )
 
-    # Sort by severity then date
-    enriched.sort(
-        key=lambda a: (SEVERITY_ORDER.get(a.severity, 9), a.sent_at),
-        reverse=False,
-    )
-
+    # Order is already sent_at DESC from the DB query — no secondary sort needed.
     return AlertsResponse(total=len(enriched), unread_count=unread_count, alerts=enriched)
 
 
