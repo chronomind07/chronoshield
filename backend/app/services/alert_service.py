@@ -1,3 +1,4 @@
+import html as html_module
 import resend
 from app.core.config import settings
 from app.db.supabase import get_supabase_client
@@ -75,14 +76,17 @@ def _send_alert_email(user_id: str, title: str, message: str, severity: str, db)
         severity_colors = {"critical": "#ef4444", "warning": "#f59e0b", "info": "#3b82f6"}
         color = severity_colors.get(severity, "#3b82f6")
 
-        html = f"""
+        safe_title = html_module.escape(str(title))
+        safe_message = html_module.escape(str(message))
+
+        email_html = f"""
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: {color}; padding: 16px; border-radius: 8px 8px 0 0;">
             <h2 style="color: white; margin: 0;">🛡️ ChronoShield Alert</h2>
           </div>
           <div style="border: 1px solid #e5e7eb; padding: 24px; border-radius: 0 0 8px 8px;">
-            <h3 style="color: #111827;">{title}</h3>
-            <p style="color: #6b7280;">{message}</p>
+            <h3 style="color: #111827;">{safe_title}</h3>
+            <p style="color: #6b7280;">{safe_message}</p>
             <a href="https://app.chronoshield.io/dashboard"
                style="background: #2563eb; color: white; padding: 12px 24px;
                       border-radius: 6px; text-decoration: none; display: inline-block; margin-top: 16px;">
@@ -95,8 +99,8 @@ def _send_alert_email(user_id: str, title: str, message: str, severity: str, db)
         resend.Emails.send({
             "from": settings.FROM_EMAIL,
             "to": [user_email],
-            "subject": f"[ChronoShield] {title}",
-            "html": html,
+            "subject": f"[ChronoShield] {safe_title}",
+            "html": email_html,
         })
     except Exception as e:
         logger.error("Failed to send alert email", error=str(e), user_id=user_id)

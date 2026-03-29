@@ -80,51 +80,74 @@ def get_or_init_credits(user_id: str, db) -> dict:
 
 def consume_credit(user_id: str, db) -> dict:
     """
-    Deduct 1 credit. Raises HTTP 402 if none available.
-    Returns updated credits row.
+    Deduct 1 credit atomically using optimistic locking (compare-and-swap).
+    Raises HTTP 402 if none available. Returns updated credits row.
     """
-    row = get_or_init_credits(user_id, db)
-    if row["credits_available"] < 1:
-        raise HTTPException(
-            status_code=402,
-            detail={
-                "code": "NO_CREDITS",
-                "message": "No tienes créditos disponibles. Compra un pack para continuar.",
-                "credits_available": 0,
-            },
-        )
-    updated = db.table("credits").update({
-        "credits_available": row["credits_available"] - 1,
-        "credits_used": row["credits_used"] + 1,
-    }).eq("user_id", user_id).execute()
-    logger.info("Credit consumed", user_id=user_id,
-                remaining=updated.data[0]["credits_available"])
-    return updated.data[0]
+    return consume_credits(user_id, 1, db)
 
 
 def consume_credits(user_id: str, amount: int, db) -> dict:
     """
-    Deduct `amount` credits at once. Raises HTTP 402 if insufficient.
-    Returns updated credits row.
+    Deduct `amount` credits atomically using optimistic locking (compare-and-swap).
+    Retries up to 3 times on concurrent modification.
+    Raises HTTP 402 if insufficient credits. Returns updated credits row.
     """
-    row = get_or_init_credits(user_id, db)
-    if row["credits_available"] < amount:
-        raise HTTPException(
-            status_code=402,
-            detail={
-                "code": "NO_CREDITS",
-                "message": f"Necesitas {amount} créditos pero solo tienes {row['credits_available']} disponibles.",
-                "credits_available": row["credits_available"],
-                "credits_needed": amount,
-            },
+    for attempt in range(3):
+        row = get_or_init_credits(user_id, db)
+        current_available = row["credits_available"]
+        current_used = row["credits_used"]
+
+        if current_available < amount:
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "code": "NO_CREDITS",
+                    "message": (
+                        f"Necesitas {amount} crédito(s) pero solo tienes {current_available} disponibles."
+                        if amount > 1
+                        else "No tienes créditos disponibles. Compra un pack para continuar."
+                    ),
+                    "credits_available": current_available,
+                    "credits_needed": amount,
+                },
+            )
+
+        # Compare-and-swap: update only if credits_available hasn't changed since we read it
+        result = (
+            db.table("credits")
+            .update({
+                "credits_available": current_available - amount,
+                "credits_used": current_used + amount,
+            })
+            .eq("user_id", user_id)
+            .eq("credits_available", current_available)  # only update if still same value
+            .execute()
         )
-    updated = db.table("credits").update({
-        "credits_available": row["credits_available"] - amount,
-        "credits_used": row["credits_used"] + amount,
-    }).eq("user_id", user_id).execute()
-    logger.info("Credits consumed", user_id=user_id, amount=amount,
-                remaining=updated.data[0]["credits_available"])
-    return updated.data[0]
+
+        if result.data:
+            logger.info(
+                "Credits consumed",
+                user_id=user_id,
+                amount=amount,
+                remaining=result.data[0]["credits_available"],
+                attempt=attempt,
+            )
+            return result.data[0]
+
+        # result.data is empty → concurrent modification detected, retry
+        logger.warning(
+            "Credit CAS conflict, retrying",
+            user_id=user_id,
+            attempt=attempt,
+        )
+
+    raise HTTPException(
+        status_code=429,
+        detail={
+            "code": "CREDITS_CONFLICT",
+            "message": "No se pudo procesar el crédito. Inténtalo de nuevo.",
+        },
+    )
 
 
 def add_credits(user_id: str, amount: int, plan: str | None, db) -> dict:

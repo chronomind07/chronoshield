@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     # Google Safe Browsing API (Chrome extension phishing detection)
     GOOGLE_SAFE_BROWSING_API_KEY: str = ""
 
-    # Scan intervals (minutes)
+    # Scan intervals (minutes) — used by Celery beat schedule
     BREACH_SCAN_INTERVAL: int = 1440   # daily
     SSL_SCAN_INTERVAL: int = 60         # hourly
     UPTIME_SCAN_INTERVAL: int = 5       # every 5 min

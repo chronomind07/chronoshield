@@ -5,20 +5,24 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
 import httpx
 import base64
+import time
 
 bearer_scheme = HTTPBearer()
 
 # Cache de JWKS para no llamar al endpoint en cada request
 _jwks_cache: dict | None = None
+_jwks_cache_timestamp: float = 0.0
+_JWKS_TTL_SECONDS: float = 3600.0  # Refresh JWKS every hour
 
 async def _get_jwks() -> dict:
-    global _jwks_cache
-    if _jwks_cache is None:
+    global _jwks_cache, _jwks_cache_timestamp
+    if _jwks_cache is None or time.time() - _jwks_cache_timestamp > _JWKS_TTL_SECONDS:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
             )
             _jwks_cache = resp.json()
+            _jwks_cache_timestamp = time.time()
     return _jwks_cache
 
 

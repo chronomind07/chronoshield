@@ -22,7 +22,7 @@ Usage examples (curl):
        -d '{"email": "demo@chronoshield.eu", "plan": "business", "credits": 50}'
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from app.core.config import settings
@@ -43,11 +43,15 @@ PLAN_CREDITS = {"starter": 5, "business": 20, "trial": 0}
 # ── Auth dependency ───────────────────────────────────────────────────────────
 
 def require_admin(
-    x_admin_key: str = Header(None),
-    key: str = Query(None, description="Admin key via query param (alternative to X-Admin-Key header)"),
+    x_admin_key: str = Header(None, alias="X-Admin-Key"),
 ):
-    provided = x_admin_key or key
-    if not provided or provided != settings.ADMIN_SECRET_KEY:
+    # Refuse to serve admin endpoints if the key is still the insecure default
+    if not settings.ADMIN_SECRET_KEY or settings.ADMIN_SECRET_KEY == "change-me-in-railway":
+        raise HTTPException(
+            status_code=503,
+            detail="Admin endpoints not configured. Set ADMIN_SECRET_KEY in environment variables.",
+        )
+    if not x_admin_key or x_admin_key != settings.ADMIN_SECRET_KEY:
         raise HTTPException(status_code=403, detail="Invalid or missing admin key")
 
 

@@ -4,6 +4,9 @@ from app.core.security import get_current_user_id
 from app.core.config import settings
 from app.db.supabase import get_db
 from app.schemas.subscription import SubscriptionResponse, CheckoutSession, BillingPortalSession
+import structlog
+
+logger = structlog.get_logger()
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -95,6 +98,17 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None))
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
     db = get_db()
+
+    # Idempotency check: ignore duplicate Stripe events
+    try:
+        db.table("stripe_events").insert({"event_id": event["id"]}).execute()
+    except Exception as e:
+        # Unique violation means we already processed this event
+        if "duplicate" in str(e).lower() or "unique" in str(e).lower() or "23505" in str(e):
+            logger.info("Stripe webhook duplicate, skipping", event_id=event["id"])
+            return {"status": "ok"}
+        # For any other DB error, log but continue processing (don't lose events)
+        logger.warning("Stripe events table insert failed", event_id=event["id"], error=str(e))
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]

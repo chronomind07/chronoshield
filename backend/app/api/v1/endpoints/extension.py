@@ -140,8 +140,11 @@ def _check_daily_limit(user_id: str, db) -> bool:
 
         return True
     except Exception as e:
-        logger.warning("Daily limit check failed (allowing)", error=str(e))
-        return True  # Fail open — don't block on DB errors
+        logger.error("Daily limit check failed (fail-closed)", error=str(e))
+        raise HTTPException(
+            status_code=429,
+            detail="Error al verificar límite de uso. Inténtalo de nuevo.",
+        )
 
 
 # ── DNS Security Checks ────────────────────────────────────────────────────────
