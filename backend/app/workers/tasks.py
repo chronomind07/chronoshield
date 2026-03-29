@@ -1,9 +1,10 @@
 """
 Celery task definitions for all scan workers.
 
-Each domain-level scan task (ssl / uptime / email_security) now calls
-calculate_domain_score at the end so scores stay up-to-date without a
-separate periodic recalculation task.
+Domain-level scan tasks (ssl / uptime / email_security) run sequentially within
+each scan cycle (SSL at :00, uptime at :10, email at :20). Score recalculation
+is handled by a dedicated finalize_domain_scores task at :30 — one score update
+per domain per scan cycle instead of three redundant recalculations.
 """
 from app.workers.celery_app import celery_app
 from app.db.supabase import get_supabase_client
@@ -39,7 +40,6 @@ def _get_all_active_emails():
 @celery_app.task(name="app.workers.tasks.scan_ssl_all_domains", bind=True, max_retries=2)
 def scan_ssl_all_domains(self):
     from app.workers.ssl.scanner import scan_ssl
-    from app.services.score_calculator import calculate_domain_score
 
     domains = _get_all_active_domains()
     logger.info("SSL scan started", count=len(domains))
@@ -49,13 +49,6 @@ def scan_ssl_all_domains(self):
         except Exception as e:
             logger.error("SSL scan failed", domain=d["domain"], error=str(e))
 
-    # Recalculate scores after all SSL data is fresh
-    for d in domains:
-        try:
-            calculate_domain_score(d["id"], d["user_id"])
-        except Exception as e:
-            logger.error("Score recalc failed after SSL scan", domain=d["domain"], error=str(e))
-
     logger.info("SSL scan finished", count=len(domains))
 
 
@@ -64,7 +57,6 @@ def scan_ssl_all_domains(self):
 @celery_app.task(name="app.workers.tasks.scan_uptime_all_domains", bind=True, max_retries=2)
 def scan_uptime_all_domains(self):
     from app.workers.uptime.scanner import scan_uptime
-    from app.services.score_calculator import calculate_domain_score
 
     domains = _get_all_active_domains()
     logger.info("Uptime scan started", count=len(domains))
@@ -74,13 +66,6 @@ def scan_uptime_all_domains(self):
         except Exception as e:
             logger.error("Uptime scan failed", domain=d["domain"], error=str(e))
 
-    # Recalculate scores after all uptime data is fresh
-    for d in domains:
-        try:
-            calculate_domain_score(d["id"], d["user_id"])
-        except Exception as e:
-            logger.error("Score recalc failed after uptime scan", domain=d["domain"], error=str(e))
-
     logger.info("Uptime scan finished", count=len(domains))
 
 
@@ -89,7 +74,6 @@ def scan_uptime_all_domains(self):
 @celery_app.task(name="app.workers.tasks.scan_email_security_all_domains", bind=True, max_retries=2)
 def scan_email_security_all_domains(self):
     from app.workers.email_security.scanner import scan_email_security
-    from app.services.score_calculator import calculate_domain_score
 
     domains = _get_all_active_domains()
     logger.info("Email security scan started", count=len(domains))
@@ -98,13 +82,6 @@ def scan_email_security_all_domains(self):
             scan_email_security(d["id"], d["domain"], d["user_id"])
         except Exception as e:
             logger.error("Email security scan failed", domain=d["domain"], error=str(e))
-
-    # Recalculate scores after all email security data is fresh
-    for d in domains:
-        try:
-            calculate_domain_score(d["id"], d["user_id"])
-        except Exception as e:
-            logger.error("Score recalc failed after email security scan", domain=d["domain"], error=str(e))
 
     logger.info("Email security scan finished", count=len(domains))
 
@@ -129,7 +106,7 @@ def recalculate_all_scores(self):
     """
     Kept for manual invocation / one-off recalculation.
     No longer in the Celery Beat schedule — scores are recalculated
-    at the end of each individual scan task instead.
+    by finalize_domain_scores after each scan cycle instead.
     """
     from app.services.score_calculator import calculate_domain_score
     domains = _get_all_active_domains()
@@ -141,6 +118,28 @@ def recalculate_all_scores(self):
             logger.error("Score calculation failed", domain=d["domain"], error=str(e))
     logger.info("Manual score recalculation finished", count=len(domains))
 
+
+# ── Score finalization ────────────────────────────────────────────────────────
+
+@celery_app.task(name="app.workers.tasks.finalize_domain_scores", bind=True, max_retries=2)
+def finalize_domain_scores(self):
+    """
+    Runs after all 3 scan tasks complete (SSL at :00, uptime at :10, email at :20).
+    Scheduled at :30 — recalculates and records the final score for all domains.
+    One score recalculation per scan cycle = one history entry per domain per cycle.
+    """
+    from app.services.score_calculator import calculate_domain_score
+    domains = _get_all_active_domains()
+    logger.info("Score finalization started", count=len(domains))
+    for d in domains:
+        try:
+            calculate_domain_score(d["id"], d["user_id"])
+        except Exception as e:
+            logger.error("Score finalization failed", domain=d["domain"], error=str(e))
+    logger.info("Score finalization finished", count=len(domains))
+
+
+# ── Breach / Dark Web ─────────────────────────────────────────────────────────
 
 @celery_app.task(name="app.workers.tasks.darkweb_scan_all_users", bind=True, max_retries=2)
 def darkweb_scan_all_users(self):

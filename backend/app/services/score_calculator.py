@@ -124,22 +124,33 @@ def calculate_domain_score(domain_id: str, user_id: str) -> dict:
 
     grade = _score_to_grade(overall)
 
-    # Upsert score
-    db.table("security_scores").insert(
-        {
-            "user_id": user_id,
-            "domain_id": domain_id,
-            "overall_score": overall,
-            "breach_score": breach_score,
-            "ssl_score": ssl_score,
-            "uptime_score": uptime_score,
-            "email_sec_score": email_sec_score,
-            "grade": grade,
-            "details": {
-                "weights": {"breach": 0.30, "ssl": 0.25, "uptime": 0.25, "email_sec": 0.20}
-            },
-        }
-    ).execute()
+    # Upsert score (check-then-insert/update to avoid duplicates)
+    existing = (
+        db.table("security_scores")
+        .select("id")
+        .eq("domain_id", domain_id)
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+        .data
+    )
+    payload = {
+        "user_id": user_id,
+        "domain_id": domain_id,
+        "overall_score": overall,
+        "breach_score": breach_score,
+        "ssl_score": ssl_score,
+        "uptime_score": uptime_score,
+        "email_sec_score": email_sec_score,
+        "grade": grade,
+        "details": {
+            "weights": {"breach": 0.30, "ssl": 0.25, "uptime": 0.25, "email_sec": 0.20}
+        },
+    }
+    if existing:
+        db.table("security_scores").update(payload).eq("id", existing[0]["id"]).execute()
+    else:
+        db.table("security_scores").insert(payload).execute()
 
     logger.info(
         "Score calculated",

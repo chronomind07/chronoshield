@@ -87,6 +87,18 @@ async def get_history(
     cutoff = _cutoff(date_filter)
     entries: List[HistoryEntry] = []
 
+    # Pre-fetch domain map (id → domain name) — reused by sources 5 and 6
+    domain_map: dict = {
+        str(d["id"]): d["domain"]
+        for d in (
+            db.table("domains")
+            .select("id,domain")
+            .eq("user_id", user_id)
+            .execute()
+            .data or []
+        )
+    }
+
     # ── 1. Domains added ──────────────────────────────────────────────────────
     if not category or category == "system":
         q = db.table("domains").select("id,domain,created_at").eq("user_id", user_id)
@@ -200,73 +212,67 @@ async def get_history(
                 },
             ))
 
-    # ── 5. Domain scan completions (from security_scores) ─────────────────────
+    # ── 5. Domain scan completions (from ssl_results as scan anchor) ────────────
+    # ssl_results has one row per scan — using it as the history anchor instead of
+    # security_scores (which is now a single UPSERT row per domain, not a log).
     if not category or category == "domain":
-        sq = (
-            db.table("security_scores")
-            .select("id,domain_id,overall_score,ssl_score,uptime_score,email_sec_score,breach_score,grade,calculated_at")
+        ssl_q = (
+            db.table("ssl_results")
+            .select("id,domain_id,status,expires_at,scanned_at")
             .eq("user_id", user_id)
         )
-        if cutoff:
-            sq = sq.gte("calculated_at", cutoff)
-        score_rows = sq.order("calculated_at", desc=True).limit(500).execute().data or []
+        if date_filter and cutoff:
+            ssl_q = ssl_q.gte("scanned_at", cutoff)
+        ssl_rows = ssl_q.order("scanned_at", desc=True).limit(200).execute().data or []
 
-        # Batch-fetch domain names
-        d_ids = list({str(r["domain_id"]) for r in score_rows if r.get("domain_id")})
-        d_map: dict = {}
-        if d_ids:
-            d_rows = db.table("domains").select("id,domain").in_("id", d_ids).execute().data or []
-            d_map = {str(r["id"]): r["domain"] for r in d_rows}
+        # Current scores keyed by domain_id
+        score_map: dict = {}
+        score_rows = (
+            db.table("security_scores")
+            .select("domain_id,overall_score,grade")
+            .eq("user_id", user_id)
+            .execute()
+            .data or []
+        )
+        for sr in score_rows:
+            score_map[sr["domain_id"]] = sr
 
-        for r in score_rows:
-            score      = r.get("overall_score", 0)
-            ssl_s      = r.get("ssl_score", 0)
-            up_s       = r.get("uptime_score", 0)
-            em_s       = r.get("email_sec_score", 0)
-            br_s       = r.get("breach_score", 0)
-            grade      = r.get("grade", "")
-            dname      = d_map.get(str(r.get("domain_id", "")), "dominio")
-
-            status, status_label = _score_status(score)
-
+        for r in ssl_rows:
+            did = r.get("domain_id")
+            if not did or str(did) not in domain_map:
+                continue
+            if category and category != "domain":
+                continue
+            dname = domain_map[str(did)]
+            sc = score_map.get(did, {})
+            overall = sc.get("overall_score")
+            grade = sc.get("grade", "—")
+            score_label = f"{grade} · {overall}/100" if overall is not None else "Sin score"
+            ssl_ok = r.get("status") == "valid"
+            has_problem = not ssl_ok
+            if problems_only and not has_problem:
+                continue
             entries.append(HistoryEntry(
-                id=f"sc_{r['id']}",
+                id=r["id"],
                 event_type="domain_scan",
                 category="domain",
                 icon="🌐",
                 title=f"Escaneo completado — {dname}",
                 subject=dname,
-                occurred_at=r["calculated_at"],
+                occurred_at=r["scanned_at"],
                 scan_mode="auto",
-                status=status,
-                status_label=f"{grade} · {score}/100" if grade else f"{score}/100",
+                status="ok" if not has_problem else "warning",
+                status_label=score_label,
                 details={
-                    "overall_score":  score,
-                    "grade":          grade,
-                    "ssl_score":      ssl_s,
-                    "uptime_score":   up_s,
-                    "email_sec_score": em_s,
-                    "breach_score":   br_s,
-                    # Human-readable summaries
-                    "ssl_label":    "SSL válido" if ssl_s >= 100 else ("SSL expirando" if ssl_s >= 40 else "SSL inválido"),
-                    "uptime_label": f"Uptime {up_s}%",
-                    "email_label":  "DNS OK" if em_s >= 100 else ("DNS parcial" if em_s >= 34 else "DNS sin configurar"),
-                    "breach_label": "Sin brechas" if br_s >= 100 else "Brechas detectadas",
+                    "ssl_status": r.get("status"),
+                    "ssl_expires_at": r.get("expires_at"),
+                    "overall_score": overall,
+                    "grade": grade,
                 },
             ))
 
     # ── 6. Email DNS scans (from email_security_results) ──────────────────────
     if not category or category == "email":
-        # Batch-fetch domain names mapping id→domain for context
-        dom_rows = (
-            db.table("domains")
-            .select("id,domain")
-            .eq("user_id", user_id)
-            .execute()
-            .data
-        ) or []
-        dom_id_map = {str(r["id"]): r["domain"] for r in dom_rows}
-
         eq = (
             db.table("email_security_results")
             .select("id,domain_id,spf_status,dkim_status,dmarc_status,spf_record,dkim_record,dmarc_record,scanned_at")
@@ -279,7 +285,7 @@ async def get_history(
             spf   = r.get("spf_status")
             dkim  = r.get("dkim_status")
             dmarc = r.get("dmarc_status")
-            dname = dom_id_map.get(str(r.get("domain_id", "")), "dominio")
+            dname = domain_map.get(str(r.get("domain_id", "")), "dominio")
             status, status_label = _dns_status(spf, dkim, dmarc)
             entries.append(HistoryEntry(
                 id=f"es_{r['id']}",
