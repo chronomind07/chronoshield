@@ -1,5 +1,9 @@
 """
 Celery task definitions for all scan workers.
+
+Each domain-level scan task (ssl / uptime / email_security) now calls
+calculate_domain_score at the end so scores stay up-to-date without a
+separate periodic recalculation task.
 """
 from app.workers.celery_app import celery_app
 from app.db.supabase import get_supabase_client
@@ -30,22 +34,13 @@ def _get_all_active_emails():
     )
 
 
-@celery_app.task(name="app.workers.tasks.scan_uptime_all_domains", bind=True, max_retries=2)
-def scan_uptime_all_domains(self):
-    from app.workers.uptime.scanner import scan_uptime
-    domains = _get_all_active_domains()
-    logger.info("Uptime scan started", count=len(domains))
-    for d in domains:
-        try:
-            scan_uptime(d["id"], d["domain"], d["user_id"])
-        except Exception as e:
-            logger.error("Uptime scan failed", domain=d["domain"], error=str(e))
-    logger.info("Uptime scan finished", count=len(domains))
-
+# ── SSL ───────────────────────────────────────────────────────────────────────
 
 @celery_app.task(name="app.workers.tasks.scan_ssl_all_domains", bind=True, max_retries=2)
 def scan_ssl_all_domains(self):
     from app.workers.ssl.scanner import scan_ssl
+    from app.services.score_calculator import calculate_domain_score
+
     domains = _get_all_active_domains()
     logger.info("SSL scan started", count=len(domains))
     for d in domains:
@@ -53,12 +48,49 @@ def scan_ssl_all_domains(self):
             scan_ssl(d["id"], d["domain"], d["user_id"])
         except Exception as e:
             logger.error("SSL scan failed", domain=d["domain"], error=str(e))
+
+    # Recalculate scores after all SSL data is fresh
+    for d in domains:
+        try:
+            calculate_domain_score(d["id"], d["user_id"])
+        except Exception as e:
+            logger.error("Score recalc failed after SSL scan", domain=d["domain"], error=str(e))
+
     logger.info("SSL scan finished", count=len(domains))
 
+
+# ── Uptime ────────────────────────────────────────────────────────────────────
+
+@celery_app.task(name="app.workers.tasks.scan_uptime_all_domains", bind=True, max_retries=2)
+def scan_uptime_all_domains(self):
+    from app.workers.uptime.scanner import scan_uptime
+    from app.services.score_calculator import calculate_domain_score
+
+    domains = _get_all_active_domains()
+    logger.info("Uptime scan started", count=len(domains))
+    for d in domains:
+        try:
+            scan_uptime(d["id"], d["domain"], d["user_id"])
+        except Exception as e:
+            logger.error("Uptime scan failed", domain=d["domain"], error=str(e))
+
+    # Recalculate scores after all uptime data is fresh
+    for d in domains:
+        try:
+            calculate_domain_score(d["id"], d["user_id"])
+        except Exception as e:
+            logger.error("Score recalc failed after uptime scan", domain=d["domain"], error=str(e))
+
+    logger.info("Uptime scan finished", count=len(domains))
+
+
+# ── Email Security ────────────────────────────────────────────────────────────
 
 @celery_app.task(name="app.workers.tasks.scan_email_security_all_domains", bind=True, max_retries=2)
 def scan_email_security_all_domains(self):
     from app.workers.email_security.scanner import scan_email_security
+    from app.services.score_calculator import calculate_domain_score
+
     domains = _get_all_active_domains()
     logger.info("Email security scan started", count=len(domains))
     for d in domains:
@@ -66,8 +98,18 @@ def scan_email_security_all_domains(self):
             scan_email_security(d["id"], d["domain"], d["user_id"])
         except Exception as e:
             logger.error("Email security scan failed", domain=d["domain"], error=str(e))
+
+    # Recalculate scores after all email security data is fresh
+    for d in domains:
+        try:
+            calculate_domain_score(d["id"], d["user_id"])
+        except Exception as e:
+            logger.error("Score recalc failed after email security scan", domain=d["domain"], error=str(e))
+
     logger.info("Email security scan finished", count=len(domains))
 
+
+# ── Breach / Dark Web ─────────────────────────────────────────────────────────
 
 @celery_app.task(name="app.workers.tasks.scan_breaches_all_emails", bind=True, max_retries=2)
 def scan_breaches_all_emails(self):
@@ -84,24 +126,29 @@ def scan_breaches_all_emails(self):
 
 @celery_app.task(name="app.workers.tasks.recalculate_all_scores", bind=True, max_retries=2)
 def recalculate_all_scores(self):
+    """
+    Kept for manual invocation / one-off recalculation.
+    No longer in the Celery Beat schedule — scores are recalculated
+    at the end of each individual scan task instead.
+    """
     from app.services.score_calculator import calculate_domain_score
     domains = _get_all_active_domains()
-    logger.info("Score recalculation started", count=len(domains))
+    logger.info("Manual score recalculation started", count=len(domains))
     for d in domains:
         try:
             calculate_domain_score(d["id"], d["user_id"])
         except Exception as e:
             logger.error("Score calculation failed", domain=d["domain"], error=str(e))
-    logger.info("Score recalculation finished", count=len(domains))
+    logger.info("Manual score recalculation finished", count=len(domains))
 
 
 @celery_app.task(name="app.workers.tasks.darkweb_scan_all_users", bind=True, max_retries=2)
 def darkweb_scan_all_users(self):
     """
-    Daily automatic Dark Web scan for all users.
+    Dark Web scan for all users.
     No credit cost — automatic scan included in plan.
-    Starter: email breach + domain breach.
-    Business: same + typosquatting.
+    Starter: email breach + domain breach, gated at ≥7 days between auto scans.
+    Business: same + typosquatting, gated at ≥2 days.
     """
     from app.services import insecureweb_service as iw
     from app.core.config import settings
@@ -112,7 +159,6 @@ def darkweb_scan_all_users(self):
 
     db = get_supabase_client()
 
-    # Get distinct user_ids with active subscriptions (starter or business)
     subs = (
         db.table("subscriptions")
         .select("user_id,plan")
@@ -129,9 +175,9 @@ def darkweb_scan_all_users(self):
 
     for sub in subs:
         user_id = sub["user_id"]
-        plan = sub["plan"]
+        plan    = sub["plan"]
 
-        # ── Frequency gate: Starter=7 days, Business=2 days ────────────────
+        # ── Frequency gate ────────────────────────────────────────────────────
         days_interval = 7 if plan == "starter" else 2
         cutoff_iso = (now_utc - timedelta(days=days_interval)).isoformat()
         last_auto = (
@@ -145,14 +191,11 @@ def darkweb_scan_all_users(self):
             .data
         )
         if last_auto and last_auto[0]["scanned_at"] >= cutoff_iso:
-            logger.info(
-                "Skipping dark web auto-scan — interval not yet reached",
-                user_id=user_id, plan=plan, interval_days=days_interval,
-            )
+            logger.info("Skipping dark web auto-scan — interval not reached",
+                        user_id=user_id, plan=plan, interval_days=days_interval)
             continue
 
         try:
-            # Active emails
             emails_rows = (
                 db.table("monitored_emails")
                 .select("email")
@@ -163,7 +206,6 @@ def darkweb_scan_all_users(self):
             ) or []
             emails = [r["email"] for r in emails_rows]
 
-            # Active domains
             domains_rows = (
                 db.table("domains")
                 .select("domain")
@@ -174,32 +216,30 @@ def darkweb_scan_all_users(self):
             ) or []
             domains = [r["domain"] for r in domains_rows]
 
-            # Email breach scans
             for email in emails:
                 try:
                     data = iw.search_dark_web(emails=[email])
                     db.table("dark_web_results").insert({
-                        "user_id": user_id,
-                        "scan_type": "email_breach",
-                        "query_value": email,
+                        "user_id":       user_id,
+                        "scan_type":     "email_breach",
+                        "query_value":   email,
                         "total_results": data.get("totalResults", 0),
-                        "results": data.get("results", []),
-                        "is_manual": False,
+                        "results":       data.get("results", []),
+                        "is_manual":     False,
                     }).execute()
                 except Exception as e:
                     logger.error("Auto email breach scan failed", email=email, error=str(e))
 
-            # Domain breach scans
             for domain in domains:
                 try:
                     data = iw.search_dark_web(domains=[domain])
                     db.table("dark_web_results").insert({
-                        "user_id": user_id,
-                        "scan_type": "domain_breach",
-                        "query_value": domain,
+                        "user_id":       user_id,
+                        "scan_type":     "domain_breach",
+                        "query_value":   domain,
                         "total_results": data.get("totalResults", 0),
-                        "results": data.get("results", []),
-                        "is_manual": False,
+                        "results":       data.get("results", []),
+                        "is_manual":     False,
                     }).execute()
                 except Exception as e:
                     logger.error("Auto domain breach scan failed", domain=domain, error=str(e))
@@ -207,18 +247,24 @@ def darkweb_scan_all_users(self):
             # Typosquatting — Business only
             if plan == "business" and domains:
                 try:
-                    profile = db.table("profiles").select("company_name").eq("id", user_id).execute().data
+                    profile = (
+                        db.table("profiles")
+                        .select("company_name")
+                        .eq("id", user_id)
+                        .execute()
+                        .data
+                    )
                     org_name = (profile[0].get("company_name") or "ChronoShield Org") if profile else "ChronoShield Org"
-                    org_id = iw.ensure_org(user_id, org_name, domains, emails, db)
+                    org_id   = iw.ensure_org(user_id, org_name, domains, emails, db)
                     typo_data = iw.get_typosquatting_threats(org_id)
-                    threats = typo_data.get("content", typo_data.get("results", []))
+                    threats   = typo_data.get("content", typo_data.get("results", []))
                     db.table("dark_web_results").insert({
-                        "user_id": user_id,
-                        "scan_type": "typosquatting",
-                        "query_value": domains[0],
+                        "user_id":       user_id,
+                        "scan_type":     "typosquatting",
+                        "query_value":   domains[0],
                         "total_results": len(threats),
-                        "results": threats,
-                        "is_manual": False,
+                        "results":       threats,
+                        "is_manual":     False,
                     }).execute()
                 except Exception as e:
                     logger.error("Auto typosquatting scan failed", user_id=user_id, error=str(e))
@@ -228,6 +274,8 @@ def darkweb_scan_all_users(self):
 
     logger.info("Dark web auto-scan finished", users=len(subs))
 
+
+# ── Monthly credits ───────────────────────────────────────────────────────────
 
 @celery_app.task(name="app.workers.tasks.reset_monthly_credits", bind=True, max_retries=2)
 def reset_monthly_credits(self):

@@ -67,13 +67,20 @@ export const alertsApi = {
 
 // History endpoints
 export const historyApi = {
-  list: (params?: { dateFilter?: string; eventType?: string; page?: number; per_page?: number }) =>
+  list: (params?: {
+    dateFilter?: string;
+    category?: string;
+    problemsOnly?: boolean;
+    page?: number;
+    perPage?: number;
+  }) =>
     api.get("/history", {
       params: {
-        date_filter: params?.dateFilter,
-        event_type: params?.eventType,
-        page: params?.page,
-        per_page: params?.per_page,
+        date_filter:   params?.dateFilter,
+        category:      params?.category,
+        problems_only: params?.problemsOnly,
+        page:          params?.page,
+        per_page:      params?.perPage,
       },
     }),
 };

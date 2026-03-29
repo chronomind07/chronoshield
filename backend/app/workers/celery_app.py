@@ -1,5 +1,12 @@
 """
 Celery application configuration with periodic tasks.
+
+Schedule (all times UTC, Madrid = UTC+1 winter / UTC+2 summer):
+  SSL + Uptime + Email Security  →  05:00 UTC (07:00 Madrid summer) and 20:00 UTC (22:00 Madrid summer)
+  Dark Web (breach + typosquatting) →  07:00 UTC (09:00 Madrid summer), gated by plan interval
+  Monthly credit reset            →  00:00 UTC daily
+
+Score recalculation is NOT scheduled here — it runs at the end of each scan task.
 """
 from celery import Celery
 from celery.schedules import crontab
@@ -25,41 +32,43 @@ celery_app.conf.update(
     task_acks_late=True,
 )
 
-# Periodic tasks schedule
+# ── Periodic tasks schedule ───────────────────────────────────────────────────
 celery_app.conf.beat_schedule = {
-    # Uptime: every 5 minutes
-    "scan-uptime-all": {
-        "task": "app.workers.tasks.scan_uptime_all_domains",
-        "schedule": crontab(minute="*/5"),
-    },
-    # SSL: every hour
+
+    # ── SSL scan: twice daily ─────────────────────────────────────────────────
     "scan-ssl-all": {
         "task": "app.workers.tasks.scan_ssl_all_domains",
-        "schedule": crontab(minute=0),
+        "schedule": crontab(hour="5,20", minute=0),
     },
-    # Email security: twice daily
+
+    # ── Uptime scan: twice daily (10-min offset to avoid DB contention) ───────
+    "scan-uptime-all": {
+        "task": "app.workers.tasks.scan_uptime_all_domains",
+        "schedule": crontab(hour="5,20", minute=10),
+    },
+
+    # ── Email security (SPF/DKIM/DMARC): twice daily ──────────────────────────
     "scan-email-security-all": {
         "task": "app.workers.tasks.scan_email_security_all_domains",
-        "schedule": crontab(hour="6,18", minute=0),
+        "schedule": crontab(hour="5,20", minute=20),
     },
-    # Breach detection: daily at 3am
-    "scan-breaches-all": {
-        "task": "app.workers.tasks.scan_breaches_all_emails",
-        "schedule": crontab(hour=3, minute=0),
-    },
-    # Dark Web (email+domain breach + typosquatting): daily at 3:15am
+
+    # ── Dark Web (breach + typosquatting): daily at 07:00 UTC ─────────────────
+    # Frequency is gated inside the task:
+    #   Starter → runs only if ≥7 days since last auto scan
+    #   Business → runs only if ≥2 days since last auto scan
     "darkweb-scan-all-users": {
         "task": "app.workers.tasks.darkweb_scan_all_users",
-        "schedule": crontab(hour=3, minute=15),
+        "schedule": crontab(hour=7, minute=0),
     },
-    # Monthly credit reset check: every day at midnight
+
+    # ── Monthly credit reset: every day at midnight UTC ───────────────────────
+    # The task itself checks whether it's the 1st of the month.
     "reset-monthly-credits": {
         "task": "app.workers.tasks.reset_monthly_credits",
         "schedule": crontab(hour=0, minute=0),
     },
-    # Recalculate all scores: every 30 min (at :00 and :30)
-    "recalculate-scores": {
-        "task": "app.workers.tasks.recalculate_all_scores",
-        "schedule": crontab(minute="*/30"),
-    },
+
+    # NOTE: recalculate-scores intentionally removed from schedule.
+    # Scores are recalculated at the end of each scan task (ssl / uptime / email_security).
 }
