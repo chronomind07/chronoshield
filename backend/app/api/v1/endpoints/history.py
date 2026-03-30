@@ -229,7 +229,7 @@ async def get_history(
         score_map: dict = {}
         score_rows = (
             db.table("security_scores")
-            .select("domain_id,overall_score,grade")
+            .select("domain_id,overall_score,grade,ssl_score,uptime_score,email_sec_score,breach_score")
             .eq("user_id", user_id)
             .execute()
             .data or []
@@ -264,10 +264,19 @@ async def get_history(
                 status="ok" if not has_problem else "warning",
                 status_label=score_label,
                 details={
-                    "ssl_status": r.get("status"),
-                    "ssl_valid_until": r.get("valid_until"),
-                    "overall_score": overall,
-                    "grade": grade,
+                    "ssl_status":       r.get("status"),
+                    "ssl_valid_until":  r.get("valid_until"),
+                    "overall_score":    overall,
+                    "grade":            grade,
+                    "ssl_score":        sc.get("ssl_score", 0),
+                    "uptime_score":     sc.get("uptime_score", 0),
+                    "email_sec_score":  sc.get("email_sec_score", 0),
+                    "breach_score":     sc.get("breach_score", 0),
+                    # Human-readable labels for the chip row
+                    "ssl_label":        r.get("status", "—"),
+                    "uptime_label":     f"{sc.get('uptime_score', 0)}/100",
+                    "email_label":      f"{sc.get('email_sec_score', 0)}/100",
+                    "breach_label":     f"{sc.get('breach_score', 0)}/100",
                 },
             ))
 
