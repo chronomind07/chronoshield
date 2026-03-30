@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { toast } from "@/components/Toast";
 import { useCredits } from "@/contexts/CreditsContext";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface DashboardSummary {
@@ -59,21 +60,21 @@ function scoreGrade(s: number) {
   return s >= 95 ? "A+" : s >= 90 ? "A" : s >= 80 ? "B" : s >= 70 ? "C" : s >= 60 ? "D" : "F";
 }
 
-function greetingByHour() {
+function greetingByHour(t: (k: string) => string) {
   const h = new Date().getHours();
-  if (h < 12) return "Buenos días";
-  if (h < 20) return "Buenas tardes";
-  return "Buenas noches";
+  if (h < 12) return t("overview.greeting.morning");
+  if (h < 20) return t("overview.greeting.afternoon");
+  return t("overview.greeting.evening");
 }
 
-function relTime(iso: string): string {
+function relTime(iso: string, t: (k: string) => string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "ahora mismo";
-  if (m < 60) return `hace ${m}m`;
+  if (m < 1) return t("time.now");
+  if (m < 60) return t("time.minutesAgo").replace("{n}", String(m));
   const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h}h`;
-  return new Date(iso).toLocaleDateString("es-ES");
+  if (h < 24) return t("time.hoursAgo").replace("{n}", String(h));
+  return t("time.daysAgo").replace("{n}", String(Math.floor(h / 24)));
 }
 
 function sevColor(sev: string): string {
@@ -82,13 +83,13 @@ function sevColor(sev: string): string {
   return "#3b82f6";
 }
 
-function domainStatus(d: Domain): { label: string; color: string; bg: string } {
+function domainStatus(d: Domain, t: (k: string) => string): { label: string; color: string; bg: string } {
   const score = d.security_score ?? 0;
-  if (!d.is_active) return { label: "Inactivo", color: "#71717a", bg: "rgba(113,113,122,0.12)" };
-  if (score >= 80) return { label: "Seguro", color: "#3ecf8e", bg: "rgba(62,207,142,0.12)" };
-  if (score >= 60) return { label: "Advertencia", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" };
-  if (score === 0 && d.last_scanned_at == null) return { label: "Sin escanear", color: "#71717a", bg: "rgba(113,113,122,0.12)" };
-  return { label: "Error", color: "#ef4444", bg: "rgba(239,68,68,0.12)" };
+  if (!d.is_active) return { label: t("overview.domainStatus.inactive"), color: "#71717a", bg: "rgba(113,113,122,0.12)" };
+  if (score >= 80) return { label: t("overview.domainStatus.secure"), color: "#3ecf8e", bg: "rgba(62,207,142,0.12)" };
+  if (score >= 60) return { label: t("overview.domainStatus.warning"), color: "#f59e0b", bg: "rgba(245,158,11,0.12)" };
+  if (score === 0 && d.last_scanned_at == null) return { label: t("overview.domainStatus.unscanned"), color: "#71717a", bg: "rgba(113,113,122,0.12)" };
+  return { label: t("overview.domainStatus.error"), color: "#ef4444", bg: "rgba(239,68,68,0.12)" };
 }
 
 function formatDateFull(d: Date): string {
@@ -412,6 +413,7 @@ const cardStyle: React.CSSProperties = {
 // ── Main ───────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { refreshCredits } = useCredits();
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [emails, setEmails] = useState<MonitoredEmail[]>([]);
   const [domains, setDomains] = useState<Domain[]>([]);
@@ -437,7 +439,7 @@ export default function DashboardPage() {
       setDomains(Array.isArray(domRes.data) ? domRes.data : (domRes.data?.data ?? []));
       setAlerts(Array.isArray(alRes.data) ? alRes.data : (alRes.data?.alerts ?? alRes.data?.data ?? []));
     } catch {
-      toast.error("Error al cargar el dashboard");
+      toast.error(t("overview.scanError"));
     } finally {
       setLoading(false);
     }
@@ -476,7 +478,7 @@ export default function DashboardPage() {
     setScanning2(true);
     try {
       const doms = domains.length > 0 ? domains : (await domainsApi.list()).data ?? [];
-      if (doms.length === 0) { toast.info("Sin dominios que escanear"); setScanning2(false); return; }
+      if (doms.length === 0) { toast.info(t("overview.noDomainsToScan")); setScanning2(false); return; }
       await Promise.allSettled(doms.map((d: Domain) => domainsApi.scan(d.id)));
       await new Promise(resolve => setTimeout(resolve, 12000));
       const [sumRes, emlRes, domRes, alRes] = await Promise.all([
@@ -494,10 +496,10 @@ export default function DashboardPage() {
       refreshCredits();
       const score = Math.round(fresh?.average_score ?? 0);
       const issues = fresh?.active_alerts ?? 0;
-      if (score >= 90 && issues === 0) toast.success("✅ Tu dominio está correctamente configurado y protegido");
-      else if (score >= 70) toast.success(`Scan completado · Score: ${score}${issues > 0 ? ` · ${issues} alerta${issues !== 1 ? "s" : ""}` : ""}`);
-      else toast.error(`Score: ${score} · Revisa las alertas activas`);
-    } catch { toast.error("Error al escanear"); } finally { setScanning2(false); }
+      if (score >= 90 && issues === 0) toast.success("✅ " + t("overview.scanCompleted"));
+      else if (score >= 70) toast.success(`${t("overview.scanCompleted")} · Score: ${score}${issues > 0 ? ` · ${issues}` : ""}`);
+      else toast.error(`Score: ${score} · ${t("overview.scanError")}`);
+    } catch { toast.error(t("overview.scanError")); } finally { setScanning2(false); }
   };
 
   // ── Loading ──
@@ -568,8 +570,8 @@ export default function DashboardPage() {
 
       {/* ── Page Header ── */}
       <div style={{ padding: "8px 0 24px 0" }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>Overview</h1>
-        <p style={{ fontSize: "0.875rem", color: "#b3b4b5", marginTop: 4, margin: "4px 0 0" }}>Monitoriza la seguridad de tu organización</p>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>{t("overview.title")}</h1>
+        <p style={{ fontSize: "0.875rem", color: "#b3b4b5", marginTop: 4, margin: "4px 0 0" }}>{t("overview.subtitle")}</p>
       </div>
 
       {/* ── 12-column Grid ── */}
@@ -594,18 +596,18 @@ export default function DashboardPage() {
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>
-                  {greetingByHour()}, {username} 👋
+                  {greetingByHour(t)}, {username} 👋
                 </h2>
                 <p style={{ fontSize: 13, color: "#b3b4b5", marginTop: 8, margin: "8px 0 0" }}>
-                  Listo para proteger tu organización 🛡️
+                  {t("overview.readyProtect")}
                 </p>
               </div>
               <div style={{ marginTop: 20 }}>
                 <LiveClock />
                 <div style={{ fontSize: 13, color: "#71717a", marginTop: 8 }}>
                   {lastScanTime
-                    ? `Último escaneo: ${relTime(lastScanTime.toISOString())}`
-                    : `Último escaneo: hace ${summary?.domains_monitored ? "5m" : "—"}`}
+                    ? `${t("overview.lastScan")} ${relTime(lastScanTime.toISOString(), t)}`
+                    : `${t("overview.lastScan")} ${summary?.domains_monitored ? t("time.minutesAgo").replace("{n}", "5") : "—"}`}
                 </div>
               </div>
             </div>
@@ -617,7 +619,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 600, color: "#f5f5f5", marginBottom: 4 }}>
-                  {hasAlerts ? "Atención Requerida" : "Sistema Seguro"}
+                  {hasAlerts ? t("overview.attentionRequired") : t("overview.systemOk")}
                 </div>
                 <div style={{ fontSize: 13, color: "#b3b4b5", marginBottom: 8 }}>
                   {formatDateFull(new Date())}
@@ -644,7 +646,7 @@ export default function DashboardPage() {
                   style={{ animation: scanning2 ? "spin 0.8s linear infinite" : "none" }}>
                   <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.84" />
                 </svg>
-                {scanning2 ? "Escaneando..." : "Escanear Todo"}
+                {scanning2 ? t("common.scanningAll") : t("common.scanAll")}
               </button>
             </div>
           </div>
@@ -658,7 +660,7 @@ export default function DashboardPage() {
                   <path d="M9 12l2 2 4-4" />
                 </svg>
               }
-              label="Security Score"
+              label={t("overview.kpi.securityScore")}
               value={String(avg)}
               delta="+2"
               deltaType="positive"
@@ -669,7 +671,7 @@ export default function DashboardPage() {
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
               }
-              label="Uptime"
+              label={t("overview.kpi.uptime")}
               value={`${uptimeScore}%`}
               delta="+0%"
               deltaType="neutral"
@@ -682,7 +684,7 @@ export default function DashboardPage() {
                   <path d="M16 13l2 2 4-4" />
                 </svg>
               }
-              label="Email Security"
+              label={t("overview.kpi.emailSecurity")}
               value={`${emailSecScore}%`}
               delta="+0%"
               deltaType="neutral"
@@ -695,7 +697,7 @@ export default function DashboardPage() {
                   <line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
               }
-              label="Brechas"
+              label={t("overview.kpi.breaches")}
               value={String(summary?.breached_emails ?? 0)}
               delta="→0"
               deltaType="neutral"
@@ -707,17 +709,17 @@ export default function DashboardPage() {
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>Alertas Recientes</div>
-                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>Últimas incidencias de seguridad</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>{t("overview.recentAlerts")}</div>
+                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>{t("overview.latestIncidents")}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <TabPills
-                  tabs={[`Activas (${activeAlerts.length})`, `Resueltas (${resolvedAlerts.length})`]}
-                  active={alertTab === "Activas" ? `Activas (${activeAlerts.length})` : `Resueltas (${resolvedAlerts.length})`}
-                  onChange={(t) => setAlertTab(t.startsWith("Activas") ? "Activas" : "Resueltas")}
+                  tabs={[`${t("overview.activeTab")} (${activeAlerts.length})`, `${t("overview.resolvedTab")} (${resolvedAlerts.length})`]}
+                  active={alertTab === "Activas" ? `${t("overview.activeTab")} (${activeAlerts.length})` : `${t("overview.resolvedTab")} (${resolvedAlerts.length})`}
+                  onChange={(tab) => setAlertTab(tab.includes(t("overview.activeTab")) ? "Activas" : "Resueltas")}
                 />
                 <Link href="/dashboard/alerts" style={{ fontSize: 11, color: "#3ecf8e", textDecoration: "none", fontWeight: 500 }}>
-                  Ver todas →
+                  {t("common.viewAll")}
                 </Link>
               </div>
             </div>
@@ -728,7 +730,7 @@ export default function DashboardPage() {
               if (list.length === 0) {
                 return (
                   <div style={{ textAlign: "center", padding: "24px 0", color: "#71717a", fontSize: 13 }}>
-                    {alertTab === "Activas" ? "No hay alertas activas" : "No hay alertas resueltas"}
+                    {alertTab === "Activas" ? t("overview.noActiveAlerts") : t("overview.noResolvedAlerts")}
                   </div>
                 );
               }
@@ -748,13 +750,13 @@ export default function DashboardPage() {
                           {alert.title}
                         </div>
                       </div>
-                      <span style={{ fontSize: 11, color: "#71717a", flexShrink: 0 }}>{relTime(alert.sent_at)}</span>
+                      <span style={{ fontSize: 11, color: "#71717a", flexShrink: 0 }}>{relTime(alert.sent_at, t)}</span>
                       {!alert.read_at && (
                         <button
                           onClick={() => markRead(alert.id)}
                           style={{ fontSize: 11, color: "#3ecf8e", background: "rgba(62,207,142,0.08)", border: "0.8px solid rgba(62,207,142,0.2)", cursor: "pointer", padding: "3px 8px", borderRadius: 6 }}
                         >
-                          Marcar
+                          {t("overview.markAlert")}
                         </button>
                       )}
                     </div>
@@ -769,22 +771,22 @@ export default function DashboardPage() {
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>Dominios Monitorizados</div>
-                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>Resumen del estado</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>{t("overview.domains")}</div>
+                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>{t("overview.domainsSubtitle")}</div>
               </div>
               <Link href="/dashboard/domains" style={{ fontSize: 11, color: "#3ecf8e", textDecoration: "none", fontWeight: 500 }}>
-                Gestionar →
+                {t("overview.manageDomains")}
               </Link>
             </div>
 
             {domains.length === 0 ? (
               <div style={{ textAlign: "center", padding: "24px 0", color: "#71717a", fontSize: 13 }}>
-                No hay dominios configurados
+                {t("overview.noDomains")}
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {domains.map(d => {
-                  const st = domainStatus(d);
+                  const st = domainStatus(d, t);
                   return (
                     <div key={d.id} className="cs-domain-item" style={{
                       display: "flex", alignItems: "center", gap: 12,
@@ -799,7 +801,7 @@ export default function DashboardPage() {
                           {d.domain}
                         </div>
                         <div style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}>
-                          {d.last_scanned_at ? `Último scan: ${relTime(d.last_scanned_at)}` : "Sin escanear"}
+                          {d.last_scanned_at ? `${t("overview.lastScan")} ${relTime(d.last_scanned_at, t)}` : t("overview.lastScanNever")}
                         </div>
                       </div>
                       {/* Status chip */}
@@ -829,27 +831,27 @@ export default function DashboardPage() {
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>Insights</div>
-                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>Análisis de seguridad</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>{t("overview.insights")}</div>
+                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>{t("overview.securityAnalysis")}</div>
               </div>
               <TabPills
-                tabs={["Performance", "Trends"]}
-                active={insightTab}
-                onChange={setInsightTab}
+                tabs={[t("overview.performance"), t("overview.trends")]}
+                active={insightTab === "Performance" ? t("overview.performance") : t("overview.trends")}
+                onChange={(tab) => setInsightTab(tab === t("overview.performance") ? "Performance" : "Trends")}
               />
             </div>
 
             {/* ── Performance tab: animated score ring + breakdown ── */}
-            {insightTab === "Performance" && (
+            {(insightTab === "Performance" || insightTab === t("overview.performance")) && (
               <ScoreRing score={avg} ssl={sslScore} email={emailSecScore} uptime={uptimeScore} darkweb={darkwebScore} />
             )}
 
             {/* ── Trends tab: one score ring per domain ── */}
-            {insightTab === "Trends" && (
+            {(insightTab === "Trends" || insightTab === t("overview.trends")) && (
               <>
                 {domains.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "32px 0", color: "#71717a", fontSize: 13 }}>
-                    No hay dominios configurados
+                    {t("overview.noDomains")}
                   </div>
                 ) : (
                   <>
@@ -869,9 +871,9 @@ export default function DashboardPage() {
                       ))}
                     </div>
                     <div style={{ borderTop: "0.8px solid #1a1a1a", paddingTop: 12 }}>
-                      <div style={{ fontSize: 11, color: "#71717a", marginBottom: 6 }}>Leyenda</div>
+                      <div style={{ fontSize: 11, color: "#71717a", marginBottom: 6 }}>{t("overview.legend.label")}</div>
                       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                        {[["#3ecf8e", "≥80 Seguro"], ["#f59e0b", "60–79 Aviso"], ["#ef4444", "<60 Crítico"]].map(([c, l]) => (
+                        {([["#3ecf8e", t("overview.legend.safe")], ["#f59e0b", t("overview.legend.warning")], ["#ef4444", t("overview.legend.critical")]] as [string,string][]).map(([c, l]) => (
                           <div key={l} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                             <div style={{ width: 8, height: 8, borderRadius: "50%", background: c }} />
                             <span style={{ fontSize: 10, color: "#b3b4b5" }}>{l}</span>
@@ -890,12 +892,12 @@ export default function DashboardPage() {
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>Actividad de Escaneo</div>
-                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>Historial de escaneos recientes</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f5" }}>{t("overview.scanActivity")}</div>
+                <div style={{ fontSize: 12, color: "#b3b4b5", marginTop: 2 }}>{t("overview.scanHistory")}</div>
               </div>
               {/* Time range pill */}
               <div style={{ background: "#1c1c1c", border: "0.8px solid #1a1a1a", borderRadius: 6, padding: "5px 10px", fontSize: 11, color: "#b3b4b5", display: "flex", alignItems: "center", gap: 4 }}>
-                Este Mes
+                {t("overview.thisMonth")}
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
               </div>
             </div>
@@ -911,7 +913,7 @@ export default function DashboardPage() {
                 <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: 13, fontWeight: 700, color: "#f5f5f5" }}>
                   {totalScans}
                 </span>
-                <span style={{ fontSize: 11, color: "#71717a", marginLeft: 4 }}>escaneos</span>
+                <span style={{ fontSize: 11, color: "#71717a", marginLeft: 4 }}>{t("overview.scans")}</span>
               </div>
               <div>
                 <span style={{ fontSize: 11, color: "#3ecf8e", fontWeight: 500 }}>+{summary?.domains_monitored ?? 0}%</span>
@@ -939,8 +941,8 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#f5f5f5" }}>AI Assistant</div>
-              <div style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}>Analiza tus alertas con IA</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#f5f5f5" }}>{t("overview.aiAssistantTitle")}</div>
+              <div style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}>{t("overview.aiAssistantDesc")}</div>
             </div>
             <span style={{ color: "#71717a", fontSize: 14 }}>→</span>
           </Link>

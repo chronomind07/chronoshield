@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { settingsApi, billingApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/Toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Profile {
@@ -625,6 +626,7 @@ function TabNotifications({ prefs, lang, onChange, onSave, saving }: { prefs: No
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const router = useRouter();
+  const { setLang: setContextLang } = useTranslation();
 
   const [tab, setTab]               = useState<Tab>("general");
   const [profile, setProfile]       = useState<Profile | null>(null);
@@ -657,11 +659,18 @@ export default function SettingsPage() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
+  // Sync language context immediately when profile language changes
+  useEffect(() => {
+    if (profile?.language) setContextLang(profile.language as "es" | "en");
+  }, [profile?.language]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSaveProfile = async () => {
     if (!profile) return;
     setSaving(true);
     try {
       await settingsApi.updateProfile({ full_name: profile.full_name, language: profile.language, timezone: profile.timezone });
+      // Sync language context immediately so the whole dashboard updates
+      setContextLang(profile.language as "es" | "en");
       toast.success("Perfil actualizado");
     } catch { toast.error("Error al guardar el perfil"); }
     finally { setSaving(false); }

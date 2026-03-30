@@ -7,6 +7,7 @@ import { alertsApi } from "@/lib/api";
 import Link from "next/link";
 import { Toaster } from "@/components/Toast";
 import { CreditsProvider, useCredits } from "@/contexts/CreditsContext";
+import { LanguageProvider, useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface AlertItem {
@@ -198,6 +199,7 @@ function AlertRow({ alert, onDismiss, onDelete, onClose }: {
   const [dismissing, setDismissing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const c = SEV_COLOR[alert.severity] ?? "#3b82f6";
+  const { t } = useTranslation();
 
   return (
     <div style={{
@@ -227,7 +229,7 @@ function AlertRow({ alert, onDismiss, onDelete, onClose }: {
               onClick={async (e) => { e.stopPropagation(); setDismissing(true); await onDismiss(alert.id); setDismissing(false); }}
               disabled={dismissing}
               style={{ fontSize: "0.68rem", fontWeight: 500, color: "#71717a", padding: "3px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, cursor: "pointer" }}>
-              {dismissing ? "…" : "Descartar"}
+              {dismissing ? "…" : t("topbar.dismiss")}
             </button>
           )}
           <button
@@ -263,6 +265,7 @@ const PACKS = [
 
 function BuyCreditsModal({ creditsAvailable, onClose }: { creditsAvailable: number | null; onClose: () => void }) {
   const [buying, setBuying] = useState<string | null>(null);
+  const { t } = useTranslation();
   const handleBuy = async (pack: "s" | "m" | "l") => {
     if (buying) return;
     setBuying(pack);
@@ -281,9 +284,9 @@ function BuyCreditsModal({ creditsAvailable, onClose }: { creditsAvailable: numb
       <div style={{ width: "100%", maxWidth: 400, background: "#151515", border: "1px solid #1a1a1a", borderRadius: 16, padding: 24 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>Comprar créditos</h2>
+            <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>{t("credits.title")}</h2>
             <p style={{ fontSize: "0.78rem", color: "#71717a", marginTop: 2, margin: "2px 0 0 0" }}>
-              {creditsAvailable !== null ? `${creditsAvailable} crédito${creditsAvailable !== 1 ? "s" : ""} disponible${creditsAvailable !== 1 ? "s" : ""}` : "Saldo de créditos"}
+              {creditsAvailable !== null ? `${creditsAvailable} crédito${creditsAvailable !== 1 ? "s" : ""} disponible${creditsAvailable !== 1 ? "s" : ""}` : t("credits.balance")}
             </p>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#71717a", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
@@ -311,7 +314,7 @@ function BuyCreditsModal({ creditsAvailable, onClose }: { creditsAvailable: numb
             </button>
           ))}
         </div>
-        <p style={{ fontSize: "0.72rem", color: "#71717a", textAlign: "center", margin: 0 }}>1 crédito = 1 escaneo. Los créditos no caducan.</p>
+        <p style={{ fontSize: "0.72rem", color: "#71717a", textAlign: "center", margin: 0 }}>{t("credits.footer")}</p>
       </div>
     </div>
   );
@@ -323,6 +326,7 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!open) return;
@@ -384,7 +388,7 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
         }}
         onMouseEnter={e => (e.currentTarget.style.color = "#f5f5f5")}
         onMouseLeave={e => { if (!open) e.currentTarget.style.color = "#71717a"; }}
-        aria-label="Notificaciones"
+        aria-label={t("topbar.notifications")}
       >
         <IcoBell />
         {unreadCount > 0 && (
@@ -396,13 +400,13 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
         <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 340, background: "#151515", border: "1px solid #1a1a1a", borderRadius: 12, overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.5)", zIndex: 50 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #1a1a1a" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#f5f5f5" }}>Notificaciones</span>
+              <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#f5f5f5" }}>{t("topbar.notifications")}</span>
               {unreadCount > 0 && <span style={{ fontSize: "0.6rem", fontWeight: 700, background: "#ef4444", color: "#fff", borderRadius: 6, padding: "1px 5px", fontFamily: "var(--font-dm-mono)" }}>{unreadCount}</span>}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {unreadCount > 0 && (
                 <button onClick={handleMarkAllRead} style={{ fontSize: "0.72rem", fontWeight: 600, color: "#3ecf8e", background: "none", border: "none", cursor: "pointer" }}>
-                  Marcar leídas
+                  {t("topbar.markRead")}
                 </button>
               )}
               <button onClick={async () => {
@@ -413,7 +417,7 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
                   setUnreadCount(0);
                 } catch { /* silent */ }
               }} style={{ fontSize: "0.72rem", fontWeight: 600, color: "#71717a", background: "none", border: "none", cursor: "pointer" }}>
-                Borrar todas
+                {t("topbar.deleteAll")}
               </button>
             </div>
           </div>
@@ -425,15 +429,15 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
             ) : alerts.length === 0 ? (
               <div style={{ padding: "32px 16px", textAlign: "center" }}>
                 <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>🛡</div>
-                <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f5f5f5" }}>Todo en orden</div>
-                <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 4 }}>Sin alertas activas.</div>
+                <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f5f5f5" }}>{t("topbar.allClear")}</div>
+                <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 4 }}>{t("topbar.noActiveAlerts")}</div>
               </div>
             ) : alerts.map(a => <AlertRow key={a.id} alert={a} onDismiss={handleDismiss} onDelete={handleDelete} onClose={() => setOpen(false)} />)}
           </div>
           {!loading && alerts.length > 0 && (
             <div style={{ padding: "10px 16px", borderTop: "1px solid #1a1a1a" }}>
               <Link href="/dashboard/alerts" onClick={() => setOpen(false)} style={{ fontSize: "0.78rem", fontWeight: 600, color: "#3ecf8e", textDecoration: "none", display: "block", textAlign: "center" }}>
-                Ver todas las alertas →
+                {t("topbar.viewAllAlerts")}
               </Link>
             </div>
           )}
@@ -443,24 +447,26 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
   );
 }
 
-// ── Page title map ────────────────────────────────────────────────────────────
-const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Overview",
-  "/dashboard/assistant": "AI Assistant",
-  "/dashboard/emails": "Emails",
-  "/dashboard/domains": "Dominios",
-  "/dashboard/darkweb": "Dark Web",
-  "/dashboard/alerts": "Alertas",
-  "/dashboard/history": "Historial",
-  "/dashboard/settings": "Ajustes",
+// ── Page title key map ────────────────────────────────────────────────────────
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  "/dashboard": "nav.overview",
+  "/dashboard/assistant": "nav.aiAssistant",
+  "/dashboard/emails": "nav.emails",
+  "/dashboard/domains": "nav.domains",
+  "/dashboard/darkweb": "nav.darkweb",
+  "/dashboard/alerts": "nav.alerts",
+  "/dashboard/history": "nav.history",
+  "/dashboard/settings": "nav.settings",
 };
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <CreditsProvider>
-      <LayoutInner>{children}</LayoutInner>
-    </CreditsProvider>
+    <LanguageProvider>
+      <CreditsProvider>
+        <LayoutInner>{children}</LayoutInner>
+      </CreditsProvider>
+    </LanguageProvider>
   );
 }
 
@@ -472,6 +478,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const { credits, refreshCredits } = useCredits();
+  const { t } = useTranslation();
 
   // Poll unread count every 2 min
   useEffect(() => {
@@ -512,7 +519,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
 
   const initials = userEmail ? userEmail.split("@")[0].slice(0, 2).toUpperCase() : "??";
   const username = userEmail?.split("@")[0] ?? "Usuario";
-  const currentTitle = PAGE_TITLES[pathname] ?? "Dashboard";
+  const currentTitle = t(PAGE_TITLE_KEYS[pathname] ?? "nav.overview");
   const isLowCredits = credits !== null && credits <= 5;
 
   return (
@@ -573,21 +580,21 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav style={{ flex: 1, overflowY: "auto" }}>
-          <NavSection label="Principal">
-            <NavItem href="/dashboard" icon={<IcoOverview />} label="Overview" active={pathname === "/dashboard"} />
-            <NavItem href="/dashboard/assistant" icon={<IcoAssistant />} label="AI Assistant" active={pathname === "/dashboard/assistant"} />
-            <NavItem href="/dashboard/darkweb" icon={<IcoDarkWeb />} label="Dark Web" active={pathname === "/dashboard/darkweb"} />
+          <NavSection label={t("nav.section.main")}>
+            <NavItem href="/dashboard" icon={<IcoOverview />} label={t("nav.overview")} active={pathname === "/dashboard"} />
+            <NavItem href="/dashboard/assistant" icon={<IcoAssistant />} label={t("nav.aiAssistant")} active={pathname === "/dashboard/assistant"} />
+            <NavItem href="/dashboard/darkweb" icon={<IcoDarkWeb />} label={t("nav.darkweb")} active={pathname === "/dashboard/darkweb"} />
           </NavSection>
 
-          <NavSection label="Monitor">
-            <NavItem href="/dashboard/emails" icon={<IcoEmails />} label="Emails" active={pathname === "/dashboard/emails"} />
-            <NavItem href="/dashboard/domains" icon={<IcoDomains />} label="Dominios" active={pathname === "/dashboard/domains"} />
-            <NavItem href="/dashboard/alerts" icon={<IcoAlerts />} label="Alertas" active={pathname === "/dashboard/alerts"} badge={unreadAlerts} />
+          <NavSection label={t("nav.section.monitor")}>
+            <NavItem href="/dashboard/emails" icon={<IcoEmails />} label={t("nav.emails")} active={pathname === "/dashboard/emails"} />
+            <NavItem href="/dashboard/domains" icon={<IcoDomains />} label={t("nav.domains")} active={pathname === "/dashboard/domains"} />
+            <NavItem href="/dashboard/alerts" icon={<IcoAlerts />} label={t("nav.alerts")} active={pathname === "/dashboard/alerts"} badge={unreadAlerts} />
           </NavSection>
 
-          <NavSection label="Cuenta">
-            <NavItem href="/dashboard/history" icon={<IcoHistory />} label="Historial" active={pathname === "/dashboard/history"} />
-            <NavItem href="/dashboard/settings" icon={<IcoSettings />} label="Ajustes" active={pathname === "/dashboard/settings"} />
+          <NavSection label={t("nav.section.account")}>
+            <NavItem href="/dashboard/history" icon={<IcoHistory />} label={t("nav.history")} active={pathname === "/dashboard/history"} />
+            <NavItem href="/dashboard/settings" icon={<IcoSettings />} label={t("nav.settings")} active={pathname === "/dashboard/settings"} />
           </NavSection>
         </nav>
 
@@ -608,7 +615,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 {username}
               </div>
             </div>
-            <button onClick={handleLogout} title="Cerrar sesión"
+            <button onClick={handleLogout} title={t("nav.settings")}
               style={{ background: "none", border: "none", cursor: "pointer", color: "#71717a", padding: 4, borderRadius: 6, display: "flex", transition: "color 0.15s" }}
               onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
               onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
@@ -654,14 +661,14 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 border: "0.8px solid #1a1a1a",
                 cursor: "pointer", transition: "all 0.15s",
               }}
-              title="Comprar créditos"
+              title={t("topbar.buyCredits")}
             >
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: isLowCredits ? "#f59e0b" : "#3ecf8e", flexShrink: 0 }} />
               <span style={{ fontSize: 12, fontWeight: 500, fontFamily: "var(--font-dm-mono)", color: isLowCredits ? "#f59e0b" : "#f5f5f5" }}>
                 {credits === null ? "—" : credits}
               </span>
               <span style={{ fontSize: 12, color: "#b3b4b5" }}>
-                créd.
+                {t("topbar.credits")}
               </span>
             </button>
 
