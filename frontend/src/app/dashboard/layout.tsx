@@ -120,6 +120,7 @@ function NavItem({ href, icon, label, active, badge }: {
   return (
     <Link
       href={href}
+      className="cs-nav-item"
       style={{
         display: "flex",
         alignItems: "center",
@@ -387,7 +388,7 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
       >
         <IcoBell />
         {unreadCount > 0 && (
-          <span style={{ position: "absolute", top: 2, right: 2, width: 6, height: 6, background: "#ef4444", borderRadius: "50%", display: "block" }} />
+          <span className="cs-notif-pulse" style={{ position: "absolute", top: 2, right: 2, width: 6, height: 6, background: "#ef4444", borderRadius: "50%", display: "block" }} />
         )}
       </button>
 
@@ -519,6 +520,19 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         * { box-sizing: border-box; }
+        @keyframes csBellPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); }
+          50% { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+        }
+        .cs-notif-pulse { animation: csBellPulse 2s ease-in-out infinite; }
+        .cs-nav-item { position: relative !important; overflow: visible !important; }
+        .cs-nav-item::before {
+          content: ''; position: absolute; left: 0; top: 50%;
+          transform: translateY(-50%); width: 2px; height: 0;
+          background: #3ecf8e; border-radius: 0 3px 3px 0; transition: height 0.2s ease;
+        }
+        .cs-nav-item:hover::before { height: 55%; }
+        .cs-nav-item:hover { transform: translateX(2px); }
       `}</style>
 
       {/* Buy credits modal */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { dashboardApi, emailsApi, domainsApi, alertsApi, settingsApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
@@ -155,59 +155,127 @@ function ScanActivityChart({ totalScans }: { totalScans: number }) {
   );
 }
 
-// ── Multi-ring Donut ───────────────────────────────────────────────────────────
-function MultiRingDonut({ ssl, email, uptime, darkweb, score }: {
-  ssl: number; email: number; uptime: number; darkweb: number; score: number;
+// ── Score Ring (animated — replaces MultiRingDonut) ───────────────────────────
+function ScoreRing({ score, ssl, email, uptime, darkweb }: {
+  score: number; ssl: number; email: number; uptime: number; darkweb: number;
 }) {
   const grade = scoreGrade(score);
-  const cx = 70, cy = 70;
-  const segments = [
-    { r: 58, val: ssl,     color: "#3ecf8e", label: "SSL" },
-    { r: 47, val: email,   color: "#3b82f6", label: "Email" },
-    { r: 36, val: uptime,  color: "#f59e0b", label: "Uptime" },
-    { r: 25, val: darkweb, color: "#ef4444", label: "DarkWeb" },
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [displayScore, setDisplayScore] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  // Count-up animation on mount
+  useEffect(() => {
+    setMounted(true);
+    if (score === 0) { setDisplayScore(0); return; }
+    const target = score;
+    const dur = 1500;
+    const t0 = performance.now();
+    let raf: number;
+    const tick = (now: number) => {
+      const prog = Math.min((now - t0) / dur, 1);
+      const eased = 1 - Math.pow(1 - prog, 3);
+      setDisplayScore(Math.round(eased * target));
+      if (prog < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [score]);
+
+  // 3D parallax on mousemove
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const dx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const dy = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    containerRef.current.style.transition = "transform 0.1s ease";
+    containerRef.current.style.transform = `perspective(400px) rotateX(${-dy * 8}deg) rotateY(${dx * 8}deg)`;
+  };
+  const onMouseLeave = () => {
+    if (!containerRef.current) return;
+    containerRef.current.style.transition = "transform 0.6s ease";
+    containerRef.current.style.transform = "perspective(400px) rotateX(0deg) rotateY(0deg)";
+  };
+
+  const R = 68;
+  const circ = 2 * Math.PI * R;
+  const offset = mounted ? circ * (1 - Math.min(100, Math.max(0, score)) / 100) : circ;
+
+  const barGrad = (v: number) => v >= 80
+    ? "linear-gradient(90deg,#4ade80,#3ecf8e)"
+    : v >= 60 ? "linear-gradient(90deg,#f59e0b,#f97316)"
+    : "linear-gradient(90deg,#ef4444,#ff3b6b)";
+  const valCol = (v: number) => v >= 80 ? "#4ade80" : v >= 60 ? "#f59e0b" : "#ef4444";
+
+  const rows = [
+    { key: "ssl",     label: "SSL Certificate", desc: "Estado del certificado", val: ssl,     iBg: "rgba(62,207,142,0.1)",  iCol: "#3ecf8e", icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
+    { key: "email",   label: "Email Security",  desc: "SPF · DKIM · DMARC",    val: email,   iBg: "rgba(59,130,246,0.1)",  iCol: "#3b82f6", icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+    { key: "uptime",  label: "Uptime",          desc: "Disponibilidad 30d",    val: uptime,  iBg: "rgba(167,139,250,0.1)", iCol: "#a78bfa", icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
+    { key: "darkweb", label: "Dark Web",         desc: "Brechas detectadas",    val: darkweb, iBg: "rgba(239,68,68,0.1)",   iCol: "#ef4444", icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
   ];
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ position: "relative", width: 140, height: 140, flexShrink: 0 }}>
-        <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)", overflow: "hidden", display: "block" }}>
-          {segments.map(({ r }) => (
-            <circle
-              key={r}
-              cx={cx} cy={cy} r={r}
-              fill="none"
-              stroke="rgba(255,255,255,0.06)"
-              strokeWidth="7"
-            />
-          ))}
-          {segments.map(({ r, val, color }) => {
-            const circ = 2 * Math.PI * r;
-            const dash = circ * (Math.max(0, Math.min(100, val)) / 100);
-            const gap = circ - dash;
-            return (
-              <circle
-                key={`arc-${r}`}
-                cx={cx} cy={cy} r={r}
-                fill="none"
-                stroke={color}
-                strokeWidth="7"
-                strokeLinecap="butt"
-                strokeDasharray={`${dash} ${gap}`}
-                style={{ transition: "stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1)" }}
-              />
-            );
-          })}
-        </svg>
-        <div style={{
-          position: "absolute", inset: 0,
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        }}>
-          <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", lineHeight: 1 }}>
-            {score}%
-          </span>
+    <>
+      {/* Animated ring — centered */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+        <div ref={containerRef} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}
+          style={{ position: "relative", width: 160, height: 160, cursor: "default" }}>
+          {/* Radial bg + inset depth shadow */}
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle at 30% 30%,#16161f,#0a0a0f)", boxShadow: "inset 0 2px 20px rgba(0,0,0,.6),0 0 40px rgba(62,207,142,.05)" }} />
+          {/* Pulsing glow layer */}
+          <div className="cs-score-glow" style={{ position: "absolute", inset: 8, borderRadius: "50%", background: "radial-gradient(circle,rgba(62,207,142,.07) 0%,transparent 70%)" }} />
+          {/* SVG ring with gradient + dashoffset animation */}
+          <svg width="160" height="160" viewBox="0 0 160 160" style={{ position: "relative", transform: "rotate(-90deg)", display: "block" }}>
+            <defs>
+              <linearGradient id="csScoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#3ecf8e" />
+                <stop offset="50%" stopColor="#00c4a3" />
+                <stop offset="100%" stopColor="#4ade80" />
+              </linearGradient>
+            </defs>
+            <circle cx="80" cy="80" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" strokeLinecap="round" />
+            <circle cx="80" cy="80" r={R} fill="none" stroke="url(#csScoreGrad)" strokeWidth="8" strokeLinecap="round"
+              strokeDasharray={circ} strokeDashoffset={offset}
+              style={{ transition: "stroke-dashoffset 2s cubic-bezier(.4,0,.2,1)", filter: "drop-shadow(0 0 6px rgba(62,207,142,.45))" }} />
+          </svg>
+          {/* Inner circle: gradient number + label + grade badge */}
+          <div style={{ position: "absolute", inset: 22, borderRadius: "50%", background: "#0a0a0f", border: "1px solid rgba(255,255,255,.06)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+            <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "1.9rem", fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1,
+              background: "linear-gradient(135deg,#f5f5f5,#3ecf8e)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              {displayScore}
+            </span>
+            <span style={{ fontSize: "0.55rem", color: "#71717a", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 3 }}>Score</span>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "rgba(62,207,142,.1)", color: "#3ecf8e", fontSize: "0.72rem", fontWeight: 800, marginTop: 5, border: "1px solid rgba(62,207,142,.18)" }}>
+              {grade}
+            </span>
+          </div>
+          {/* Orbiting particles */}
+          <div className="cs-orbit-p1" />
+          <div className="cs-orbit-p2" />
+          <div className="cs-orbit-p3" />
         </div>
       </div>
-    </div>
+
+      {/* Breakdown rows with gradient bars + animated fill */}
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {rows.map(({ key, label, desc, val, iBg, iCol, icon }) => (
+          <div key={key} className="cs-score-row"
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: iBg, color: iCol, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: "#b3b4b5" }}>{label}</div>
+              <div style={{ fontSize: 11, color: "#71717a" }}>{desc}</div>
+            </div>
+            <div style={{ width: 76, flexShrink: 0 }}>
+              <div style={{ height: 3, background: "rgba(255,255,255,.06)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: mounted ? `${val}%` : "0%", borderRadius: 3, background: barGrad(val), transition: "width 1.5s cubic-bezier(.4,0,.2,1) .5s" }} />
+              </div>
+            </div>
+            <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.7rem", fontWeight: 600, color: valCol(val), width: 28, textAlign: "right", flexShrink: 0 }}>{val}%</span>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -222,7 +290,7 @@ function KpiCard({ icon, label, value, delta, deltaType }: {
   const deltaColor = deltaType === "positive" ? "#3ecf8e" : deltaType === "negative" ? "#ef4444" : "#71717a";
   const deltaArrow = deltaType === "positive" ? "↑" : deltaType === "negative" ? "↓" : "→";
   return (
-    <div style={{
+    <div className="cs-kpi-card" style={{
       background: "#151515",
       border: "0.8px solid #1a1a1a",
       borderRadius: 16,
@@ -231,6 +299,7 @@ function KpiCard({ icon, label, value, delta, deltaType }: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
+      transition: "transform 0.2s ease, box-shadow 0.2s ease",
     }}>
       {/* Top row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -460,7 +529,42 @@ export default function DashboardPage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes csScoreGlow { 0%,100%{opacity:.5;transform:scale(.95)} 50%{opacity:1;transform:scale(1.02)} }
+        @keyframes csOrbit { 0%{transform:rotate(0deg) translateX(76px) rotate(0deg);opacity:.8} 50%{opacity:.3} 100%{transform:rotate(360deg) translateX(76px) rotate(-360deg);opacity:.8} }
+        @keyframes csAmbFloat { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-20px) scale(1.1)} 66%{transform:translate(-20px,30px) scale(.9)} }
+        @keyframes csFadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .cs-score-glow { animation: csScoreGlow 3s ease-in-out infinite; }
+        .cs-orbit-p1,.cs-orbit-p2,.cs-orbit-p3 { position:absolute;width:4px;height:4px;border-radius:50%;background:#3ecf8e;box-shadow:0 0 6px #3ecf8e;z-index:3;top:50%;left:50%;margin:-2px 0 0 -2px; }
+        .cs-orbit-p1 { animation:csOrbit 8s linear infinite; }
+        .cs-orbit-p2 { animation:csOrbit 8s linear infinite 2.67s; }
+        .cs-orbit-p3 { animation:csOrbit 8s linear infinite 5.33s; }
+        .cs-score-row { transition:padding-left .2s ease; }
+        .cs-score-row:hover { padding-left:6px !important; }
+        .cs-kpi-card:hover { transform:translateY(-2px) !important; box-shadow:0 8px 24px rgba(0,0,0,.3) !important; }
+        .cs-domain-item:hover { background:rgba(255,255,255,.04) !important; }
+        .cs-amb { position:fixed;pointer-events:none;z-index:0;border-radius:50%; }
+        .cs-amb-1 { width:600px;height:600px;top:-200px;left:-100px;background:radial-gradient(circle,rgba(62,207,142,.04) 0%,transparent 70%);filter:blur(80px);animation:csAmbFloat 20s ease-in-out infinite; }
+        .cs-amb-2 { width:400px;height:400px;bottom:-100px;right:-50px;background:radial-gradient(circle,rgba(96,165,250,.03) 0%,transparent 70%);filter:blur(60px);animation:csAmbFloat 25s ease-in-out infinite reverse; }
+        .cs-amb-3 { width:300px;height:300px;top:40%;left:50%;background:radial-gradient(circle,rgba(167,139,250,.025) 0%,transparent 70%);filter:blur(50px);animation:csAmbFloat 30s ease-in-out infinite 5s; }
+        .cs-noise { position:fixed;inset:0;opacity:.4;pointer-events:none;z-index:9998;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='csn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23csn)' opacity='.04'/%3E%3C/svg%3E"); }
+        ::-webkit-scrollbar { width:5px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.08);border-radius:3px; }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.15); }
+        .cs-fadeup-1 { animation:csFadeUp .5s cubic-bezier(.4,0,.2,1) both .05s; }
+        .cs-fadeup-2 { animation:csFadeUp .5s cubic-bezier(.4,0,.2,1) both .12s; }
+        .cs-fadeup-3 { animation:csFadeUp .5s cubic-bezier(.4,0,.2,1) both .19s; }
+        .cs-fadeup-4 { animation:csFadeUp .5s cubic-bezier(.4,0,.2,1) both .26s; }
+        .cs-fadeup-5 { animation:csFadeUp .5s cubic-bezier(.4,0,.2,1) both .33s; }
+        .cs-fadeup-6 { animation:csFadeUp .5s cubic-bezier(.4,0,.2,1) both .40s; }
       `}</style>
+
+      {/* Ambient orbs */}
+      <div className="cs-amb cs-amb-1" />
+      <div className="cs-amb cs-amb-2" />
+      <div className="cs-amb cs-amb-3" />
+      {/* Noise overlay */}
+      <div className="cs-noise" />
 
       {/* ── Page Header ── */}
       <div style={{ padding: "8px 0 24px 0" }}>
@@ -477,7 +581,7 @@ export default function DashboardPage() {
         <div style={{ gridColumn: "span 8", display: "flex", flexDirection: "column", gap: 16 }}>
 
           {/* ── Welcome Banner ── */}
-          <div style={{
+          <div className="cs-fadeup-1" style={{
             ...cardStyle,
             padding: 32,
             display: "flex",
@@ -546,7 +650,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ── KPI Cards (4 in a row) ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+          <div className="cs-fadeup-2" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
             <KpiCard
               icon={
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -599,7 +703,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ── Alertas Recientes ── */}
-          <div style={cardStyle}>
+          <div className="cs-fadeup-3" style={cardStyle}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
               <div>
@@ -661,7 +765,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ── Dominios Monitorizados ── */}
-          <div style={cardStyle}>
+          <div className="cs-fadeup-4" style={cardStyle}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
               <div>
@@ -682,12 +786,13 @@ export default function DashboardPage() {
                 {domains.map(d => {
                   const st = domainStatus(d);
                   return (
-                    <div key={d.id} style={{
+                    <div key={d.id} className="cs-domain-item" style={{
                       display: "flex", alignItems: "center", gap: 12,
                       padding: "10px 12px",
                       background: "rgba(255,255,255,0.02)",
                       border: "0.8px solid #1a1a1a",
                       borderRadius: 10,
+                      transition: "background 0.15s ease",
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, color: "#f5f5f5", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -720,7 +825,7 @@ export default function DashboardPage() {
         <div style={{ gridColumn: "span 4", display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 68 }}>
 
           {/* ── Security Insights ── */}
-          <div style={cardStyle}>
+          <div className="cs-fadeup-5" style={cardStyle}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
               <div>
@@ -734,75 +839,9 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* ── Performance tab: global donut + metric rows ── */}
+            {/* ── Performance tab: animated score ring + breakdown ── */}
             {insightTab === "Performance" && (
-              <>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-                  <MultiRingDonut
-                    ssl={sslScore}
-                    email={emailSecScore}
-                    uptime={uptimeScore}
-                    darkweb={darkwebScore}
-                    score={avg}
-                  />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {/* SSL */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(62,207,142,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>SSL</div>
-                      <div style={{ fontSize: 11, color: "#71717a" }}>Overall SSL health</div>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#3ecf8e", fontFamily: "var(--font-dm-mono)" }}>{sslScore}%</span>
-                  </div>
-                  {/* Email Security */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
-                      </svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>Email Security</div>
-                      <div style={{ fontSize: 11, color: "#71717a" }}>SPF/DKIM/DMARC</div>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#3b82f6", fontFamily: "var(--font-dm-mono)" }}>{emailSecScore}%</span>
-                  </div>
-                  {/* Uptime */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                      </svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>Uptime</div>
-                      <div style={{ fontSize: 11, color: "#71717a" }}>Disponibilidad 30d</div>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#f59e0b", fontFamily: "var(--font-dm-mono)" }}>{uptimeScore}%</span>
-                  </div>
-                  {/* Dark Web */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: "#b3b4b5" }}>Dark Web</div>
-                      <div style={{ fontSize: 11, color: "#71717a" }}>Brechas detectadas</div>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#ef4444", fontFamily: "var(--font-dm-mono)" }}>
-                      {summary?.breached_emails ?? 0} brechas
-                    </span>
-                  </div>
-                </div>
-              </>
+              <ScoreRing score={avg} ssl={sslScore} email={emailSecScore} uptime={uptimeScore} darkweb={darkwebScore} />
             )}
 
             {/* ── Trends tab: one score ring per domain ── */}
@@ -847,7 +886,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ── Actividad de Escaneo ── */}
-          <div style={cardStyle}>
+          <div className="cs-fadeup-6" style={cardStyle}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
               <div>
