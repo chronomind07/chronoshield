@@ -121,20 +121,42 @@ async def add_domain(
             detail=f"Plan limit reached ({sub.data['max_domains']} domains). Please upgrade.",
         )
 
-    # Check duplicate
-    existing = (
+    # Check duplicate — only among *active* domains for this user.
+    # Soft-deleted rows (is_active=False) are not counted; we reactivate them instead.
+    existing_active = (
         db.table("domains")
         .select("id")
         .eq("user_id", user_id)
         .eq("domain", payload.domain)
+        .eq("is_active", True)
         .execute()
         .data
     )
-    if existing:
+    if existing_active:
         raise HTTPException(status_code=409, detail="Domain already being monitored")
 
-    result = db.table("domains").insert({"user_id": user_id, "domain": payload.domain}).execute()
-    domain = result.data[0]
+    # If a soft-deleted row exists for this (user_id, domain) reactivate it
+    # instead of inserting a new row (avoids DB unique-constraint conflicts).
+    existing_inactive = (
+        db.table("domains")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("domain", payload.domain)
+        .eq("is_active", False)
+        .execute()
+        .data
+    )
+    if existing_inactive:
+        result = (
+            db.table("domains")
+            .update({"is_active": True})
+            .eq("id", existing_inactive[0]["id"])
+            .execute()
+        )
+        domain = result.data[0]
+    else:
+        result = db.table("domains").insert({"user_id": user_id, "domain": payload.domain}).execute()
+        domain = result.data[0]
 
     # Kick off initial scans in background
     background_tasks.add_task(trigger_domain_scan, domain["id"], user_id)

@@ -53,6 +53,10 @@ CREATE TABLE public.domains (
     verified        BOOLEAN DEFAULT FALSE,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW(),
+    -- Composite unique: each user can monitor any domain independently of other users.
+    -- If upgrading from an older schema that had UNIQUE(domain) alone, run in Supabase SQL editor:
+    --   ALTER TABLE public.domains DROP CONSTRAINT IF EXISTS domains_domain_key;
+    --   ALTER TABLE public.domains ADD CONSTRAINT domains_user_domain_unique UNIQUE (user_id, domain);
     UNIQUE(user_id, domain)
 );
 
