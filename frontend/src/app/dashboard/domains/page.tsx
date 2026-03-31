@@ -6,6 +6,7 @@ import { useTechMode } from "@/lib/mode-context";
 import BuyCreditsModal from "@/components/BuyCreditsModal";
 import { toast } from "@/components/Toast";
 import { useCredits } from "@/contexts/CreditsContext";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Domain {
@@ -144,18 +145,19 @@ const UPTIME_BADGE_MAP: Record<string, StatusDef> = {
   error: { label: "Error",  color: "#f59e0b", bg: "rgba(245,158,11,0.10)"  },
 };
 
-function getDomainOverallStatus(d: Domain): { label: string; color: string; bg: string; border: string } {
+function getDomainOverallStatus(d: Domain, tFn?: (k: string) => string): { label: string; color: string; bg: string; border: string } {
+  const tl = tFn ?? ((k: string) => k);
   if (!d.last_scanned_at) {
-    return { label: "Sin escanear", color: "#71717a", bg: "rgba(113,113,122,0.10)", border: "rgba(113,113,122,0.2)" };
+    return { label: tl("domains.status.unscanned"), color: "#71717a", bg: "rgba(113,113,122,0.10)", border: "rgba(113,113,122,0.2)" };
   }
   const bc = domainBorderColor(d);
   if (bc === "#3ecf8e") {
-    return { label: "Protegido", color: "#3ecf8e", bg: "rgba(62,207,142,0.10)", border: "rgba(62,207,142,0.2)" };
+    return { label: tl("domains.status.protected"), color: "#3ecf8e", bg: "rgba(62,207,142,0.10)", border: "rgba(62,207,142,0.2)" };
   }
   if (bc === "#ef4444") {
-    return { label: "Atención",  color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.2)"  };
+    return { label: tl("domains.status.attention"),  color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.2)"  };
   }
-  return { label: "Atención", color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.2)" };
+  return { label: tl("domains.status.attention"), color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.2)" };
 }
 
 function DomainDnsBadge({ label, status, statusMap }: {
@@ -178,14 +180,14 @@ function DomainDnsBadge({ label, status, statusMap }: {
   );
 }
 
-function relTime(iso: string): string {
+function relTime(iso: string, lang = "es"): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "ahora mismo";
-  if (m < 60) return `hace ${m} min`;
+  if (m < 1) return lang === "en" ? "just now" : "ahora mismo";
+  if (m < 60) return lang === "en" ? `${m} min ago` : `hace ${m} min`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h}h`;
-  return new Date(iso).toLocaleDateString("es-ES");
+  if (h < 24) return lang === "en" ? `${h}h ago` : `hace ${h}h`;
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "es-ES");
 }
 
 /** Derive actionable recommendations from scan data */
@@ -230,6 +232,7 @@ interface DomainCardProps {
 }
 
 function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDelete }: DomainCardProps) {
+  const { t, lang } = useTranslation();
   const recs = getRecommendations(d);
   const borderColor = domainBorderColor(d);
 
@@ -281,6 +284,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
 
   return (
     <div
+      className="cs-domain-item"
       style={{
         background: "#151515",
         border: "0.8px solid #1a1a1a",
@@ -364,8 +368,8 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
             }}
           >
             {d.last_scanned_at
-              ? `Último scan: ${relTime(d.last_scanned_at)}`
-              : "Sin escanear"}
+              ? `${t("domains.lastScan")} ${relTime(d.last_scanned_at, lang)}`
+              : t("domains.neverScanned")}
           </p>
         </div>
 
@@ -389,7 +393,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
           <DomainDnsBadge label="Web"   status={d.uptime_status} statusMap={UPTIME_BADGE_MAP} />
           {/* Overall status badge */}
           {(() => {
-            const os = getDomainOverallStatus(d);
+            const os = getDomainOverallStatus(d, t);
             return (
               <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: "6px", background: os.bg, border: `0.8px solid ${os.border}`, fontFamily: "var(--font-dm-sans, system-ui, sans-serif)", fontSize: "11px", fontWeight: 600, color: os.color, whiteSpace: "nowrap", letterSpacing: "0.01em" }}>
                 {os.label}
@@ -400,9 +404,10 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
 
           {/* Scan button */}
           <button
+            className="cs-btn"
             onClick={(e) => { e.stopPropagation(); onScan(e, d.id); }}
             disabled={isScanning}
-            title="Escanear (1 crédito)"
+            title={t("domains.scanTooltip")}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -434,7 +439,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
               />
               <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor" />
             </svg>
-            Revisar
+            {t("domains.scanBtn")}
           </button>
 
           {/* Delete button */}
@@ -522,7 +527,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                 margin: 0,
               }}
             >
-              Último escaneo: {new Date(d.last_scanned_at).toLocaleString("es-ES")}
+              {t("domains.lastScanFull")} {new Date(d.last_scanned_at).toLocaleString(lang === "en" ? "en-US" : "es-ES")}
             </p>
           )}
 
@@ -546,7 +551,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                 marginBottom: 10,
               }}
             >
-              Certificado SSL
+              {t("domains.sslCert")}
             </span>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span
@@ -556,9 +561,9 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                   color: d.ssl_status === "valid" ? "#3ecf8e" : d.ssl_status ? "#ef4444" : "#71717a",
                 }}
               >
-                {d.ssl_status === "valid" ? "Válido" :
-                 d.ssl_status === "expired" ? "Caducado" :
-                 d.ssl_status === "error" ? "Error" : "Sin datos"}
+                {d.ssl_status === "valid" ? t("domains.ssl.valid") :
+                 d.ssl_status === "expired" ? t("domains.ssl.expired") :
+                 d.ssl_status === "error" ? t("domains.ssl.error") : t("domains.ssl.noData")}
               </span>
               {d.ssl_days_remaining !== null && (
                 <span
@@ -568,7 +573,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                     color: "#71717a",
                   }}
                 >
-                  {d.ssl_days_remaining} días restantes
+                  {d.ssl_days_remaining} {t("domains.daysRemaining")}
                 </span>
               )}
             </div>
@@ -616,7 +621,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                 marginBottom: 10,
               }}
             >
-              Disponibilidad
+              {t("domains.uptime")}
             </span>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span
@@ -626,9 +631,9 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                   color: d.uptime_status === "up" ? "#3ecf8e" : d.uptime_status ? "#ef4444" : "#71717a",
                 }}
               >
-                {d.uptime_status === "up" ? "Online" :
-                 d.uptime_status === "down" ? "Caído" :
-                 d.uptime_status === "error" ? "Error" : "Sin datos"}
+                {d.uptime_status === "up" ? t("domains.uptime.up") :
+                 d.uptime_status === "down" ? t("domains.uptime.down") :
+                 d.uptime_status === "error" ? t("domains.uptime.error") : t("domains.uptime.noData")}
               </span>
               {d.last_response_ms !== null && (
                 <span
@@ -664,7 +669,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                 marginBottom: 6,
               }}
             >
-              Seguridad de Email
+              {t("domains.emailSec")}
             </span>
             {secRow("SPF",   d.spf_status)}
             {secRow("DKIM",  d.dkim_status)}
@@ -692,7 +697,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                   marginBottom: 10,
                 }}
               >
-                Recomendaciones
+                {t("domains.recommendations")}
               </span>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {recs.map((r, i) => (
@@ -748,7 +753,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
                 <path d="M3 8l3.5 3.5L13 4" stroke="#3ecf8e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <p style={{ fontSize: "0.78rem", color: "#3ecf8e", margin: 0 }}>
-                Sin recomendaciones críticas. Tu dominio está bien configurado.
+                {t("domains.noRecommendations")}
               </p>
             </div>
           ) : null}
@@ -762,6 +767,7 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
 export default function DomainsPage() {
   const { techMode } = useTechMode();
   const { decrementCredits, refreshCredits } = useCredits();
+  const { t, lang } = useTranslation();
   const [domains, setDomains]         = useState<Domain[]>([]);
   const [loading, setLoading]         = useState(true);
   const [adding, setAdding]           = useState(false);
@@ -775,7 +781,7 @@ export default function DomainsPage() {
       const res = await domainsApi.list();
       setDomains(Array.isArray(res.data) ? res.data : (res.data?.data ?? []));
     } catch {
-      toast.error("Error al cargar dominios");
+      toast.error(t("domains.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -790,9 +796,9 @@ export default function DomainsPage() {
       const res = await domainsApi.add(domain);
       setDomains((prev) => [...prev, res.data]);
       setNewDomain("");
-      toast.success("Dominio añadido");
+      toast.success(t("domains.addedSuccess"));
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || "Error al añadir dominio";
+      const msg = err?.response?.data?.detail || t("domains.errorAdd");
       toast.error(msg);
     } finally {
       setAdding(false);
@@ -800,14 +806,14 @@ export default function DomainsPage() {
   };
 
   const handleRemove = async (id: string, domain: string) => {
-    if (!confirm(`¿Eliminar ${domain}?`)) return;
+    if (!confirm(`${t("domains.confirmDelete")} ${domain}?`)) return;
     try {
       await domainsApi.remove(id);
       setDomains((prev) => prev.filter((d) => d.id !== id));
       if (expandedId === id) setExpandedId(null);
-      toast.success("Dominio eliminado");
+      toast.success(t("domains.deletedSuccess"));
     } catch {
-      toast.error("Error al eliminar dominio");
+      toast.error(t("domains.errorDelete"));
     }
   };
 
@@ -818,7 +824,7 @@ export default function DomainsPage() {
       const res = await domainsApi.scan(id);
       const remaining = res.data?.credits_remaining;
 
-      toast.info("Escaneando dominio...");
+      toast.info(t("domains.scanningMsg"));
 
       // Wait for the background scan to complete (~12 s)
       await new Promise((resolve) => setTimeout(resolve, 12000));
@@ -845,7 +851,7 @@ export default function DomainsPage() {
           d.dmarc_status === "valid";
 
         if (allOk) {
-          toast.success(`${d.domain} está correctamente configurado y protegido`);
+          toast.success(t("domains.wellConfigured").replace("{domain}", d.domain));
         } else {
           const issues: string[] = [];
           if (d.ssl_status && d.ssl_status !== "valid") issues.push("SSL");
@@ -854,22 +860,22 @@ export default function DomainsPage() {
           if (d.dkim_status  && d.dkim_status  !== "valid") issues.push("DKIM");
           if (d.dmarc_status && d.dmarc_status !== "valid") issues.push("DMARC");
           if (issues.length > 0) {
-            toast.warning(`Revisar: ${issues.join(", ")}`);
+            toast.warning(`${t("domains.reviewIssues")} ${issues.join(", ")}`);
           } else {
-            toast.success("Scan completado");
+            toast.success(t("domains.scanComplete"));
           }
         }
       }
 
       if (remaining !== undefined) {
-        toast.info(`${remaining} crédito${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}`);
+        toast.info(`${remaining} ${t("domains.creditsLeft").replace("{s}", remaining !== 1 ? "s" : "")}`);
       }
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 402 || detail?.code === "NO_CREDITS") {
         setShowCredits(true);
       } else {
-        toast.error(typeof detail === "string" ? detail : "Error al iniciar escaneo");
+        toast.error(typeof detail === "string" ? detail : t("domains.errorScan"));
       }
     } finally {
       setScanning(null);
@@ -893,15 +899,15 @@ export default function DomainsPage() {
       {showCredits && <BuyCreditsModal onClose={() => setShowCredits(false)} />}
 
       {/* Page Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 24 }}>
+      <div className="cs-fadeup-1" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#f5f5f5", margin: 0 }}>
-            {techMode ? "Domain Monitor" : "Tus webs"}
+            {techMode ? "Domain Monitor" : t("domains.title")}
           </h1>
           <p style={{ fontSize: "0.875rem", color: "#b3b4b5", marginTop: 4, marginBottom: 0 }}>
             {techMode
               ? "SSL, uptime & security score per domain"
-              : "Comprueba que tus webs funcionan y están protegidas"}
+              : t("domains.subtitle")}
           </p>
         </div>
         <button
@@ -934,12 +940,12 @@ export default function DomainsPage() {
           <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
             <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          Comprar créditos
+          {t("domains.buyCredits")}
         </button>
       </div>
 
       {/* Add domain card */}
-      <div
+      <div className="cs-fadeup-2"
         style={{
           background: "#151515",
           border: "0.8px solid #1a1a1a",
@@ -960,14 +966,14 @@ export default function DomainsPage() {
             display: "block",
           }}
         >
-          {techMode ? "Add domain" : "Añadir web"}
+          {techMode ? "Add domain" : t("domains.addLabel")}
         </span>
         <form onSubmit={handleAdd} style={{ display: "flex", gap: 8 }}>
           <input
             type="text"
             value={newDomain}
             onChange={(e) => setNewDomain(e.target.value)}
-            placeholder={techMode ? "ejemplo.com" : "La dirección de tu web, ej: miagencia.com"}
+            placeholder={techMode ? "ejemplo.com" : t("domains.inputPlaceholder")}
             disabled={adding}
             style={{
               flex: 1,
@@ -1008,7 +1014,7 @@ export default function DomainsPage() {
             <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13 }}>
               <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            {adding ? "Añadiendo..." : "Añadir"}
+            {adding ? t("domains.addingBtn") : t("domains.addBtn")}
           </button>
         </form>
       </div>
@@ -1023,7 +1029,7 @@ export default function DomainsPage() {
           marginTop: 8,
         }}
       >
-        Los escaneos manuales consumen 1 crédito por dominio
+        {t("domains.manualScanNote")}
       </p>
 
       {/* Domain list */}
@@ -1070,10 +1076,10 @@ export default function DomainsPage() {
             </div>
             <div>
               <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f5f5f5", margin: "0 0 6px" }}>
-                Sin dominios
+                {t("domains.noDomains")}
               </p>
               <p style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 300, margin: 0 }}>
-                {techMode ? "Add your first domain to start monitoring." : "Añade tu web para empezar a vigilarla."}
+                {techMode ? "Add your first domain to start monitoring." : t("domains.addFirst")}
               </p>
             </div>
           </div>

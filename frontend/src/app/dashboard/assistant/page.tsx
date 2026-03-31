@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { mitigationApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/Toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ChatMsg {
@@ -13,134 +14,112 @@ interface ChatMsg {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function greetingText(): string {
+function greetingText(lang = "es"): string {
   const h = new Date().getHours();
+  if (lang === "en") {
+    if (h < 12) return "Good morning";
+    if (h < 20) return "Good afternoon";
+    return "Good evening";
+  }
   if (h < 12) return "Buenos días";
   if (h < 20) return "Buenas tardes";
   return "Buenas noches";
 }
 
-function formatTime(date?: Date): string {
+function formatTime(date?: Date, lang = "es"): string {
   if (!date) return "";
-  return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString(lang === "en" ? "en-US" : "es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
-// ── AI Orb ────────────────────────────────────────────────────────────────────
+// ── AI Orb (CSS-only 3D sphere) ───────────────────────────────────────────────
 function AIOrb({ speaking = false }: { speaking?: boolean }) {
   return (
     <div style={{ width: 160, height: 160, position: "relative", margin: "0 auto 24px" }}>
-      <svg
-        viewBox="0 0 160 160"
-        width="160"
-        height="160"
-        style={{ overflow: "visible" }}
+      <style>{`
+        @keyframes orbFloat {
+          0%,100% { transform: translateY(0); }
+          50%      { transform: translateY(-10px); }
+        }
+        @keyframes orbGlow {
+          0%,100% { box-shadow: 0 0 30px rgba(62,207,142,.18), 0 0 60px rgba(62,207,142,.08); }
+          50%      { box-shadow: 0 0 50px rgba(62,207,142,.35), 0 0 100px rgba(62,207,142,.15); }
+        }
+        @keyframes orbRingA {
+          from { transform: rotateX(70deg) rotate(0deg); }
+          to   { transform: rotateX(70deg) rotate(360deg); }
+        }
+        @keyframes orbRingB {
+          from { transform: rotateX(20deg) rotateY(30deg) rotate(0deg); }
+          to   { transform: rotateX(20deg) rotateY(30deg) rotate(360deg); }
+        }
+        @keyframes orbPulse {
+          0%,100% { opacity: .5; transform: scale(.96); }
+          50%      { opacity: 1;  transform: scale(1.04); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .orb-float,.orb-ring-a,.orb-ring-b { animation: none !important; }
+        }
+      `}</style>
+      {/* Float wrapper */}
+      <div
+        className="orb-float"
+        style={{
+          width: 160, height: 160, position: "relative",
+          animation: `orbFloat 4s ease-in-out infinite`,
+        }}
       >
-        <defs>
-          {/* Dark sphere gradient */}
-          <radialGradient id="orbBg" cx="45%" cy="35%" r="60%">
-            <stop offset="0%" stopColor="#1a2820" />
-            <stop offset="50%" stopColor="#0d1a12" />
-            <stop offset="100%" stopColor="#050f09" />
-          </radialGradient>
-          {/* Clip to circle */}
-          <clipPath id="orbClip">
-            <circle cx="80" cy="80" r="72" />
-          </clipPath>
-          {/* Arc glow filter */}
-          <filter id="arcGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+        {/* Sphere body */}
+        <div style={{
+          position: "absolute", inset: 16, borderRadius: "50%",
+          background: "radial-gradient(circle at 35% 30%, #1e3a2e 0%, #0d1a12 45%, #040d08 100%)",
+          animation: speaking ? `orbGlow 1.2s ease-in-out infinite, orbPulse 1.2s ease-in-out infinite` : `orbGlow 3s ease-in-out infinite`,
+          boxShadow: "0 0 40px rgba(62,207,142,.18)",
+        }}>
+          {/* Inner highlight */}
+          <div style={{
+            position: "absolute", top: "18%", left: "22%",
+            width: "34%", height: "22%", borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 100%)",
+          }} />
+        </div>
 
-        {/* Outer subtle ring */}
-        <circle
-          cx="80" cy="80" r="76"
-          fill="none"
-          stroke="rgba(62,207,142,0.08)"
-          strokeWidth="1"
+        {/* Orbital ring A */}
+        <div
+          className="orb-ring-a"
+          style={{
+            position: "absolute", inset: 4, borderRadius: "50%",
+            border: "1.5px solid transparent",
+            background: "transparent",
+            backgroundImage: `conic-gradient(from 0deg, rgba(62,207,142,0) 0%, rgba(62,207,142,0.7) 35%, rgba(62,207,142,0) 70%)`,
+            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 1.5px), white calc(100% - 1.5px))",
+            mask: "radial-gradient(farthest-side, transparent calc(100% - 1.5px), white calc(100% - 1.5px))",
+            transform: "rotateX(70deg)",
+            animation: `orbRingA ${speaking ? "1.6s" : "6s"} linear infinite`,
+          }}
         />
 
-        {/* Main sphere */}
-        <circle cx="80" cy="80" r="72" fill="url(#orbBg)" />
-
-        {/* Grid lines inside sphere (clipped) */}
-        <g clipPath="url(#orbClip)">
-          {[24, 36, 48, 60, 72, 84, 96, 108, 120, 132].map(y => (
-            <line
-              key={`h${y}`}
-              x1="8" y1={y} x2="152" y2={y}
-              stroke="rgba(62,207,142,0.12)"
-              strokeWidth="0.5"
-            />
-          ))}
-          {[24, 36, 48, 60, 72, 84, 96, 108, 120, 132].map(x => (
-            <line
-              key={`v${x}`}
-              x1={x} y1="8" x2={x} y2="152"
-              stroke="rgba(62,207,142,0.12)"
-              strokeWidth="0.5"
-            />
-          ))}
-          {/* Equator line (slightly brighter) */}
-          <ellipse
-            cx="80" cy="80" rx="72" ry="20"
-            fill="none"
-            stroke="rgba(62,207,142,0.18)"
-            strokeWidth="0.75"
-          />
-          {/* Meridian */}
-          <ellipse
-            cx="80" cy="80" rx="20" ry="72"
-            fill="none"
-            stroke="rgba(62,207,142,0.12)"
-            strokeWidth="0.5"
-          />
-        </g>
-
-        {/* Primary rotating arc group */}
-        <g
+        {/* Orbital ring B */}
+        <div
+          className="orb-ring-b"
           style={{
-            transformOrigin: "80px 80px",
-            animation: `orbSpin ${speaking ? "2s" : "8s"} linear infinite`,
+            position: "absolute", inset: 10, borderRadius: "50%",
+            backgroundImage: `conic-gradient(from 120deg, rgba(0,229,191,0) 0%, rgba(0,229,191,0.5) 30%, rgba(0,229,191,0) 60%)`,
+            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 1.5px), white calc(100% - 1.5px))",
+            mask: "radial-gradient(farthest-side, transparent calc(100% - 1.5px), white calc(100% - 1.5px))",
+            transform: "rotateX(20deg) rotateY(30deg)",
+            animation: `orbRingB ${speaking ? "2.2s" : "9s"} linear infinite`,
           }}
-        >
-          <circle
-            cx="80" cy="80" r="72"
-            fill="none"
-            stroke="#3ecf8e"
-            strokeWidth="2.5"
-            strokeDasharray="105 405"
-            strokeLinecap="round"
-            filter="url(#arcGlow)"
-          />
-          {/* Bright glow dot at arc leading edge */}
-          <circle cx="80" cy="8" r="3" fill="white" opacity="0.9" />
-        </g>
+        />
 
-        {/* Secondary dimmer arc (reverse) */}
-        <g
-          style={{
-            transformOrigin: "80px 80px",
-            animation: `orbSpin2 ${speaking ? "3s" : "12s"} linear infinite reverse`,
-          }}
-        >
-          <circle
-            cx="80" cy="80" r="72"
-            fill="none"
-            stroke="rgba(255,255,255,0.15)"
-            strokeWidth="1"
-            strokeDasharray="60 392"
-            strokeLinecap="round"
-          />
-        </g>
-
-        {/* Sphere highlight */}
-        <ellipse cx="65" cy="48" rx="16" ry="10" fill="rgba(255,255,255,0.04)" />
-      </svg>
+        {/* Center pulse dot */}
+        <div style={{
+          position: "absolute", top: "50%", left: "50%",
+          width: 6, height: 6, marginTop: -3, marginLeft: -3,
+          borderRadius: "50%", background: "#3ecf8e",
+          boxShadow: "0 0 8px rgba(62,207,142,0.8)",
+          animation: speaking ? "orbPulse 0.8s ease-in-out infinite" : "orbPulse 2.5s ease-in-out infinite",
+        }} />
+      </div>
     </div>
   );
 }
@@ -174,6 +153,7 @@ function TypingDots() {
 
 // ── Chat bubble ───────────────────────────────────────────────────────────────
 function Bubble({ msg }: { msg: ChatMsg }) {
+  const { lang } = useTranslation();
   const isUser = msg.role === "user";
   return (
     <div
@@ -212,7 +192,7 @@ function Bubble({ msg }: { msg: ChatMsg }) {
             paddingRight: isUser ? 2 : 0,
           }}
         >
-          {formatTime(msg.timestamp)}
+          {formatTime(msg.timestamp, lang)}
         </span>
       )}
     </div>
@@ -221,6 +201,7 @@ function Bubble({ msg }: { msg: ChatMsg }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AssistantPage() {
+  const { t, lang } = useTranslation();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -292,15 +273,15 @@ export default function AssistantPage() {
       } catch (err: unknown) {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 429) {
-          toast.error("Límite de uso alcanzado.");
+          toast.error(t("assistant.usageLimit"));
         } else {
-          toast.error("Error al conectar con el asistente.");
+          toast.error(t("assistant.errorConnect"));
         }
       } finally {
         setSending(false);
       }
     },
-    [sending, messages, usageCount, usageLimit]
+    [sending, messages, usageCount, usageLimit, t]
   );
 
   // ── Keyboard handler ─────────────────────────────────────────────────────
@@ -315,7 +296,7 @@ export default function AssistantPage() {
   const analyzeAlerts = useCallback(async () => {
     if (sending) return;
     setSending(true);
-    const userMsg: ChatMsg = { role: "user", content: "Analiza mis alertas activas", timestamp: new Date() };
+    const userMsg: ChatMsg = { role: "user", content: t("assistant.analyzeActive"), timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
 
     try {
@@ -323,7 +304,7 @@ export default function AssistantPage() {
       const summary = summaryRes.data.summary as string;
 
       const res = await mitigationApi.chat({
-        message: summary + "\n\nPor favor, analiza estas alertas y dime cuáles son las más urgentes y cómo resolverlas.",
+        message: summary + "\n\n" + t("assistant.analyzePlease"),
         conversation_history: [],
       });
 
@@ -334,29 +315,30 @@ export default function AssistantPage() {
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 429) {
-        toast.error("Límite de uso alcanzado.");
+        toast.error(t("assistant.usageLimit"));
       } else {
-        toast.error("Error al analizar alertas.");
+        toast.error(t("assistant.errorAlerts"));
       }
     } finally {
       setSending(false);
     }
-  }, [sending, usageCount, usageLimit]);
+  }, [sending, usageCount, usageLimit, t]);
 
   // ── Suggestion chips ─────────────────────────────────────────────────────
+  const ANALYZE_KEY = "__ANALYZE__";
   const suggestions = [
-    "¿Cómo mejorar mi SPF/DKIM?",
-    "Analiza mi puntuación SSL",
-    "Qué significa una brecha Dark Web",
-    "📊 Analizar mis alertas",
+    { label: t("assistant.suggestions.spf"),  action: null },
+    { label: t("assistant.suggestions.ssl"),  action: null },
+    { label: t("assistant.suggestions.dark"), action: null },
+    { label: t("assistant.analyzeAlerts"),    action: ANALYZE_KEY },
   ];
 
-  const handleSuggestion = (text: string) => {
-    if (text === "📊 Analizar mis alertas") {
+  const handleSuggestion = (label: string, action: string | null) => {
+    if (action === ANALYZE_KEY) {
       analyzeAlerts();
       return;
     }
-    setInput(text);
+    setInput(label);
     textareaRef.current?.focus();
   };
 
@@ -388,14 +370,6 @@ export default function AssistantPage() {
     >
       {/* ── Global keyframes ── */}
       <style>{`
-        @keyframes orbSpin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes orbSpin2 {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
         @keyframes dotBounce {
           0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
           40%            { transform: scale(1);   opacity: 1;   }
@@ -468,7 +442,7 @@ export default function AssistantPage() {
           {/* History */}
           <button
             className="icon-btn"
-            title="Historial"
+            title={t("assistant.history")}
             style={{
               background: "transparent",
               border: "none",
@@ -491,7 +465,7 @@ export default function AssistantPage() {
           {/* New chat */}
           <button
             className="icon-btn"
-            title="Nueva conversación"
+            title={t("assistant.newChat")}
             onClick={handleNewChat}
             style={{
               background: "transparent",
@@ -551,7 +525,7 @@ export default function AssistantPage() {
                   letterSpacing: "-0.01em",
                 }}
               >
-                {greetingText()}{username ? `, ${username}` : ""}
+                {greetingText(lang)}{username ? `, ${username}` : ""}
               </h2>
               <p
                 style={{
@@ -561,7 +535,7 @@ export default function AssistantPage() {
                   marginBottom: 0,
                 }}
               >
-                ¿Cómo puedo ayudarte con la seguridad hoy?
+                {t("assistant.howHelp")}
               </p>
             </div>
 
@@ -580,7 +554,7 @@ export default function AssistantPage() {
                 <button
                   key={i}
                   className="chip-btn"
-                  onClick={() => handleSuggestion(chip)}
+                  onClick={() => handleSuggestion(chip.label, chip.action)}
                   style={{
                     background: "#151515",
                     border: "0.8px solid #1a1a1a",
@@ -594,7 +568,7 @@ export default function AssistantPage() {
                     lineHeight: 1.4,
                   }}
                 >
-                  {chip}
+                  {chip.label}
                 </button>
               ))}
             </div>
@@ -744,7 +718,7 @@ export default function AssistantPage() {
                     <line x1="22" y1="2" x2="11" y2="13" />
                     <polygon points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
-                  Enviar
+                  {t("assistant.send")}
                 </>
               )}
             </button>
@@ -764,11 +738,11 @@ export default function AssistantPage() {
             }}
           >
             <span style={{ fontSize: 11, color: "#71717a" }}>
-              Shift+Enter para nueva línea
+              {t("assistant.shiftEnter")}
             </span>
             {usageCount > 0 && (
               <span style={{ fontSize: 11, color: "#71717a" }}>
-                Tokens usados: {usageCount}/{usageLimit}
+                {t("assistant.tokensUsed")} {usageCount}/{usageLimit}
               </span>
             )}
           </div>

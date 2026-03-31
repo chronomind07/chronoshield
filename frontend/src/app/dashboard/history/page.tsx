@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { historyApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -29,29 +30,29 @@ interface HistoryData {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+function fmtTime(iso: string, lang = "es") {
+  return new Date(iso).toLocaleTimeString(lang === "en" ? "en-US" : "es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
-function fmtFull(iso: string) {
-  return new Date(iso).toLocaleString("es-ES", {
+function fmtFull(iso: string, lang = "es") {
+  return new Date(iso).toLocaleString(lang === "en" ? "en-US" : "es-ES", {
     day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
 }
 
-function dayLabel(iso: string): string {
+function dayLabel(iso: string, lang = "es", tToday = "Hoy", tYesterday = "Ayer"): string {
   const d = new Date(iso);
   const now = new Date();
-  if (d.toDateString() === now.toDateString()) return "Hoy";
-  if (new Date(now.getTime() - 86400000).toDateString() === d.toDateString()) return "Ayer";
-  return d.toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
+  if (d.toDateString() === now.toDateString()) return tToday;
+  if (new Date(now.getTime() - 86400000).toDateString() === d.toDateString()) return tYesterday;
+  return d.toLocaleDateString(lang === "en" ? "en-US" : "es-ES", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-function groupByDay(entries: HistoryEntry[]): { label: string; items: HistoryEntry[] }[] {
+function groupByDay(entries: HistoryEntry[], lang: string, tToday: string, tYesterday: string): { label: string; items: HistoryEntry[] }[] {
   const map = new Map<string, HistoryEntry[]>();
   for (const e of entries) {
-    const key = dayLabel(e.occurred_at);
+    const key = dayLabel(e.occurred_at, lang, tToday, tYesterday);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(e);
   }
@@ -73,11 +74,11 @@ const MODE_STYLE: Record<string, { color: string; bg: string; border: string }> 
   system: { color: "#a855f7", bg: "rgba(168,85,247,0.08)",  border: "rgba(168,85,247,0.15)"  },
 };
 
-const DNS_CHIP: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  valid:   { color: "#3ecf8e", bg: "rgba(62,207,142,0.10)",  border: "rgba(62,207,142,0.2)",  label: "OK"      },
-  invalid: { color: "#ef4444", bg: "rgba(239,68,68,0.10)",   border: "rgba(239,68,68,0.2)",   label: "Inválido" },
-  missing: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.2)",  label: "Falta"   },
-  error:   { color: "#f59e0b", bg: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.2)",  label: "Error"   },
+const DNS_CHIP_BASE: Record<string, { color: string; bg: string; border: string }> = {
+  valid:   { color: "#3ecf8e", bg: "rgba(62,207,142,0.10)",  border: "rgba(62,207,142,0.2)"  },
+  invalid: { color: "#ef4444", bg: "rgba(239,68,68,0.10)",   border: "rgba(239,68,68,0.2)"   },
+  missing: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.2)"  },
+  error:   { color: "#f59e0b", bg: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.2)"  },
 };
 
 // ── Small components ──────────────────────────────────────────────────────────
@@ -93,9 +94,9 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
   );
 }
 
-function ModeBadge({ mode }: { mode: string }) {
+function ModeBadge({ mode, tAuto, tManual, tSystem }: { mode: string; tAuto: string; tManual: string; tSystem: string }) {
   const s = MODE_STYLE[mode] ?? MODE_STYLE.system;
-  const label = mode === "auto" ? "Auto" : mode === "manual" ? "Manual" : "Sistema";
+  const label = mode === "auto" ? tAuto : mode === "manual" ? tManual : tSystem;
   return (
     <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "11px", fontWeight: 600,
       padding: "2px 8px", borderRadius: 6, color: s.color, background: s.bg,
@@ -105,14 +106,21 @@ function ModeBadge({ mode }: { mode: string }) {
   );
 }
 
-function DnsChip({ label, status }: { label: string; status: string | null | undefined }) {
-  const s = status ? (DNS_CHIP[status] ?? DNS_CHIP.error) : { color: "#71717a", bg: "rgba(113,113,122,0.08)", border: "rgba(113,113,122,0.15)", label: "—" };
+function DnsChip({ label, status, tInvalid, tMissing }: {
+  label: string; status: string | null | undefined;
+  tInvalid: string; tMissing: string;
+}) {
+  const base = status ? (DNS_CHIP_BASE[status] ?? DNS_CHIP_BASE.error) : null;
+  const color = base?.color ?? "#71717a";
+  const bg = base?.bg ?? "rgba(113,113,122,0.08)";
+  const border = base?.border ?? "rgba(113,113,122,0.15)";
+  const chipLabel = !status ? "—" : status === "valid" ? "OK" : status === "invalid" ? tInvalid : status === "missing" ? tMissing : "Error";
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: "var(--font-dm-mono)",
       fontSize: "11px", fontWeight: 500, padding: "2px 7px", borderRadius: 5,
-      color: s.color, background: s.bg, border: `0.8px solid ${s.border}`, whiteSpace: "nowrap" }}>
+      color, background: bg, border: `0.8px solid ${border}`, whiteSpace: "nowrap" }}>
       <span style={{ color: "#71717a", fontWeight: 400 }}>{label}</span>
-      <span>{s.label}</span>
+      <span>{chipLabel}</span>
     </span>
   );
 }
@@ -132,31 +140,28 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 
 // ── Expanded detail panels ────────────────────────────────────────────────────
 
-function DomainScanDetails({ details }: { details: Record<string, unknown> }) {
+function DomainScanDetails({ details, tScore, tBreaches }: { details: Record<string, unknown>; tScore: string; tBreaches: string }) {
   const score = (details.overall_score as number) ?? 0;
   const grade = details.grade as string | undefined;
   const color = score >= 80 ? "#3ecf8e" : score >= 60 ? "#f59e0b" : "#ef4444";
   return (
     <div style={{ padding: "14px 16px", background: "#1a1a1a", borderRadius: 10, marginTop: 12 }}>
-      {/* Score headline */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#71717a" }}>Puntuación de seguridad</span>
+        <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#71717a" }}>{tScore}</span>
         <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "1.1rem", fontWeight: 700, color }}>
           {score}/100{grade ? ` · ${grade}` : ""}
         </span>
       </div>
-      {/* Component bars */}
-      <ScoreBar label="SSL"          score={(details.ssl_score as number) ?? 0} />
-      <ScoreBar label="Uptime"       score={(details.uptime_score as number) ?? 0} />
-      <ScoreBar label="Email DNS"    score={(details.email_sec_score as number) ?? 0} />
-      <ScoreBar label="Dark Web"     score={(details.breach_score as number) ?? 0} />
-      {/* Text summary */}
+      <ScoreBar label="SSL"       score={(details.ssl_score as number) ?? 0} />
+      <ScoreBar label="Uptime"    score={(details.uptime_score as number) ?? 0} />
+      <ScoreBar label="Email DNS" score={(details.email_sec_score as number) ?? 0} />
+      <ScoreBar label="Dark Web"  score={(details.breach_score as number) ?? 0} />
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
         {([
-          ["SSL",      details.ssl_label],
-          ["Uptime",   details.uptime_label],
-          ["DNS",      details.email_label],
-          ["Brechas",  details.breach_label],
+          ["SSL",       details.ssl_label],
+          ["Uptime",    details.uptime_label],
+          ["DNS",       details.email_label],
+          [tBreaches,   details.breach_label],
         ] as [string, unknown][]).map(([k, v]) => (
           <span key={k} style={{ fontFamily: "var(--font-dm-mono)", fontSize: "11px", color: "#b3b4b5",
             padding: "2px 7px", borderRadius: 5, background: "rgba(255,255,255,0.04)", border: "0.8px solid #222" }}>
@@ -168,13 +173,13 @@ function DomainScanDetails({ details }: { details: Record<string, unknown> }) {
   );
 }
 
-function EmailDnsDetails({ details }: { details: Record<string, unknown> }) {
+function EmailDnsDetails({ details, tInvalid, tMissing }: { details: Record<string, unknown>; tInvalid: string; tMissing: string }) {
   return (
     <div style={{ padding: "14px 16px", background: "#1a1a1a", borderRadius: 10, marginTop: 12 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-        <DnsChip label="SPF"   status={details.spf_status as string} />
-        <DnsChip label="DKIM"  status={details.dkim_status as string} />
-        <DnsChip label="DMARC" status={details.dmarc_status as string} />
+        <DnsChip label="SPF"   status={details.spf_status as string}   tInvalid={tInvalid} tMissing={tMissing} />
+        <DnsChip label="DKIM"  status={details.dkim_status as string}  tInvalid={tInvalid} tMissing={tMissing} />
+        <DnsChip label="DMARC" status={details.dmarc_status as string} tInvalid={tInvalid} tMissing={tMissing} />
       </div>
       {(["spf_record", "dkim_record", "dmarc_record"] as const).map((key) => {
         const val = details[key] as string | null | undefined;
@@ -193,15 +198,15 @@ function EmailDnsDetails({ details }: { details: Record<string, unknown> }) {
   );
 }
 
-function DarkWebDetails({ details }: { details: Record<string, unknown> }) {
+function DarkWebDetails({ details, tType, tResults, tNoFindings }: { details: Record<string, unknown>; tType: string; tResults: string; tNoFindings: string }) {
   const total = (details.total_results as number) ?? 0;
   const findings = (details.findings as unknown[]) ?? [];
   return (
     <div style={{ padding: "14px 16px", background: "#1a1a1a", borderRadius: 10, marginTop: 12 }}>
       <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.75rem", marginBottom: 8 }}>
-        <span style={{ color: "#71717a" }}>Tipo: </span>
+        <span style={{ color: "#71717a" }}>{tType} </span>
         <span style={{ color: "#b3b4b5" }}>{String(details.scan_type ?? "—")}</span>
-        <span style={{ color: "#71717a", marginLeft: 16 }}>Resultados: </span>
+        <span style={{ color: "#71717a", marginLeft: 16 }}>{tResults} </span>
         <span style={{ color: total > 0 ? "#ef4444" : "#3ecf8e", fontWeight: 600 }}>{total}</span>
       </div>
       {findings.length > 0 && (
@@ -216,7 +221,7 @@ function DarkWebDetails({ details }: { details: Record<string, unknown> }) {
       )}
       {total === 0 && (
         <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "11px", color: "#3ecf8e" }}>
-          ✓ Sin hallazgos en la dark web
+          {tNoFindings}
         </div>
       )}
     </div>
@@ -235,10 +240,14 @@ function AlertDetails({ details }: { details: Record<string, unknown> }) {
 
 // ── Entry card (expandable) ────────────────────────────────────────────────────
 
-function EntryCard({ entry, isExpanded, onToggle }: {
+function EntryCard({ entry, isExpanded, onToggle, lang, tInvalid, tMissing, tScore, tBreaches, tType, tResults, tNoFindings, tAuto, tManual, tSystem }: {
   entry: HistoryEntry;
   isExpanded: boolean;
   onToggle: () => void;
+  lang: string;
+  tInvalid: string; tMissing: string; tScore: string; tBreaches: string;
+  tType: string; tResults: string; tNoFindings: string;
+  tAuto: string; tManual: string; tSystem: string;
 }) {
   const ss = STATUS_STYLE[entry.status] ?? STATUS_SYSTEM;
   const isSystem = entry.category === "system" && entry.event_type !== "alert_generated";
@@ -249,6 +258,7 @@ function EntryCard({ entry, isExpanded, onToggle }: {
 
   return (
     <div
+      className="cs-domain-item"
       style={{
         background: "#151515",
         border: "0.8px solid #1a1a1a",
@@ -291,7 +301,7 @@ function EntryCard({ entry, isExpanded, onToggle }: {
               {entry.title}
             </span>
             {!isSystem && <StatusBadge status={entry.status} label={entry.status_label} />}
-            <ModeBadge mode={entry.scan_mode} />
+            <ModeBadge mode={entry.scan_mode} tAuto={tAuto} tManual={tManual} tSystem={tSystem} />
           </div>
           <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a" }}>
             {entry.subject !== entry.title && entry.subject !== "—" && (
@@ -303,7 +313,7 @@ function EntryCard({ entry, isExpanded, onToggle }: {
         {/* Time + chevron */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a", whiteSpace: "nowrap" }}>
-            {fmtTime(entry.occurred_at)}
+            {fmtTime(entry.occurred_at, lang)}
           </span>
           {hasDetails && (
             <svg viewBox="0 0 16 16" fill="none" style={{
@@ -322,12 +332,12 @@ function EntryCard({ entry, isExpanded, onToggle }: {
         <div style={{ padding: "0 18px 14px", borderTop: "0.8px solid #1a1a1a" }}>
           <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.62rem", color: "#71717a",
             paddingTop: 10, marginBottom: 2 }}>
-            {fmtFull(entry.occurred_at)}
+            {fmtFull(entry.occurred_at, lang)}
           </div>
-          {entry.event_type === "domain_scan"      && <DomainScanDetails details={entry.details} />}
-          {entry.event_type === "email_dns"         && <EmailDnsDetails   details={entry.details} />}
-          {entry.event_type === "darkweb_scan"      && <DarkWebDetails    details={entry.details} />}
-          {entry.event_type === "alert_generated"   && <AlertDetails      details={entry.details} />}
+          {entry.event_type === "domain_scan"    && <DomainScanDetails details={entry.details} tScore={tScore} tBreaches={tBreaches} />}
+          {entry.event_type === "email_dns"      && <EmailDnsDetails   details={entry.details} tInvalid={tInvalid} tMissing={tMissing} />}
+          {entry.event_type === "darkweb_scan"   && <DarkWebDetails    details={entry.details} tType={tType} tResults={tResults} tNoFindings={tNoFindings} />}
+          {entry.event_type === "alert_generated"&& <AlertDetails      details={entry.details} />}
         </div>
       )}
     </div>
@@ -336,11 +346,15 @@ function EntryCard({ entry, isExpanded, onToggle }: {
 
 // ── Day group ─────────────────────────────────────────────────────────────────
 
-function DayGroup({ label, items, expandedId, onToggle }: {
+function DayGroup({ label, items, expandedId, onToggle, lang, tInvalid, tMissing, tScore, tBreaches, tType, tResults, tNoFindings, tAuto, tManual, tSystem }: {
   label: string;
   items: HistoryEntry[];
   expandedId: string | null;
   onToggle: (id: string) => void;
+  lang: string;
+  tInvalid: string; tMissing: string; tScore: string; tBreaches: string;
+  tType: string; tResults: string; tNoFindings: string;
+  tAuto: string; tManual: string; tSystem: string;
 }) {
   return (
     <div>
@@ -361,41 +375,30 @@ function DayGroup({ label, items, expandedId, onToggle }: {
           entry={e}
           isExpanded={expandedId === e.id}
           onToggle={() => onToggle(e.id)}
+          lang={lang}
+          tInvalid={tInvalid} tMissing={tMissing} tScore={tScore} tBreaches={tBreaches}
+          tType={tType} tResults={tResults} tNoFindings={tNoFindings}
+          tAuto={tAuto} tManual={tManual} tSystem={tSystem}
         />
       ))}
     </div>
   );
 }
 
-// ── Filter constants ───────────────────────────────────────────────────────────
-
-const DATE_FILTERS = [
-  { key: "week",  label: "7 días" },
-  { key: "month", label: "30 días" },
-  { key: "all",   label: "Todo" },
-];
-
-const CATEGORY_FILTERS = [
-  { key: "",        label: "Todos" },
-  { key: "domain",  label: "🌐 Dominios" },
-  { key: "email",   label: "📧 Emails" },
-  { key: "darkweb", label: "🕵️ Dark Web" },
-  { key: "system",  label: "⚡ Alertas" },
-];
-
 // ── Pagination ────────────────────────────────────────────────────────────────
 
-function Pagination({ page, total, perPage, onPage }: {
-  page: number; total: number; perPage: number; onPage: (p: number) => void;
+function Pagination({ page, total, perPage, onPage, tShowing }: {
+  page: number; total: number; perPage: number; onPage: (p: number) => void; tShowing: string;
 }) {
   const totalPages = Math.ceil(total / perPage);
   if (totalPages <= 1) return null;
   const showing = Math.min(page * perPage, total);
+  const showingText = tShowing.replace("{n}", String(showing)).replace("{total}", String(total));
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
       marginTop: 24, paddingTop: 18, borderTop: "0.8px solid #1a1a1a" }}>
       <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a" }}>
-        {showing} de {total} registros
+        {showingText}
       </span>
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
         {[
@@ -428,6 +431,7 @@ function Pagination({ page, total, perPage, onPage }: {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
+  const { t, lang } = useTranslation();
   const [data, setData]                 = useState<HistoryData | null>(null);
   const [loading, setLoading]           = useState(true);
   const [dateFilter, setDateFilter]     = useState("month");
@@ -435,6 +439,20 @@ export default function HistoryPage() {
   const [problemsOnly, setProblemsOnly] = useState(false);
   const [page, setPage]                 = useState(1);
   const [expandedId, setExpandedId]     = useState<string | null>(null);
+
+  const DATE_FILTERS = [
+    { key: "week",  label: t("history.dateFilter.week") },
+    { key: "month", label: t("history.dateFilter.month") },
+    { key: "all",   label: t("history.dateFilter.all") },
+  ];
+
+  const CATEGORY_FILTERS = [
+    { key: "",        label: t("history.category.all") },
+    { key: "domain",  label: t("history.category.domain") },
+    { key: "email",   label: t("history.category.email") },
+    { key: "darkweb", label: t("history.category.darkweb") },
+    { key: "system",  label: t("history.category.system") },
+  ];
 
   const load = useCallback(async (p = 1) => {
     setLoading(true);
@@ -448,11 +466,11 @@ export default function HistoryPage() {
       });
       setData(res.data);
     } catch {
-      toast.error("Error al cargar el historial");
+      toast.error(t("history.errorLoad"));
     } finally {
       setLoading(false);
     }
-  }, [dateFilter, categoryFilter, problemsOnly]);
+  }, [dateFilter, categoryFilter, problemsOnly, t]);
 
   useEffect(() => {
     setPage(1);
@@ -474,31 +492,47 @@ export default function HistoryPage() {
     setExpandedId(prev => prev === id ? null : id);
   };
 
-  const groups = data ? groupByDay(Array.isArray(data.entries) ? data.entries : []) : [];
+  const tToday     = t("history.today");
+  const tYesterday = t("history.yesterday");
+  const tInvalid   = t("emails.status.invalid") ?? "Inválido";
+  const tMissing   = t("emails.status.missing") ?? "Falta";
+  const tScore     = t("history.scanScore");
+  const tBreaches  = t("history.breaches");
+  const tType      = t("history.darkwebType");
+  const tResults   = t("history.darkwebResults");
+  const tNoFindings= t("history.darkwebNoFindings");
+  const tAuto      = t("history.modeAuto");
+  const tManual    = t("history.modeManual");
+  const tSystem    = t("history.modeSystem");
+
+  const groups = data ? groupByDay(
+    Array.isArray(data.entries) ? data.entries : [],
+    lang, tToday, tYesterday
+  ) : [];
 
   return (
     <div style={{ padding: "28px 32px 60px", background: "#0b0b0b", minHeight: "100vh",
       fontFamily: "var(--font-dm-sans)" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
+      <div className="cs-fadeup-1" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", margin: 0, letterSpacing: "-0.01em" }}>
-            Historial de actividad
+            {t("history.title")}
           </h1>
           <p style={{ color: "#71717a", fontSize: "0.8rem", marginTop: 5, margin: "5px 0 0" }}>
-            Registro cronológico de todos los eventos y escaneos de seguridad
+            {t("history.subtitle")}
           </p>
         </div>
         {data && (
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a", marginTop: 6 }}>
-            {data.total} registro{data.total !== 1 ? "s" : ""}
+            {data.total} {t("history.records").replace("{s}", data.total !== 1 ? "s" : "")}
           </span>
         )}
       </div>
 
       {/* Filters */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 28 }}>
+      <div className="cs-fadeup-2" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 28 }}>
         {/* Date filter pills */}
         <div style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
           border: "0.8px solid #1a1a1a", borderRadius: 8 }}>
@@ -544,7 +578,7 @@ export default function HistoryPage() {
             border: problemsOnly ? "0.8px solid rgba(239,68,68,0.2)" : "0.8px solid #1a1a1a",
           }}
         >
-          ⚠ Solo problemas
+          {t("history.problemsOnly")}
         </button>
       </div>
 
@@ -561,11 +595,9 @@ export default function HistoryPage() {
             border: "0.8px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center",
             justifyContent: "center", fontSize: "1.3rem" }}>≡</div>
           <div>
-            <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>Sin actividad</div>
+            <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>{t("history.noActivity")}</div>
             <div style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 280, lineHeight: 1.6 }}>
-              {problemsOnly
-                ? "No se encontraron problemas en el período seleccionado."
-                : "Tu historial aparecerá aquí cuando se realicen escaneos."}
+              {problemsOnly ? t("history.noProblems") : t("history.appearsHere")}
             </div>
           </div>
         </div>
@@ -578,6 +610,10 @@ export default function HistoryPage() {
               items={g.items}
               expandedId={expandedId}
               onToggle={handleToggle}
+              lang={lang}
+              tInvalid={tInvalid} tMissing={tMissing} tScore={tScore} tBreaches={tBreaches}
+              tType={tType} tResults={tResults} tNoFindings={tNoFindings}
+              tAuto={tAuto} tManual={tManual} tSystem={tSystem}
             />
           ))}
         </div>
@@ -585,7 +621,7 @@ export default function HistoryPage() {
 
       {/* Pagination */}
       {data && (
-        <Pagination page={page} total={data.total} perPage={data.per_page} onPage={handlePage} />
+        <Pagination page={page} total={data.total} perPage={data.per_page} onPage={handlePage} tShowing={t("history.showing")} />
       )}
 
       {/* Footer */}

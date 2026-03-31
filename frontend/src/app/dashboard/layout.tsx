@@ -540,7 +540,93 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         }
         .cs-nav-item:hover::before { height: 55%; }
         .cs-nav-item:hover { transform: translateX(2px); }
+
+        /* ── Global fade-up animations ── */
+        @keyframes csFadeUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .cs-fadeup-1 { animation: csFadeUp 0.45s cubic-bezier(.4,0,.2,1) both; }
+        .cs-fadeup-2 { animation: csFadeUp 0.45s cubic-bezier(.4,0,.2,1) 0.08s both; }
+        .cs-fadeup-3 { animation: csFadeUp 0.45s cubic-bezier(.4,0,.2,1) 0.16s both; }
+        .cs-fadeup-4 { animation: csFadeUp 0.45s cubic-bezier(.4,0,.2,1) 0.24s both; }
+
+        /* ── Ambient background orbs ── */
+        @keyframes csAmbFloat {
+          0%,100% { transform: translateY(0) scale(1); }
+          50%      { transform: translateY(-24px) scale(1.04); }
+        }
+
+        /* ── Domain / email item hover ── */
+        .cs-domain-item { transition: transform 0.18s ease, box-shadow 0.18s ease !important; }
+        .cs-domain-item:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(62,207,142,.06) !important; }
+
+        /* ── Score row hover ── */
+        .cs-score-row { transition: background 0.15s; border-radius: 6px; }
+        .cs-score-row:hover { background: rgba(255,255,255,0.02); }
+
+        /* ── KPI card hover ── */
+        .cs-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(62,207,142,.07) !important; }
+
+        /* ── Button shimmer ── */
+        @keyframes csShimmer {
+          from { background-position: -200% center; }
+          to   { background-position:  200% center; }
+        }
+        .cs-btn { position: relative; overflow: hidden; }
+        .cs-btn::after {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.08) 50%,transparent 100%);
+          background-size: 200% 100%; opacity: 0; transition: opacity 0.2s;
+        }
+        .cs-btn:hover::after { opacity: 1; animation: csShimmer 0.6s ease; }
+
+        /* ── Score ring glow ── */
+        @keyframes csScoreGlow {
+          0%,100% { opacity: 0.4; transform: scale(1); }
+          50%      { opacity: 0.7; transform: scale(1.08); }
+        }
+        .cs-score-glow { animation: csScoreGlow 3s ease-in-out infinite; }
+
+        /* ── Orbiting particles ── */
+        @keyframes csOrbit {
+          from { transform: rotate(0deg) translateX(84px) rotate(0deg); }
+          to   { transform: rotate(360deg) translateX(84px) rotate(-360deg); }
+        }
+        .cs-orbit-p1,.cs-orbit-p2,.cs-orbit-p3 {
+          position: absolute; border-radius: 50%; top: 50%; left: 50%;
+          margin: -3px 0 0 -3px; width: 6px; height: 6px;
+        }
+        .cs-orbit-p1 { background: rgba(62,207,142,0.8); animation: csOrbit 6s linear infinite; }
+        .cs-orbit-p2 { background: rgba(0,229,191,0.6); animation: csOrbit 9s linear infinite reverse; width: 4px; height: 4px; margin: -2px 0 0 -2px; }
+        .cs-orbit-p3 { background: rgba(74,222,128,0.5); animation: csOrbit 12s linear 2s infinite; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; }
+
+        /* ── Skeleton shimmer ── */
+        @keyframes csSkeleton {
+          from { background-position: -400px 0; }
+          to   { background-position:  400px 0; }
+        }
+        .cs-skeleton {
+          background: linear-gradient(90deg,#1a1a1a 25%,#222 50%,#1a1a1a 75%);
+          background-size: 400px 100%; animation: csSkeleton 1.4s ease infinite;
+        }
+
+        /* ── Reduced motion ── */
+        @media (prefers-reduced-motion: reduce) {
+          .cs-fadeup-1,.cs-fadeup-2,.cs-fadeup-3,.cs-fadeup-4 { animation: none !important; opacity: 1 !important; transform: none !important; }
+          .cs-domain-item:hover { transform: none !important; }
+          .cs-kpi-card:hover { transform: none !important; }
+          .cs-score-glow,.cs-orbit-p1,.cs-orbit-p2,.cs-orbit-p3 { animation: none !important; }
+          .cs-amb { animation: none !important; }
+          .cs-btn::after { animation: none !important; }
+          .cs-skeleton { animation: none !important; }
+        }
       `}</style>
+
+      {/* Ambient background orbs */}
+      <div className="cs-amb" style={{ position: "fixed", top: "15%", left: "10%", width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle,rgba(62,207,142,0.04) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0, animation: "csAmbFloat 14s ease-in-out infinite" }} />
+      <div className="cs-amb" style={{ position: "fixed", bottom: "20%", right: "8%", width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle,rgba(0,229,191,0.035) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0, animation: "csAmbFloat 18s ease-in-out 3s infinite reverse" }} />
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.018, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundRepeat: "repeat", backgroundSize: "128px" }} />
 
       {/* Buy credits modal */}
       {showBuyModal && <BuyCreditsModal creditsAvailable={credits} onClose={() => setShowBuyModal(false)} />}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { alertsApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Alert {
@@ -27,8 +28,8 @@ interface AlertsData {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-ES", {
+function fmtDate(iso: string, lang = "es") {
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "es-ES", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -37,14 +38,14 @@ function fmtDate(iso: string) {
   });
 }
 
-function relTime(iso: string) {
+function relTime(iso: string, lang = "es") {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "ahora";
-  if (m < 60) return `hace ${m}m`;
+  if (m < 1) return lang === "en" ? "now" : "ahora";
+  if (m < 60) return lang === "en" ? `${m}m ago` : `hace ${m}m`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h}h`;
-  return `hace ${Math.floor(h / 24)}d`;
+  if (h < 24) return lang === "en" ? `${h}h ago` : `hace ${h}h`;
+  return lang === "en" ? `${Math.floor(h / 24)}d ago` : `hace ${Math.floor(h / 24)}d`;
 }
 
 // ── Severity config ────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ function AlertCard({
   onArchive: (id: string) => void;
   archivingId: string | null;
 }) {
+  const { t, lang } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [marking, setMarking]   = useState(false);
   const sev = SEV_CONFIG[alert.severity] ?? SEV_CONFIG.low;
@@ -104,7 +106,7 @@ function AlertCard({
       await alertsApi.markRead(alert.id);
       onMarkRead(alert.id);
     } catch {
-      toast.error("No se pudo marcar como leída");
+      toast.error(t("alerts.errorMarkOne"));
     } finally {
       setMarking(false);
     }
@@ -112,6 +114,7 @@ function AlertCard({
 
   return (
     <div
+      className="cs-domain-item"
       style={{
         background: "#151515",
         border: "0.8px solid #1a1a1a",
@@ -210,7 +213,7 @@ function AlertCard({
                   whiteSpace: "nowrap",
                 }}
               >
-                {relTime(alert.sent_at)}
+                {relTime(alert.sent_at, lang)}
               </span>
               {alert.is_unread && (
                 <div
@@ -238,7 +241,7 @@ function AlertCard({
                   alignItems: "center",
                   opacity: archivingId === alert.id ? 0.5 : 1,
                 }}
-                title="Eliminar alerta"
+                title={t("alerts.deleteAlert")}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
@@ -289,7 +292,7 @@ function AlertCard({
                   color: sev.color,
                 }}
               >
-                Impacto en tu negocio
+                {t("alerts.businessImpact")}
               </span>
             </div>
             <p style={{ fontSize: "0.78rem", lineHeight: 1.6, color: "#b3b4b5", margin: 0 }}>{alert.human_impact}</p>
@@ -316,7 +319,7 @@ function AlertCard({
                   color: "#3ecf8e",
                 }}
               >
-                Cómo solucionarlo
+                {t("alerts.howToFix")}
               </span>
             </div>
             <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -365,7 +368,7 @@ function AlertCard({
                 color: "#71717a",
               }}
             >
-              {fmtDate(alert.sent_at)}
+              {fmtDate(alert.sent_at, lang)}
             </span>
             {alert.is_unread ? (
               <button
@@ -389,7 +392,7 @@ function AlertCard({
                 }}
               >
                 <span>{marking ? "…" : "✓"}</span>
-                Marcar como leída
+                {t("alerts.markAsRead")}
               </button>
             ) : (
               <span
@@ -402,8 +405,8 @@ function AlertCard({
                   fontFamily: "var(--font-dm-mono)",
                 }}
               >
-                <span style={{ color: "#3ecf8e" }}>✓</span> Leída{" "}
-                {alert.read_at ? relTime(alert.read_at) : ""}
+                <span style={{ color: "#3ecf8e" }}>✓</span> {t("alerts.filter.read")}{" "}
+                {alert.read_at ? relTime(alert.read_at, lang) : ""}
               </span>
             )}
           </div>
@@ -483,6 +486,7 @@ function AlertGroup({
 
 // ── Empty state ────────────────────────────────────────────────────────────────
 function EmptyState() {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -518,11 +522,10 @@ function EmptyState() {
             marginBottom: 6,
           }}
         >
-          Todo está en orden
+          {t("alerts.allClear.title")}
         </div>
         <div style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 280, lineHeight: 1.6 }}>
-          No tienes alertas activas. Tus sistemas están monitorizados y te avisaremos si se detecta
-          cualquier problema.
+          {t("alerts.allClear.desc")}
         </div>
       </div>
       <div
@@ -546,7 +549,7 @@ function EmptyState() {
             textTransform: "uppercase",
           }}
         >
-          Monitoreo activo
+          {t("alerts.activeMonitoring")}
         </span>
       </div>
     </div>
@@ -563,12 +566,13 @@ function FilterBar({
   onChange: (f: string) => void;
   counts: { all: number; critical: number; medium: number; low: number; unread: number };
 }) {
+  const { t } = useTranslation();
   const filters = [
-    { key: "all",      label: "Todas",     count: counts.all },
-    { key: "unread",   label: "Sin leer",  count: counts.unread },
-    { key: "critical", label: "Críticas",  count: counts.critical },
-    { key: "medium",   label: "Medias",    count: counts.medium },
-    { key: "low",      label: "Bajas",     count: counts.low },
+    { key: "all",      label: t("alerts.filter.all"),      count: counts.all },
+    { key: "unread",   label: t("alerts.filter.unread"),   count: counts.unread },
+    { key: "critical", label: t("alerts.critical"),        count: counts.critical },
+    { key: "medium",   label: t("alerts.medium2"),         count: counts.medium },
+    { key: "low",      label: t("alerts.low2"),            count: counts.low },
   ];
 
   return (
@@ -631,6 +635,7 @@ function FilterBar({
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function AlertsPage() {
+  const { t, lang } = useTranslation();
   const [data, setData]             = useState<AlertsData | null>(null);
   const [loading, setLoading]       = useState(true);
   const [filter, setFilter]         = useState("all");
@@ -643,11 +648,11 @@ export default function AlertsPage() {
       const res = await alertsApi.list();
       setData(res.data);
     } catch {
-      toast.error("Error al cargar las alertas");
+      toast.error(t("alerts.errorLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -680,9 +685,9 @@ export default function AlertsPage() {
           })),
         };
       });
-      toast.success("Todas las alertas marcadas como leídas");
+      toast.success(t("alerts.markedRead"));
     } catch {
-      toast.error("Error al marcar alertas");
+      toast.error(t("alerts.errorMark"));
     } finally {
       setMarkingAll(false);
     }
@@ -697,13 +702,13 @@ export default function AlertsPage() {
         const updated = (prev.alerts ?? []).filter(a => a.id !== id);
         return { ...prev, alerts: updated, total: updated.length, unread_count: updated.filter(a => a.is_unread).length };
       });
-      toast.success("Alerta eliminada");
+      toast.success(t("alerts.deleted"));
     } catch {
-      toast.error("Error al eliminar la alerta");
+      toast.error(t("alerts.errorDelete"));
     } finally {
       setArchivingId(null);
     }
-  }, []);
+  }, [t]);
 
   const handleArchiveResolved = async () => {
     setArchivingAll(true);
@@ -714,9 +719,9 @@ export default function AlertsPage() {
         const active = (prev.alerts ?? []).filter(a => a.is_unread);
         return { ...prev, alerts: active, total: active.length, unread_count: active.length };
       });
-      toast.success("Alertas resueltas eliminadas");
+      toast.success(t("alerts.resolvedDeleted"));
     } catch {
-      toast.error("Error al eliminar alertas resueltas");
+      toast.error(t("alerts.errorDeleteResolved"));
     } finally {
       setArchivingAll(false);
     }
@@ -772,6 +777,12 @@ export default function AlertsPage() {
     low:      allAlerts.filter((a) => a.severity === "low").length,
   };
 
+  const unreadText = data.unread_count > 0
+    ? t("alerts.unread2").replace("{n}", String(data.unread_count)).replace("{total}", String(data.total))
+    : t("alerts.upToDate")
+        .replace("{n}", String(data.total))
+        .replace("{s}", data.total !== 1 ? "s" : "");
+
   return (
     <div
       style={{
@@ -783,6 +794,7 @@ export default function AlertsPage() {
     >
       {/* Page header */}
       <div
+        className="cs-fadeup-1"
         style={{
           display: "flex",
           alignItems: "flex-start",
@@ -800,7 +812,7 @@ export default function AlertsPage() {
               letterSpacing: "-0.01em",
             }}
           >
-            Alertas de seguridad
+            {t("alerts.title")}
           </h1>
           <p
             style={{
@@ -811,13 +823,11 @@ export default function AlertsPage() {
               fontFamily: "var(--font-dm-mono)",
             }}
           >
-            {data.unread_count > 0
-              ? `${data.unread_count} sin leer · ${data.total} total`
-              : `${data.total} alerta${data.total !== 1 ? "s" : ""} · todo al día`}
+            {unreadText}
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="cs-fadeup-2" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={handleArchiveResolved}
             disabled={archivingAll || (data?.alerts ?? []).every(a => a.is_unread)}
@@ -838,7 +848,7 @@ export default function AlertsPage() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
             </svg>
-            {archivingAll ? "Eliminando..." : "Borrar resueltas"}
+            {archivingAll ? t("alerts.archivingAll") : t("alerts.deleteResolved2")}
           </button>
 
           {data.unread_count > 0 && (
@@ -862,7 +872,7 @@ export default function AlertsPage() {
                 fontFamily: "var(--font-dm-sans)",
               }}
             >
-              <span>{markingAll ? "⟳" : "✓"}</span> Marcar todas como leídas
+              <span>{markingAll ? "⟳" : "✓"}</span> {t("alerts.markAllRead2")}
             </button>
           )}
         </div>
@@ -878,9 +888,9 @@ export default function AlertsPage() {
         <EmptyState />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          <AlertGroup label="Críticas" color="#ef4444" alerts={criticals} onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
-          <AlertGroup label="Medias"   color="#f59e0b" alerts={mediums}   onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
-          <AlertGroup label="Bajas"    color="#3b82f6" alerts={lows}      onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
+          <AlertGroup label={t("alerts.critical")}  color="#ef4444" alerts={criticals} onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
+          <AlertGroup label={t("alerts.medium2")}   color="#f59e0b" alerts={mediums}   onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
+          <AlertGroup label={t("alerts.low2")}      color="#3b82f6" alerts={lows}      onMarkRead={handleMarkRead} onArchive={handleArchive} archivingId={archivingId} />
         </div>
       )}
 

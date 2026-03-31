@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/Toast";
 import { emailsApi } from "@/lib/api";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,26 +73,27 @@ const DNS_DESCRIPTIONS: Record<string, Record<string, string>> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function relTime(iso: string): string {
+function relTime(iso: string, lang = "es"): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "ahora mismo";
-  if (m < 60) return `hace ${m}m`;
+  if (m < 1) return lang === "en" ? "just now" : "ahora mismo";
+  if (m < 60) return lang === "en" ? `${m}m ago` : `hace ${m}m`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h}h`;
-  return new Date(iso).toLocaleDateString("es-ES");
+  if (h < 24) return lang === "en" ? `${h}h ago` : `hace ${h}h`;
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "es-ES");
 }
 
-function getOverallStatus(email: MonitoredEmail): {
+function getOverallStatus(email: MonitoredEmail, tFn?: (k: string) => string): {
   label: string;
   color: string;
   bg: string;
   border: string;
   leftBorder: string;
 } {
+  const tl = tFn ?? ((k: string) => k);
   if (!email.last_email_sec_scan_at) {
     return {
-      label: "Sin escanear",
+      label: tl("emails.status.unscanned"),
       color: "#71717a",
       bg: "rgba(113,113,122,0.10)",
       border: "rgba(113,113,122,0.2)",
@@ -104,7 +106,7 @@ function getOverallStatus(email: MonitoredEmail): {
     email.dmarc_status === "valid";
   if (allValid) {
     return {
-      label: "Protegido",
+      label: tl("emails.status.protected"),
       color: "#3ecf8e",
       bg: "rgba(62,207,142,0.10)",
       border: "rgba(62,207,142,0.2)",
@@ -112,7 +114,7 @@ function getOverallStatus(email: MonitoredEmail): {
     };
   }
   return {
-    label: "Atención",
+    label: tl("emails.status.attention"),
     color: "#f59e0b",
     bg: "rgba(245,158,11,0.10)",
     border: "rgba(245,158,11,0.2)",
@@ -164,8 +166,8 @@ function DnsBadge({
 
 // ─── Overall Badge ────────────────────────────────────────────────────────────
 
-function OverallBadge({ email }: { email: MonitoredEmail }) {
-  const s = getOverallStatus(email);
+function OverallBadge({ email, tFn }: { email: MonitoredEmail; tFn?: (k: string) => string }) {
+  const s = getOverallStatus(email, tFn);
   return (
     <span
       style={{
@@ -207,7 +209,8 @@ function EmailCard({
   onScan,
   onDelete,
 }: EmailCardProps) {
-  const overall = getOverallStatus(emailItem);
+  const { t, lang } = useTranslation();
+  const overall = getOverallStatus(emailItem, t);
 
   const dnsChecks: Array<{
     key: string;
@@ -221,6 +224,7 @@ function EmailCard({
 
   return (
     <div
+      className="cs-domain-item"
       style={{
         background: "#151515",
         border: "0.8px solid #1a1a1a",
@@ -293,8 +297,8 @@ function EmailCard({
             }}
           >
             {emailItem.last_email_sec_scan_at
-              ? relTime(emailItem.last_email_sec_scan_at)
-              : "Sin escanear"}
+              ? relTime(emailItem.last_email_sec_scan_at, lang)
+              : t("emails.neverScanned")}
           </div>
         </div>
 
@@ -322,11 +326,12 @@ function EmailCard({
           style={{ flexShrink: 0 }}
           onClick={(e) => e.stopPropagation()}
         >
-          <OverallBadge email={emailItem} />
+          <OverallBadge email={emailItem} tFn={t} />
         </div>
 
         {/* Scan button */}
         <button
+          className="cs-btn"
           onClick={(e) => onScan(e, emailItem)}
           disabled={isScanning}
           style={{
@@ -353,7 +358,7 @@ function EmailCard({
               (e.currentTarget as HTMLButtonElement).style.opacity = "1";
           }}
         >
-          {isScanning ? "Escaneando…" : "Escanear"}
+          {isScanning ? t("emails.scanningBtn") : t("common.scan")}
         </button>
 
         {/* Delete button */}
@@ -381,7 +386,7 @@ function EmailCard({
               "rgba(239,68,68,0.08)";
           }}
         >
-          Eliminar
+          {t("emails.deleteBtn")}
         </button>
 
         {/* Expand chevron */}
@@ -426,7 +431,7 @@ function EmailCard({
               const description =
                 check.status && DNS_DESCRIPTIONS[check.key]?.[check.status]
                   ? DNS_DESCRIPTIONS[check.key][check.status]
-                  : "Estado desconocido.";
+                  : t("emails.unknownStatus");
 
               return (
                 <div
@@ -500,9 +505,9 @@ function EmailCard({
                 paddingTop: "4px",
               }}
             >
-              Último escaneo:{" "}
+              {t("emails.lastScan")}{" "}
               {new Date(emailItem.last_email_sec_scan_at).toLocaleString(
-                "es-ES",
+                lang === "en" ? "en-US" : "es-ES",
                 {
                   day: "2-digit",
                   month: "2-digit",
@@ -522,6 +527,7 @@ function EmailCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EmailsPage() {
+  const { t, lang } = useTranslation();
   const [emails, setEmails] = useState<MonitoredEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -538,7 +544,7 @@ export default function EmailsPage() {
         const res = await emailsApi.list();
         setEmails(Array.isArray(res.data) ? res.data : []);
       } catch {
-        toast.error("Error al cargar los emails");
+        toast.error(t("emails.errorLoad"));
       } finally {
         setLoading(false);
       }
@@ -573,9 +579,9 @@ export default function EmailsPage() {
         )
       );
       setExpandedId(emailItem.id);
-      toast.success(`Escaneo completado — ${res.data.domain}`);
+      toast.success(`${t("emails.scanComplete")} — ${res.data.domain}`);
     } catch {
-      toast.error("Error al escanear");
+      toast.error(t("emails.errorScan"));
     } finally {
       setScanning(null);
     }
@@ -590,7 +596,7 @@ export default function EmailsPage() {
       setEmails((prev) => [...prev, res.data]);
       setNewEmail("");
       inputRef.current?.focus();
-      toast.success("Email añadido correctamente");
+      toast.success(t("emails.addedOk"));
     } catch (err: unknown) {
       const axiosErr = err as {
         response?: { status?: number; data?: { detail?: string } };
@@ -598,12 +604,12 @@ export default function EmailsPage() {
       const status = axiosErr?.response?.status;
       const detail = axiosErr?.response?.data?.detail;
       if (status === 402) {
-        toast.error("Límite de plan alcanzado");
+        toast.error(t("common.planLimit"));
       } else if (status === 409) {
-        toast.error("Este email ya está siendo monitorizado");
+        toast.error(t("emails.alreadyMonitored"));
       } else {
         toast.error(
-          typeof detail === "string" ? detail : "Error al añadir el email"
+          typeof detail === "string" ? detail : t("emails.errorAdd")
         );
       }
     } finally {
@@ -617,9 +623,9 @@ export default function EmailsPage() {
       await emailsApi.remove(id);
       setEmails((prev) => prev.filter((em) => em.id !== id));
       if (expandedId === id) setExpandedId(null);
-      toast.success("Email eliminado");
+      toast.success(t("emails.deletedOk"));
     } catch {
-      toast.error("Error al eliminar el email");
+      toast.error(t("emails.errorDelete"));
     }
   };
 
@@ -646,7 +652,7 @@ export default function EmailsPage() {
         }}
       >
         {/* ── Header ──────────────────────────────────────────────────────────── */}
-        <div style={{ marginBottom: "32px" }}>
+        <div style={{ marginBottom: "32px" }} className="cs-fadeup-1">
           <h1
             style={{
               fontFamily: "var(--font-dm-sans)",
@@ -657,7 +663,7 @@ export default function EmailsPage() {
               letterSpacing: "-0.02em",
             }}
           >
-            Emails Monitorizados
+            {t("emails.title2")}
           </h1>
           <p
             style={{
@@ -667,12 +673,13 @@ export default function EmailsPage() {
               margin: 0,
             }}
           >
-            Verifica SPF, DKIM y DMARC de tus dominios de correo al instante.
+            {t("emails.subtitle2")}
           </p>
         </div>
 
         {/* ── Add email form ───────────────────────────────────────────────────── */}
         <div
+          className="cs-fadeup-2"
           style={{
             display: "flex",
             gap: "10px",
@@ -685,7 +692,7 @@ export default function EmailsPage() {
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="nombre@empresa.com"
+            placeholder={t("emails.inputPlaceholder")}
             style={{
               flex: 1,
               padding: "10px 14px",
@@ -734,7 +741,7 @@ export default function EmailsPage() {
               (e.currentTarget as HTMLButtonElement).style.opacity = "1";
             }}
           >
-            {adding ? "Añadiendo…" : "+ Añadir"}
+            {adding ? t("emails.addingBtn") : t("emails.addBtn2")}
           </button>
         </div>
 
@@ -795,7 +802,7 @@ export default function EmailsPage() {
                 margin: "0 0 6px",
               }}
             >
-              No hay emails monitorizados
+              {t("emails.noEmailsLong")}
             </p>
             <p
               style={{
@@ -805,7 +812,7 @@ export default function EmailsPage() {
                 margin: 0,
               }}
             >
-              Añade un email para empezar a verificar su configuración DNS.
+              {t("emails.addFirst")}
             </p>
           </div>
         ) : (

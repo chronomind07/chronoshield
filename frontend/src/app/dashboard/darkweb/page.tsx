@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { darkwebApi, creditsApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Credits {
@@ -72,18 +73,18 @@ interface DarkWebSummary {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function relTime(iso: string) {
+function relTime(iso: string, lang = "es") {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "ahora";
-  if (m < 60) return `hace ${m}m`;
+  if (m < 1) return lang === "en" ? "now" : "ahora";
+  if (m < 60) return lang === "en" ? `${m}m ago` : `hace ${m}m`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h}h`;
-  return `hace ${Math.floor(h / 24)}d`;
+  if (h < 24) return lang === "en" ? `${h}h ago` : `hace ${h}h`;
+  return lang === "en" ? `${Math.floor(h / 24)}d ago` : `hace ${Math.floor(h / 24)}d`;
 }
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-ES", {
+function fmtDate(iso: string, lang = "es") {
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "es-ES", {
     day: "2-digit", month: "short", year: "numeric",
   });
 }
@@ -100,6 +101,7 @@ function handleScanError(err: unknown, setShowPacks: (v: boolean) => void) {
 
 // ── Credit badge ───────────────────────────────────────────────────────────────
 function CreditBadge({ credits }: { credits: Credits }) {
+  const { t } = useTranslation();
   const total = credits.credits_available + credits.credits_used;
   const pct = total > 0 ? credits.credits_available / total : 1;
   const color =
@@ -122,7 +124,7 @@ function CreditBadge({ credits }: { credits: Credits }) {
         fontWeight: 600,
         marginBottom: 10,
       }}>
-        Créditos disponibles
+        {t("darkweb.creditsAvail")}
       </div>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
         <div style={{ flex: 1 }}>
@@ -157,12 +159,13 @@ function CreditBadge({ credits }: { credits: Credits }) {
 type ItemStatus = "breached" | "found" | "threatened" | "clean" | "never_scanned";
 
 function StatusPill({ status }: { status: ItemStatus }) {
+  const { t } = useTranslation();
   const map: Record<ItemStatus, { label: string; color: string; bg: string; border: string }> = {
-    breached:      { label: "FILTRADO",      color: "#ef4444", bg: "rgba(239,68,68,0.08)",        border: "rgba(239,68,68,0.2)" },
-    found:         { label: "DETECTADO",     color: "#ef4444", bg: "rgba(239,68,68,0.08)",        border: "rgba(239,68,68,0.2)" },
-    threatened:    { label: "AMENAZA",       color: "#f59e0b", bg: "rgba(245,158,11,0.08)",       border: "rgba(245,158,11,0.2)" },
-    clean:         { label: "LIMPIO",        color: "#3ecf8e", bg: "rgba(62,207,142,0.10)",       border: "rgba(62,207,142,0.2)" },
-    never_scanned: { label: "SIN ESCANEAR", color: "#71717a", bg: "rgba(113,113,122,0.10)",      border: "rgba(113,113,122,0.15)" },
+    breached:      { label: t("darkweb.status.breached"), color: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.2)" },
+    found:         { label: t("darkweb.status.found"),    color: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.2)" },
+    threatened:    { label: t("darkweb.status.threatened"),color:"#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.2)" },
+    clean:         { label: t("darkweb.status.clean"),    color: "#3ecf8e", bg: "rgba(62,207,142,0.10)",  border: "rgba(62,207,142,0.2)" },
+    never_scanned: { label: t("darkweb.status.never"),    color: "#71717a", bg: "rgba(113,113,122,0.10)", border: "rgba(113,113,122,0.15)" },
   };
   const s = map[status];
   return (
@@ -191,8 +194,10 @@ function ScanBtn({
   onClick: (e: React.MouseEvent) => void;
   small?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <button
+      className="cs-btn"
       onClick={onClick}
       disabled={scanning}
       style={{
@@ -214,14 +219,16 @@ function ScanBtn({
       }}
     >
       <span style={{ display: "inline-block", animation: scanning ? "spin 0.8s linear infinite" : "none" }}>⟳</span>
-      {scanning ? "Escaneando" : "Escanear"}
+      {scanning ? t("darkweb.scanning") : t("darkweb.scanEmail")}
     </button>
   );
 }
 
 // ── Breach detail row ──────────────────────────────────────────────────────────
 function BreachDetail({ record }: { record: BreachRecord }) {
+  const { t, lang } = useTranslation();
   const hasPassword = !!(record.password || record.hashedPassword);
+  const pwLabel = t("darkweb.field.password");
   return (
     <div style={{
       borderRadius: 12,
@@ -233,13 +240,13 @@ function BreachDetail({ record }: { record: BreachRecord }) {
       border: "0.8px solid #1a1a1a",
     }}>
       {[
-        { label: "Fuente",     val: record.breachName || record.source },
-        { label: "Email",      val: record.email },
-        { label: "Usuario",    val: record.username },
-        { label: "Dominio",    val: record.domain },
-        { label: "IP",         val: record.ipAddress },
-        { label: "Contraseña", val: record.password ? "expuesta" : record.hashedPassword ? "hash expuesto" : null },
-        { label: "Fecha",      val: record.timestamp ? fmtDate(record.timestamp) : null },
+        { label: t("darkweb.field.source"),   val: record.breachName || record.source },
+        { label: t("darkweb.field.email"),    val: record.email },
+        { label: t("darkweb.field.username"), val: record.username },
+        { label: t("darkweb.field.domain"),   val: record.domain },
+        { label: t("darkweb.field.ip"),       val: record.ipAddress },
+        { label: pwLabel, val: record.password ? t("darkweb.pw.exposed") : record.hashedPassword ? t("darkweb.pw.hash") : null },
+        { label: t("darkweb.field.date"),     val: record.timestamp ? fmtDate(record.timestamp, lang) : null },
       ].filter((f) => f.val).map((f) => (
         <div key={f.label}>
           <div style={{
@@ -255,7 +262,7 @@ function BreachDetail({ record }: { record: BreachRecord }) {
             fontSize: "0.72rem",
             marginTop: 2,
             wordBreak: "break-all" as const,
-            color: f.label === "Contraseña" && hasPassword ? "#ef4444" : "#f5f5f5",
+            color: f.label === pwLabel && hasPassword ? "#ef4444" : "#f5f5f5",
           }}>
             {f.val}
           </div>
@@ -273,6 +280,7 @@ function EmailRow({
   onScan: (id: string) => void;
   setShowPacks: (v: boolean) => void;
 }) {
+  const { t, lang } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [scanning, setScanning] = useState(false);
 
@@ -281,7 +289,7 @@ function EmailRow({
     setScanning(true);
     try {
       const res = await darkwebApi.scanEmail(item.id);
-      toast.success(`Escaneo iniciado · ${res.data.credits_remaining} créditos restantes`);
+      toast.success(`${t("darkweb.scanStarted")} · ${res.data.credits_remaining} créditos`);
       onScan(item.id);
     } catch (err) {
       handleScanError(err, setShowPacks);
@@ -340,10 +348,10 @@ function EmailRow({
             whiteSpace: "nowrap",
           }}>{item.email}</div>
           <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 3 }}>
-            {item.last_scan_at ? relTime(item.last_scan_at) : "Nunca escaneado"}
+            {item.last_scan_at ? relTime(item.last_scan_at, lang) : t("darkweb.neverScanned2")}
             {item.breach_count > 0 && (
               <span style={{ color: "#ef4444", marginLeft: 8 }}>
-                {item.breach_count} filtración{item.breach_count !== 1 ? "es" : ""}
+                {item.breach_count} {t("darkweb.breaches").replace("{es}", item.breach_count !== 1 ? "es" : "")}
               </span>
             )}
           </div>
@@ -367,7 +375,7 @@ function EmailRow({
             fontWeight: 600,
             marginBottom: 8,
           }}>
-            Filtraciones encontradas
+            {t("darkweb.breachesFound2")}
           </div>
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 6 }}>
             {item.latest_breaches.map((r, i) => (
@@ -380,14 +388,14 @@ function EmailRow({
       {expanded && item.latest_breaches.length === 0 && item.status !== "never_scanned" && (
         <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.78rem", color: "#3ecf8e" }}>
-            ✓ Sin filtraciones detectadas
+            {t("darkweb.noBreachesFound")}
           </span>
         </div>
       )}
 
       {expanded && item.status === "never_scanned" && (
         <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
-          <span style={{ fontSize: "0.78rem", color: "#71717a" }}>Este email aún no ha sido escaneado</span>
+          <span style={{ fontSize: "0.78rem", color: "#71717a" }}>{t("darkweb.notScannedYet")}</span>
         </div>
       )}
     </div>
@@ -406,6 +414,7 @@ function DomainRow({
   const [expanded, setExpanded] = useState(false);
   const [scanning, setScanning] = useState(false);
 
+  const { t, lang } = useTranslation();
   const isImpersonation = scanType === "impersonation";
   const domainItem = item as DomainItem;
   const impoItem = item as ImpersonationItem;
@@ -421,7 +430,7 @@ function DomainRow({
       const res = isImpersonation
         ? await darkwebApi.scanImpersonation(item.id)
         : await darkwebApi.scanDomain(item.id);
-      toast.success(`Escaneo iniciado · ${res.data.credits_remaining} créditos restantes`);
+      toast.success(`${t("darkweb.scanStarted")} · ${res.data.credits_remaining} créditos`);
       onScan(item.id);
     } catch (err) {
       handleScanError(err, setShowPacks);
@@ -480,10 +489,12 @@ function DomainRow({
             whiteSpace: "nowrap",
           }}>{item.domain}</div>
           <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 3 }}>
-            {item.last_scan_at ? relTime(item.last_scan_at) : "Nunca escaneado"}
+            {item.last_scan_at ? relTime(item.last_scan_at, lang) : t("darkweb.neverScanned2")}
             {count > 0 && (
               <span style={{ color: "#ef4444", marginLeft: 8 }}>
-                {count} {isImpersonation ? `amenaza${count !== 1 ? "s" : ""}` : `hallazgo${count !== 1 ? "s" : ""}`}
+                {count} {isImpersonation
+                  ? t("darkweb.threats").replace("{s}", count !== 1 ? "s" : "")
+                  : t("darkweb.findings").replace("{s}", count !== 1 ? "s" : "")}
               </span>
             )}
           </div>
@@ -507,7 +518,7 @@ function DomainRow({
             fontWeight: 600,
             marginBottom: 8,
           }}>
-            {isImpersonation ? "Dominios suplantadores detectados" : "Resultados en dark web"}
+            {isImpersonation ? t("darkweb.impersonators") : t("darkweb.domainResults")}
           </div>
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 6 }}>
             {results.map((r, i) => (
@@ -520,14 +531,14 @@ function DomainRow({
       {expanded && results.length === 0 && status !== "never_scanned" && (
         <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.78rem", color: "#3ecf8e" }}>
-            ✓ {isImpersonation ? "Sin suplantaciones detectadas" : "Sin hallazgos en dark web"}
+            ✓ {isImpersonation ? t("darkweb.noImpersonation") : t("darkweb.noBreaches")}
           </span>
         </div>
       )}
 
       {expanded && status === "never_scanned" && (
         <div style={{ padding: "12px 18px 16px", borderTop: "0.8px solid #1a1a1a", textAlign: "center" as const }}>
-          <span style={{ fontSize: "0.78rem", color: "#71717a" }}>Este dominio aún no ha sido escaneado</span>
+          <span style={{ fontSize: "0.78rem", color: "#71717a" }}>{t("darkweb.notScannedDomain")}</span>
         </div>
       )}
     </div>
@@ -544,6 +555,7 @@ function Section({
   locked?: boolean;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const borderColor = locked
     ? "#1a1a1a"
     : totalDanger > 0
@@ -593,7 +605,7 @@ function Section({
               background: "rgba(245,158,11,0.08)",
               border: "0.8px solid rgba(245,158,11,0.2)",
             }}>
-              Solo Business
+              {t("darkweb.businessOnly")}
             </span>
           ) : (
             <span style={{
@@ -607,7 +619,9 @@ function Section({
                 ? { color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "0.8px solid rgba(239,68,68,0.2)" }
                 : { color: "#3ecf8e", background: "rgba(62,207,142,0.10)", border: "0.8px solid rgba(62,207,142,0.2)" })
             }}>
-              {totalDanger > 0 ? `${totalDanger} hallazgos` : "Sin amenazas"}
+              {totalDanger > 0
+                ? `${totalDanger} ${t("darkweb.findings").replace("{s}", totalDanger !== 1 ? "s" : "")}`
+                : t("darkweb.noThreats")}
             </span>
           )}
         </div>
@@ -636,8 +650,7 @@ function Section({
               color: "#71717a",
             }}>🔒</div>
             <p style={{ fontSize: "0.82rem", color: "#71717a" }}>
-              Disponible en el plan{" "}
-              <span style={{ color: "#f5f5f5", fontWeight: 600 }}>Business</span>
+              {t("darkweb.availableBusiness")}
             </p>
           </div>
         ) : (
@@ -659,6 +672,7 @@ function ScanAllModal({
   onClose: () => void;
   onBuyCredits: () => void;
 }) {
+  const { t } = useTranslation();
   const canAfford = credits.credits_available >= cost;
 
   return (
@@ -703,7 +717,7 @@ function ScanAllModal({
         </div>
 
         <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>
-          {canAfford ? "Escaneo general" : "Créditos insuficientes"}
+          {canAfford ? t("darkweb.scanGeneral") : t("darkweb.insufficientCredits")}
         </h2>
 
         {canAfford ? (
@@ -754,7 +768,7 @@ function ScanAllModal({
                   color: "#f5f5f5", background: "#151515", border: "0.8px solid #1a1a1a", cursor: "pointer",
                 }}
               >
-                Cancelar
+                {t("darkweb.cancel")}
               </button>
               <button
                 onClick={onConfirm}
@@ -763,7 +777,7 @@ function ScanAllModal({
                   color: "#000", background: "#3ecf8e", border: "none", cursor: "pointer",
                 }}
               >
-                Confirmar
+                {t("darkweb.confirm")}
               </button>
             </div>
           </>
@@ -782,7 +796,7 @@ function ScanAllModal({
                   color: "#f5f5f5", background: "#151515", border: "0.8px solid #1a1a1a", cursor: "pointer",
                 }}
               >
-                Cancelar
+                {t("darkweb.cancel")}
               </button>
               <button
                 onClick={onBuyCredits}
@@ -791,7 +805,7 @@ function ScanAllModal({
                   color: "#000", background: "#3ecf8e", border: "none", cursor: "pointer",
                 }}
               >
-                Comprar créditos
+                {t("darkweb.buyCredits")}
               </button>
             </div>
           </>
@@ -922,6 +936,7 @@ function CreditPackModal({
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function DarkWebPage() {
+  const { t, lang } = useTranslation();
   const [summary, setSummary]         = useState<DarkWebSummary | null>(null);
   const [loading, setLoading]         = useState(true);
   const [scanningAll, setScanningAll] = useState(false);
@@ -933,7 +948,7 @@ export default function DarkWebPage() {
       const res = await darkwebApi.summary();
       setSummary(res.data);
     } catch {
-      toast.error("Error al cargar datos de Dark Web");
+      toast.error(t("darkweb.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -946,7 +961,7 @@ export default function DarkWebPage() {
     setScanningAll(true);
     try {
       const res = await darkwebApi.scanAll();
-      toast.success(`Escaneo general iniciado · ${res.data.credits_remaining} créditos restantes`);
+      toast.success(`${t("darkweb.scanStarted")} · ${res.data.credits_remaining} créditos`);
       setTimeout(() => load(), 4000);
     } catch (err) {
       handleScanError(err, setShowPacks);
@@ -960,7 +975,7 @@ export default function DarkWebPage() {
       const res = await creditsApi.checkout(pack);
       window.location.href = res.data.url;
     } catch {
-      toast.error("Error al iniciar la compra");
+      toast.error(t("darkweb.errorBuy") ?? "Error al iniciar la compra");
     }
   };
 
@@ -1024,7 +1039,7 @@ export default function DarkWebPage() {
       )}
 
       {/* Page header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap" as const, gap: 16 }}>
+      <div className="cs-fadeup-1" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap" as const, gap: 16 }}>
         <div>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 4 }}>
             Dark Web Monitoring
@@ -1073,7 +1088,7 @@ export default function DarkWebPage() {
               opacity: scanningAll ? 0.6 : 1,
             }}
           >
-            {scanningAll ? "⟳ Escaneando…" : `⟳ Escaneo general (${summary.scan_all_cost} créd.)`}
+            {scanningAll ? `⟳ ${t("darkweb.scanning")}…` : `⟳ ${t("darkweb.scanGeneral")} (${summary.scan_all_cost} créd.)`}
           </button>
         </div>
       </div>
@@ -1096,11 +1111,11 @@ export default function DarkWebPage() {
           letterSpacing: "0.12em",
           color: "#3ecf8e",
           textTransform: "uppercase" as const,
-        }}>Monitoreo activo</span>
+        }}>{t("alerts.activeMonitoring")}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 20, marginLeft: "auto" }}>
           {summary.last_scan_at && (
             <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a" }}>
-              Último: <span style={{ color: "#b3b4b5" }}>{relTime(summary.last_scan_at)}</span>
+              {t("darkweb.lastCheck")} <span style={{ color: "#b3b4b5" }}>{relTime(summary.last_scan_at, lang)}</span>
             </span>
           )}
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a" }}>
