@@ -135,6 +135,15 @@ export const mitigationApi = {
   }) => api.post("/mitigation/chat", data),
   usage: () => api.get("/mitigation/usage"),
   alertsSummary: () => api.get("/mitigation/alerts-summary"),
+  // Chat sessions
+  listSessions: () => api.get("/mitigation/chat-sessions"),
+  getSession: (id: string) => api.get(`/mitigation/chat-sessions/${id}`),
+  saveSession: (data: {
+    session_id?: string;
+    title: string;
+    messages: { role: string; content: string; timestamp?: string }[];
+  }) => api.post("/mitigation/chat-sessions", data),
+  deleteSession: (id: string) => api.delete(`/mitigation/chat-sessions/${id}`),
 };
 
 export { supabase };

@@ -400,6 +400,13 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     "assistant.usageLimit":   "Límite de uso alcanzado.",
     "assistant.errorConnect": "Error al conectar con el asistente.",
     "assistant.errorAlerts":  "Error al analizar alertas.",
+    "assistant.disclaimer":   "ChronoAI es un agente IA y puede cometer errores. Por favor, verifica las respuestas.",
+    "assistant.chatHistory":  "Historial de chats",
+    "assistant.noHistory":    "No hay conversaciones guardadas",
+    "assistant.loadChat":     "Cargar conversación",
+    "assistant.deleteChat":   "Eliminar",
+    "assistant.errorSave":    "Error al guardar la conversación.",
+    "assistant.errorHistory": "Error al cargar el historial.",
 
     // ── Buy credits modal ──
     "credits.title":      "Comprar créditos",
@@ -968,6 +975,13 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     "assistant.usageLimit":   "Usage limit reached.",
     "assistant.errorConnect": "Error connecting to assistant.",
     "assistant.errorAlerts":  "Error analyzing alerts.",
+    "assistant.disclaimer":   "ChronoAI is an AI agent and may make mistakes. Please verify responses.",
+    "assistant.chatHistory":  "Chat history",
+    "assistant.noHistory":    "No saved conversations",
+    "assistant.loadChat":     "Load conversation",
+    "assistant.deleteChat":   "Delete",
+    "assistant.errorSave":    "Error saving conversation.",
+    "assistant.errorHistory": "Error loading history.",
 
     // ── Buy credits modal ──
     "credits.title":      "Buy credits",

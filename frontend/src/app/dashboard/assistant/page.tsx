@@ -13,6 +13,13 @@ interface ChatMsg {
   timestamp?: Date;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function greetingText(lang = "es"): string {
   const h = new Date().getHours();
@@ -208,6 +215,10 @@ export default function AssistantPage() {
   const [usageCount, setUsageCount] = useState(0);
   const [usageLimit, setUsageLimit] = useState(1000);
   const [username, setUsername] = useState<string | null>(null);
+  const [showHistory, setShowHistory]         = useState(false);
+  const [sessions, setSessions]               = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [loadingHistory, setLoadingHistory]   = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasMessages = messages.length > 0;
@@ -225,6 +236,19 @@ export default function AssistantPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
+
+  // ── Load sessions ────────────────────────────────────────────────────────
+  const loadSessions = useCallback(async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await mitigationApi.listSessions();
+      setSessions(res.data || []);
+    } catch {
+      toast.error(t("assistant.errorHistory"));
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [t]);
 
   // ── Textarea auto-resize ─────────────────────────────────────────────────
   const autoResize = useCallback(() => {
@@ -270,6 +294,24 @@ export default function AssistantPage() {
         setMessages(prev => [...prev, assistantMsg]);
         setUsageCount(res.data.usage_count ?? usageCount + 1);
         setUsageLimit(res.data.usage_limit ?? usageLimit);
+
+        // Auto-save session
+        try {
+          const allMsgs = [...messages, userMsg, assistantMsg];
+          const title = userMsg.content.slice(0, 40) || "Chat";
+          const sessionRes = await mitigationApi.saveSession({
+            session_id: currentSessionId ?? undefined,
+            title,
+            messages: allMsgs.map(m => ({
+              role: m.role,
+              content: m.content,
+              timestamp: m.timestamp?.toISOString(),
+            })),
+          });
+          setCurrentSessionId(sessionRes.data.id);
+        } catch {
+          // Non-critical — don't show error
+        }
       } catch (err: unknown) {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 429) {
@@ -281,7 +323,7 @@ export default function AssistantPage() {
         setSending(false);
       }
     },
-    [sending, messages, usageCount, usageLimit, t]
+    [sending, messages, usageCount, usageLimit, t, currentSessionId]
   );
 
   // ── Keyboard handler ─────────────────────────────────────────────────────
@@ -312,6 +354,24 @@ export default function AssistantPage() {
       setMessages(prev => [...prev, assistantMsg]);
       setUsageCount(res.data.usage_count ?? usageCount + 1);
       setUsageLimit(res.data.usage_limit ?? usageLimit);
+
+      // Auto-save session
+      try {
+        const allMsgs = [userMsg, assistantMsg];
+        const title = userMsg.content.slice(0, 40) || "Chat";
+        const sessionRes = await mitigationApi.saveSession({
+          session_id: currentSessionId ?? undefined,
+          title,
+          messages: allMsgs.map(m => ({
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp?.toISOString(),
+          })),
+        });
+        setCurrentSessionId(sessionRes.data.id);
+      } catch {
+        // Non-critical — don't show error
+      }
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 429) {
@@ -322,7 +382,7 @@ export default function AssistantPage() {
     } finally {
       setSending(false);
     }
-  }, [sending, usageCount, usageLimit, t]);
+  }, [sending, usageCount, usageLimit, t, currentSessionId]);
 
   // ── Suggestion chips ─────────────────────────────────────────────────────
   const ANALYZE_KEY = "__ANALYZE__";
@@ -347,6 +407,8 @@ export default function AssistantPage() {
     setMessages([]);
     setInput("");
     setUsageCount(0);
+    setCurrentSessionId(null);
+    setShowHistory(false);
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
@@ -432,7 +494,7 @@ export default function AssistantPage() {
             <path d="M12 8v4l3 3" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round" />
           </svg>
           <span style={{ fontSize: 13, color: "#f5f5f5", fontWeight: 500 }}>
-            Claude Haiku
+            ChronoAI
           </span>
           <span style={{ fontSize: 12, color: "#71717a" }}>▾</span>
         </div>
@@ -443,13 +505,17 @@ export default function AssistantPage() {
           <button
             className="icon-btn"
             title={t("assistant.history")}
+            onClick={() => {
+              if (!showHistory) loadSessions();
+              setShowHistory(v => !v);
+            }}
             style={{
-              background: "transparent",
+              background: showHistory ? "rgba(62,207,142,0.08)" : "transparent",
               border: "none",
               cursor: "pointer",
               padding: 6,
               borderRadius: 6,
-              color: "#71717a",
+              color: showHistory ? "#3ecf8e" : "#71717a",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -488,6 +554,75 @@ export default function AssistantPage() {
           </button>
         </div>
       </div>
+
+      {/* ── History panel ── */}
+      {showHistory && (
+        <div style={{
+          borderBottom: "0.8px solid #1a1a1a",
+          background: "#0d0d0d",
+          padding: "12px 16px",
+          flexShrink: 0,
+          maxHeight: 200,
+          overflowY: "auto",
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+            {t("assistant.chatHistory")}
+          </div>
+          {loadingHistory ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#71717a", fontSize: 12 }}>
+              <div style={{ width: 10, height: 10, border: "1.5px solid #71717a", borderTopColor: "transparent", borderRadius: "50%", animation: "spinLoader 0.7s linear infinite" }} />
+              {t("common.loading")}
+            </div>
+          ) : sessions.length === 0 ? (
+            <p style={{ fontSize: 12, color: "#55556a", margin: 0 }}>{t("assistant.noHistory")}</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {sessions.map(session => (
+                <div key={session.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 8, background: session.id === currentSessionId ? "rgba(62,207,142,0.06)" : "transparent", border: `0.8px solid ${session.id === currentSessionId ? "rgba(62,207,142,0.15)" : "#1a1a1a"}`, cursor: "pointer", transition: "background 0.15s" }}
+                  onClick={async () => {
+                    try {
+                      const res = await mitigationApi.getSession(session.id);
+                      const loaded = (res.data.messages || []).map((m: { role: "user"|"assistant"; content: string; timestamp?: string }) => ({
+                        role: m.role as "user" | "assistant",
+                        content: m.content,
+                        timestamp: m.timestamp ? new Date(m.timestamp) : undefined,
+                      }));
+                      setMessages(loaded);
+                      setCurrentSessionId(session.id);
+                      setShowHistory(false);
+                    } catch {
+                      toast.error(t("assistant.errorHistory"));
+                    }
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span style={{ flex: 1, fontSize: 12, color: "#b3b4b5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {session.title}
+                  </span>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await mitigationApi.deleteSession(session.id);
+                        setSessions(prev => prev.filter(s => s.id !== session.id));
+                        if (session.id === currentSessionId) { setMessages([]); setCurrentSessionId(null); }
+                      } catch {
+                        toast.error(t("assistant.errorHistory"));
+                      }
+                    }}
+                    style={{ background: "none", border: "none", color: "#55556a", cursor: "pointer", padding: "2px 4px", borderRadius: 4, fontSize: 10, flexShrink: 0, transition: "color 0.15s" }}
+                    title={t("assistant.deleteChat")}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Main content (flex-1, scrollable) ──────────────────────────────── */}
       <div
@@ -651,7 +786,7 @@ export default function AssistantPage() {
               }}
               onKeyDown={handleKeyDown}
               onInput={autoResize}
-              placeholder="Pregúntame sobre seguridad..."
+              placeholder={t("assistant.placeholder")}
               rows={1}
               disabled={sending}
               style={{
@@ -661,11 +796,13 @@ export default function AssistantPage() {
                 border: "none",
                 color: "#f5f5f5",
                 fontSize: 14,
-                lineHeight: 1.5,
+                lineHeight: "22px",
                 fontFamily: "inherit",
                 maxHeight: 120,
                 outline: "none",
                 overflowY: "auto",
+                padding: "5px 0",
+                verticalAlign: "middle",
               }}
             />
 
@@ -746,6 +883,11 @@ export default function AssistantPage() {
               </span>
             )}
           </div>
+
+          {/* Disclaimer */}
+          <p style={{ fontSize: 11, color: "#55556a", textAlign: "center", margin: "0 0 8px", maxWidth: 680, width: "100%" }}>
+            {t("assistant.disclaimer")}
+          </p>
         </div>
       </div>
     </div>
