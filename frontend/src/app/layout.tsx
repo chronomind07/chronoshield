@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, DM_Mono, Syne, Instrument_Serif, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import { LangSync } from "@/components/LangSync";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -42,22 +43,32 @@ const BASE_URL = "https://chronoshield.eu";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "ChronoShield – Ciberseguridad para Inmobiliarias",
-    template: "%s | ChronoShield",
+    default: "ChronoShield — Plataforma de Ciberseguridad para Negocios",
+    template: "%s",
   },
   description:
-    "Protege tu agencia inmobiliaria con monitorización continua: vigilancia de filtraciones, SSL, uptime y seguridad del email. Alertas en tiempo real.",
+    "Monitoriza certificados SSL, seguridad de email, brechas en la Dark Web y disponibilidad web. Seguridad automatizada para pequeños negocios y empresas.",
   keywords: [
-    "ciberseguridad inmobiliaria",
-    "monitorización seguridad web",
-    "filtraciones de datos",
-    "SSL monitoring",
-    "uptime monitoring",
+    "ciberseguridad para negocios",
+    "monitorización SSL",
     "seguridad email SPF DKIM DMARC",
+    "dark web monitoring",
+    "uptime monitoring",
+    "filtraciones de datos",
+    "cybersecurity platform",
+    "security monitoring",
   ],
   authors: [{ name: "ChronoShield", url: BASE_URL }],
   creator: "ChronoShield",
   publisher: "ChronoShield",
+  alternates: {
+    canonical: BASE_URL,
+    languages: {
+      "es": BASE_URL,
+      "en": BASE_URL,
+      "x-default": BASE_URL,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
@@ -71,31 +82,31 @@ export const metadata: Metadata = {
     type: "website",
     url: BASE_URL,
     siteName: "ChronoShield",
-    title: "ChronoShield – Ciberseguridad para Inmobiliarias",
+    title: "ChronoShield — Plataforma de Ciberseguridad para Negocios",
     description:
-      "Monitorización continua de seguridad para agencias inmobiliarias. Detección de filtraciones, SSL, uptime y email security en un solo panel.",
+      "Monitoriza certificados SSL, seguridad de email, brechas en la Dark Web y disponibilidad web. Seguridad automatizada para pequeños negocios y empresas.",
     images: [
       {
-        url: "/og-image.png",
+        url: `${BASE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "ChronoShield – Ciberseguridad para Inmobiliarias",
+        alt: "ChronoShield — Plataforma de Ciberseguridad para Negocios",
       },
     ],
     locale: "es_ES",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ChronoShield – Ciberseguridad para Inmobiliarias",
+    title: "ChronoShield — Plataforma de Ciberseguridad para Negocios",
     description:
-      "Monitorización continua de seguridad para agencias inmobiliarias. Detección de filtraciones, SSL, uptime y email security en un solo panel.",
-    images: ["/og-image.png"],
+      "Monitoriza certificados SSL, seguridad de email, brechas en la Dark Web y disponibilidad web. Seguridad automatizada para pequeños negocios y empresas.",
+    images: [`${BASE_URL}/og-image.png`],
     creator: "@chronoshield",
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true },
+    googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
   },
 };
 
@@ -105,6 +116,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${dmSans.variable} ${syne.variable} ${dmMono.variable} ${instrumentSerif.variable} ${plusJakartaSans.variable} font-sans bg-[#050507]`}
       >
+        <LangSync />
         {children}
         <Toaster
           position="top-right"

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { TRANSLATIONS, type Lang } from "@/lib/translations";
+import { DynamicMeta } from "@/components/DynamicMeta";
 
 // ── Scroll reveal setup ───────────────────────────────────────────────────────
 function useScrollReveal() {
@@ -440,6 +441,36 @@ function Footer({ t }: { t: (k: string) => string }) {
   );
 }
 
+// ── JSON-LD structured data ───────────────────────────────────────────────────
+const JSONLD_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "ChronoShield",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web",
+  "description": "Plataforma de ciberseguridad para negocios: monitorización de SSL, dark web, uptime y seguridad de email.",
+  "url": "https://chronoshield.eu",
+  "inLanguage": ["es", "en"],
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Starter",
+      "price": "29",
+      "priceCurrency": "EUR",
+      "billingIncrement": "P1M",
+      "description": "1 dominio monitorizado, 10 emails protegidos, 5 créditos/mes",
+    },
+    {
+      "@type": "Offer",
+      "name": "Business",
+      "price": "59",
+      "priceCurrency": "EUR",
+      "billingIncrement": "P1M",
+      "description": "3 dominios monitorizados, 30 emails protegidos, 20 créditos/mes",
+    },
+  ],
+};
+
 // ── Main export ───────────────────────────────────────────────────────────────
 export default function LandingPage() {
   useScrollReveal();
@@ -447,6 +478,22 @@ export default function LandingPage() {
 
   return (
     <div className="noise-overlay" style={{ minHeight: "100vh", background: "var(--bg-void)", color: "var(--text-bright)" }}>
+      {/* Dynamic meta: updates title/description client-side for English users */}
+      <DynamicMeta
+        titles={{
+          es: "ChronoShield — Plataforma de Ciberseguridad para Negocios",
+          en: "ChronoShield — Cybersecurity Platform for Business",
+        }}
+        descriptions={{
+          es: "Monitoriza certificados SSL, seguridad de email, brechas en la Dark Web y disponibilidad web. Seguridad automatizada para pequeños negocios y empresas.",
+          en: "Monitor SSL certificates, email security, dark web breaches and uptime. Automated security for small businesses and companies.",
+        }}
+      />
+      {/* JSON-LD structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSONLD_SCHEMA) }}
+      />
       <Navbar lang={lang} toggleLang={toggleLang} t={t} />
       <main>
         <Hero t={t} />
