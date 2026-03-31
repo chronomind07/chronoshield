@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import { LogoFull } from "@/components/logos";
+import { TRANSLATIONS, type Lang } from "@/lib/translations";
 
 // ── Google colour SVG ────────────────────────────────────────────────────────
 function GoogleIcon() {
@@ -53,6 +54,7 @@ function Spinner() {
 
 // ── Main inner component (uses useSearchParams) ──────────────────────────────
 function AuthPageInner() {
+  const { lang, toggleLang, t } = usePublicLang();
   const router       = useRouter();
   const searchParams = useSearchParams();
   const initialTab   = searchParams.get("tab") === "register" ? "register" : "login";
@@ -93,15 +95,15 @@ function AuthPageInner() {
     try {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) throw err;
-      toast.success("¡Bienvenido a ChronoShield!");
+      toast.success(t("auth.login.welcome") + " a ChronoShield!");
       router.push("/dashboard");
       router.refresh();
     } catch (err: unknown) {
-      const raw = err instanceof Error ? err.message : "Error de autenticación";
+      const raw = err instanceof Error ? err.message : t("auth.error.auth");
       const msg = raw.toLowerCase().includes("email not confirmed")
-        ? "Debes confirmar tu email antes de acceder. Revisa tu bandeja de entrada."
+        ? t("auth.error.emailNotConfirmed")
         : raw.toLowerCase().includes("invalid login credentials")
-        ? "Email o contraseña incorrectos."
+        ? t("auth.error.invalidCredentials")
         : raw;
       setError(msg);
     } finally {
@@ -114,11 +116,11 @@ function AuthPageInner() {
     e.preventDefault();
     clearError();
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+      setError(t("auth.validation.passwordMismatch"));
       return;
     }
     if (!terms) {
-      setError("Debes aceptar los términos de servicio.");
+      setError(t("auth.error.acceptTerms"));
       return;
     }
     setLoading(true);
@@ -131,7 +133,7 @@ function AuthPageInner() {
       if (err) throw err;
       setDone(true);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al crear la cuenta";
+      const msg = err instanceof Error ? err.message : t("auth.error.createAccount");
       setError(msg);
     } finally {
       setLoading(false);
@@ -149,7 +151,7 @@ function AuthPageInner() {
       });
       if (err) throw err;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error con Google";
+      const msg = err instanceof Error ? err.message : t("auth.error.google");
       setError(msg);
       setGoogleLoading(false);
     }
@@ -159,7 +161,7 @@ function AuthPageInner() {
   if (done) {
     return (
       <div className="auth-layout">
-        <BrandPanel />
+        <BrandPanel t={t} />
         <div className="auth-form-panel">
           <div className="auth-container" style={{ textAlign: "center" }}>
             <div className="auth-success-icon">
@@ -167,20 +169,20 @@ function AuthPageInner() {
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
-            <h1 className="auth-title" style={{ marginTop: "20px", marginBottom: "10px" }}>¡Cuenta creada!</h1>
+            <h1 className="auth-title" style={{ marginTop: "20px", marginBottom: "10px" }}>{t("auth.success.title")}</h1>
             <p style={{ fontSize: "0.9rem", color: "var(--auth-text-mid)", lineHeight: 1.7, marginBottom: "28px" }}>
-              Hemos enviado un email de confirmación a{" "}
+              {t("auth.success.emailSent")}{" "}
               <strong style={{ color: "var(--auth-text-bright)" }}>{email}</strong>.
-              <br />Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.
+              <br />{t("auth.success.checkInbox")}
             </p>
             <button
               className="form-submit"
               onClick={() => { setDone(false); switchMode("login"); }}
             >
-              Ir a iniciar sesión
+              {t("auth.success.goLogin")}
             </button>
             <div className="auth-footer">
-              <p>© 2026 ChronoShield</p>
+              <p>{t("auth.copyright")}</p>
             </div>
           </div>
         </div>
@@ -191,7 +193,7 @@ function AuthPageInner() {
   return (
     <div className="auth-layout">
       {/* ── Left: branding ── */}
-      <BrandPanel />
+      <BrandPanel t={t} />
 
       {/* ── Right: form ── */}
       <div className="auth-form-panel">
@@ -199,19 +201,19 @@ function AuthPageInner() {
           {/* Header */}
           <div className="auth-header">
             <h1 className="auth-title">
-              {mode === "login" ? "Bienvenido" : "Crear cuenta"}
+              {mode === "login" ? t("auth.login.welcome") : t("auth.register.welcome")}
             </h1>
             <p className="auth-subtitle">
               {mode === "login" ? (
-                <>¿No tienes cuenta?{" "}
+                <>{t("auth.login.noAccount")}{" "}
                   <a href="#" onClick={(e) => { e.preventDefault(); switchMode("register"); }}>
-                    Crear una
+                    {t("auth.login.createOne")}
                   </a>
                 </>
               ) : (
-                <>¿Ya tienes cuenta?{" "}
+                <>{t("auth.register.hasAccount")}{" "}
                   <a href="#" onClick={(e) => { e.preventDefault(); switchMode("login"); }}>
-                    Inicia sesión
+                    {t("auth.register.signIn")}
                   </a>
                 </>
               )}
@@ -225,14 +227,14 @@ function AuthPageInner() {
               onClick={() => switchMode("login")}
               type="button"
             >
-              Iniciar sesión
+              {t("auth.login.tab")}
             </button>
             <button
               className={`auth-tab${mode === "register" ? " active" : ""}`}
               onClick={() => switchMode("register")}
               type="button"
             >
-              Crear cuenta
+              {t("auth.register.tab")}
             </button>
           </div>
 
@@ -253,11 +255,11 @@ function AuthPageInner() {
             {/* Register only: company name */}
             {mode === "register" && (
               <div className="form-group">
-                <label className="form-label">Nombre de empresa</label>
+                <label className="form-label">{t("auth.register.name")}</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Tu empresa S.L."
+                  placeholder={t("auth.register.namePlaceholder")}
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                 />
@@ -266,11 +268,11 @@ function AuthPageInner() {
 
             {/* Email */}
             <div className="form-group">
-              <label className="form-label">Email</label>
+              <label className="form-label">{mode === "login" ? t("auth.login.email") : t("auth.register.email")}</label>
               <input
                 type="email"
                 className="form-input"
-                placeholder="tu@empresa.com"
+                placeholder={mode === "login" ? t("auth.login.emailPlaceholder") : t("auth.register.emailPlaceholder")}
                 required
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); clearError(); }}
@@ -279,12 +281,12 @@ function AuthPageInner() {
 
             {/* Password */}
             <div className="form-group">
-              <label className="form-label">Contraseña</label>
+              <label className="form-label">{mode === "login" ? t("auth.login.password") : t("auth.register.password")}</label>
               <div className="input-wrapper">
                 <input
                   type={showPwd ? "text" : "password"}
                   className="form-input"
-                  placeholder="••••••••"
+                  placeholder={mode === "login" ? t("auth.login.passwordPlaceholder") : t("auth.register.passwordPlaceholder")}
                   required
                   minLength={8}
                   value={password}
@@ -294,7 +296,7 @@ function AuthPageInner() {
                   type="button"
                   className="input-toggle"
                   onClick={() => setShowPwd((v) => !v)}
-                  aria-label="Mostrar contraseña"
+                  aria-label={t("auth.reset.showPassword")}
                 >
                   {showPwd ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
@@ -305,7 +307,7 @@ function AuthPageInner() {
             {mode === "register" && (
               <>
                 <div className="form-group">
-                  <label className="form-label">Confirmar contraseña</label>
+                  <label className="form-label">{t("auth.register.confirmPassword")}</label>
                   <div className="input-wrapper">
                     <input
                       type={showPwd ? "text" : "password"}
@@ -325,7 +327,19 @@ function AuthPageInner() {
                     onChange={(e) => setTerms(e.target.checked)}
                   />
                   <span className="form-check-label">
-                    Acepto los <a href="/terminos">términos de servicio</a> y la <a href="/privacidad">política de privacidad</a>
+                    {(() => {
+                      const raw = t("auth.register.terms");
+                      const termsLabel = t("auth.register.termsLink");
+                      const privacyLabel = t("auth.register.privacyLink");
+                      const parts = raw.split(/\{terms\}|\{privacy\}/);
+                      return (
+                        <>
+                          {parts[0]}<a href="/terminos">{termsLabel}</a>
+                          {parts[1]}<a href="/privacidad">{privacyLabel}</a>
+                          {parts[2]}
+                        </>
+                      );
+                    })()}
                   </span>
                 </label>
               </>
@@ -336,10 +350,10 @@ function AuthPageInner() {
               <div className="form-login-extras">
                 <label className="form-check" style={{ marginBottom: 0 }}>
                   <input type="checkbox" defaultChecked />
-                  <span className="form-check-label">Recordarme</span>
+                  <span className="form-check-label">{t("auth.login.remember")}</span>
                 </label>
                 <Link href="/forgot-password" className="form-forgot-link">
-                  ¿Olvidaste tu contraseña?
+                  {t("auth.login.forgot")}
                 </Link>
               </div>
             )}
@@ -351,9 +365,9 @@ function AuthPageInner() {
               disabled={loading}
             >
               {loading ? (
-                <><Spinner />{mode === "login" ? "Entrando..." : "Creando cuenta..."}</>
+                <><Spinner />{mode === "login" ? t("auth.login.loading") : t("auth.register.loading")}</>
               ) : (
-                mode === "login" ? "Iniciar sesión" : "Crear cuenta"
+                mode === "login" ? t("auth.login.submit") : t("auth.register.submit")
               )}
             </button>
           </form>
@@ -361,7 +375,7 @@ function AuthPageInner() {
           {/* Divider */}
           <div className="form-divider">
             <div className="form-divider-line" />
-            <span className="form-divider-text">o continúa con</span>
+            <span className="form-divider-text">{t("auth.divider")}</span>
             <div className="form-divider-line" />
           </div>
 
@@ -379,9 +393,15 @@ function AuthPageInner() {
           {/* Footer */}
           <div className="auth-footer">
             <p>
-              Al continuar, aceptas nuestros <a href="/terminos">Términos</a> y <a href="/privacidad">Privacidad</a>
-              <br />© 2026 ChronoShield
+              {t("auth.footer.continuing")} <a href="/terminos">{t("auth.footer.terms")}</a> {t("auth.footer.and")} <a href="/privacidad">{t("auth.footer.privacy")}</a>
+              <br />{t("auth.copyright")}
             </p>
+            <button
+              onClick={toggleLang}
+              style={{ fontSize: "0.72rem", fontWeight: 600, color: "#55556a", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 10px", cursor: "pointer", letterSpacing: "0.05em", transition: "all 0.2s", fontFamily: "var(--font-mono-family)", marginTop: 12 }}
+            >
+              {lang === "es" ? "EN" : "ES"}
+            </button>
           </div>
         </div>
       </div>
@@ -392,8 +412,26 @@ function AuthPageInner() {
   );
 }
 
+// ── Public lang hook ──────────────────────────────────────────────────────────
+function usePublicLang() {
+  const [lang, setLang] = useState<Lang>("es");
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("cs_lang") as Lang;
+      if (stored === "en" || stored === "es") setLang(stored);
+    } catch {}
+  }, []);
+  const toggleLang = () => {
+    const next: Lang = lang === "es" ? "en" : "es";
+    setLang(next);
+    try { localStorage.setItem("cs_lang", next); } catch {}
+  };
+  const t = (key: string) => TRANSLATIONS[lang][key] ?? key;
+  return { lang, toggleLang, t };
+}
+
 // ── Brand panel (left side) ──────────────────────────────────────────────────
-function BrandPanel() {
+function BrandPanel({ t }: { t: (k: string) => string }) {
   return (
     <div className="auth-brand">
       <div className="auth-brand-orb1" />
@@ -408,19 +446,19 @@ function BrandPanel() {
 
         {/* Headline */}
         <h2 className="brand-headline">
-          Protege tu empresa<br />de forma <em>inteligente</em>
+          {t("auth.brand.headline")}<br />{t("auth.brand.headlineSuffix")} <em>{t("auth.brand.headlineEm")}</em>
         </h2>
         <p className="brand-sub">
-          Monitoreo de seguridad automatizado 24/7. Sin equipo técnico, sin complicaciones.
+          {t("auth.brand.sub")}
         </p>
 
         {/* Features */}
         <div className="brand-features">
           {[
-            "Monitoreo SSL, uptime y email security",
-            "Detección de brechas en dark web",
-            "Extensión Chrome anti-phishing",
-            "Alertas claras sin jerga técnica",
+            t("auth.brand.f1"),
+            t("auth.brand.f2"),
+            t("auth.brand.f3"),
+            t("auth.brand.f4"),
           ].map((f) => (
             <div key={f} className="brand-feature">
               <div className="feature-check">

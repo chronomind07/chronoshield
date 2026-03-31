@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { LogoFull } from "@/components/logos";
+import { TRANSLATIONS, type Lang } from "@/lib/translations";
 
 // ── Eye icons ────────────────────────────────────────────────────────────────
 function EyeIcon() {
@@ -37,8 +38,26 @@ function Spinner() {
   return <span className="auth-spinner" />;
 }
 
+// ── usePublicLang hook ────────────────────────────────────────────────────────
+function usePublicLang() {
+  const [lang, setLang] = useState<Lang>("es");
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("cs_lang") as Lang;
+      if (stored === "en" || stored === "es") setLang(stored);
+    } catch {}
+  }, []);
+  const toggleLang = () => {
+    const next: Lang = lang === "es" ? "en" : "es";
+    setLang(next);
+    try { localStorage.setItem("cs_lang", next); } catch {}
+  };
+  const t = (key: string) => TRANSLATIONS[lang][key] ?? key;
+  return { lang, toggleLang, t };
+}
+
 // ── Brand panel (left side) — identical to login ──────────────────────────────
-function BrandPanel() {
+function BrandPanel({ t, lang }: { t: (k: string) => string; lang: Lang }) {
   return (
     <div className="auth-brand">
       <div className="auth-brand-orb1" />
@@ -49,17 +68,17 @@ function BrandPanel() {
           <LogoFull height={40} />
         </div>
         <h2 className="brand-headline">
-          Tu cuenta, bajo<br />tu <em>control</em>
+          {lang === "es" ? <>Tu cuenta, bajo<br />tu <em>control</em></> : <>Your account, under<br />your <em>control</em></>}
         </h2>
         <p className="brand-sub">
-          Elige una contraseña fuerte para mantener tu empresa protegida.
+          {t("auth.resetBrand.sub")}
         </p>
         <div className="brand-features">
           {[
-            "Mínimo 8 caracteres",
-            "Usa letras, números y símbolos",
-            "No reutilices contraseñas antiguas",
-            "Guárdala en un gestor de contraseñas",
+            t("auth.resetBrand.f1"),
+            t("auth.resetBrand.f2"),
+            t("auth.resetBrand.f3"),
+            t("auth.resetBrand.f4"),
           ].map((f) => (
             <div key={f} className="brand-feature">
               <div className="feature-check"><CheckIcon /></div>
@@ -75,6 +94,7 @@ function BrandPanel() {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const { lang, toggleLang, t } = usePublicLang();
 
   const [password,        setPassword]        = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -119,11 +139,11 @@ export default function ResetPasswordPage() {
     setError("");
 
     if (password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres.");
+      setError(t("auth.validation.passwordShort"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+      setError(t("auth.validation.passwordMismatch"));
       return;
     }
 
@@ -146,7 +166,7 @@ export default function ResetPasswordPage() {
   if (done) {
     return (
       <div className="auth-layout">
-        <BrandPanel />
+        <BrandPanel t={t} lang={lang} />
         <div className="auth-form-panel">
           <div className="auth-container" style={{ textAlign: "center" }}>
             <div className="auth-success-icon">
@@ -155,17 +175,22 @@ export default function ResetPasswordPage() {
               </svg>
             </div>
             <h1 className="auth-title" style={{ marginTop: 20, marginBottom: 10 }}>
-              ¡Contraseña actualizada!
+              {t("auth.reset.successTitle")}
             </h1>
             <p style={{ fontSize: "0.9rem", color: "var(--auth-text-mid)", lineHeight: 1.7, marginBottom: 28 }}>
-              Tu contraseña ha sido cambiada correctamente.<br />
-              Redirigiendo al inicio de sesión…
+              {t("auth.reset.successMsg")}
             </p>
             <button className="form-submit" onClick={() => router.push("/login")}>
-              Ir a iniciar sesión
+              {t("auth.reset.successBtn")}
             </button>
             <div className="auth-footer">
-              <p>© 2026 ChronoShield</p>
+              <p>{t("auth.copyright")}</p>
+              <button
+                onClick={toggleLang}
+                style={{ fontSize: "0.72rem", fontWeight: 600, color: "#55556a", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 10px", cursor: "pointer", letterSpacing: "0.05em", transition: "all 0.2s", fontFamily: "var(--font-mono-family)", display: "block", margin: "8px auto 0" }}
+              >
+                {lang === "es" ? "EN" : "ES"}
+              </button>
             </div>
           </div>
         </div>
@@ -188,7 +213,7 @@ export default function ResetPasswordPage() {
   if (!isReady) {
     return (
       <div className="auth-layout">
-        <BrandPanel />
+        <BrandPanel t={t} lang={lang} />
         <div className="auth-form-panel">
           <div className="auth-container" style={{ textAlign: "center" }}>
             <div className="auth-success-icon" style={{ background: "rgba(255,77,106,0.08)", border: "1px solid rgba(255,77,106,0.15)", color: "var(--auth-red)" }}>
@@ -199,17 +224,22 @@ export default function ResetPasswordPage() {
               </svg>
             </div>
             <h1 className="auth-title" style={{ marginTop: 20, marginBottom: 10 }}>
-              Enlace expirado
+              {t("auth.reset.expiredTitle")}
             </h1>
             <p style={{ fontSize: "0.9rem", color: "var(--auth-text-mid)", lineHeight: 1.7, marginBottom: 28 }}>
-              Este enlace de recuperación no es válido o ha expirado.<br />
-              Solicita uno nuevo desde la página de recuperación.
+              {t("auth.reset.expiredMsg")}
             </p>
             <button className="form-submit" onClick={() => router.push("/forgot-password")}>
-              Solicitar nuevo enlace
+              {t("auth.reset.expiredBtn")}
             </button>
             <div className="auth-footer">
-              <p>© 2026 ChronoShield</p>
+              <p>{t("auth.copyright")}</p>
+              <button
+                onClick={toggleLang}
+                style={{ fontSize: "0.72rem", fontWeight: 600, color: "#55556a", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 10px", cursor: "pointer", letterSpacing: "0.05em", transition: "all 0.2s", fontFamily: "var(--font-mono-family)", display: "block", margin: "8px auto 0" }}
+              >
+                {lang === "es" ? "EN" : "ES"}
+              </button>
             </div>
           </div>
         </div>
@@ -221,13 +251,13 @@ export default function ResetPasswordPage() {
   // ── Reset password form ─────────────────────────────────────────────────────
   return (
     <div className="auth-layout">
-      <BrandPanel />
+      <BrandPanel t={t} lang={lang} />
       <div className="auth-form-panel">
         <div className="auth-container">
           <div className="auth-header">
-            <h1 className="auth-title">Nueva contraseña</h1>
+            <h1 className="auth-title">{t("auth.reset.title")}</h1>
             <p className="auth-subtitle">
-              Elige una contraseña segura para tu cuenta.
+              {t("auth.reset.subtitle")}
             </p>
           </div>
 
@@ -246,7 +276,7 @@ export default function ResetPasswordPage() {
           <form onSubmit={handleSubmit}>
             {/* Nueva contraseña */}
             <div className="form-group">
-              <label className="form-label">Nueva contraseña</label>
+              <label className="form-label">{t("auth.reset.newPassword")}</label>
               <div className="input-wrapper">
                 <input
                   type={showPwd ? "text" : "password"}
@@ -261,7 +291,7 @@ export default function ResetPasswordPage() {
                   type="button"
                   className="input-toggle"
                   onClick={() => setShowPwd((v) => !v)}
-                  aria-label="Mostrar contraseña"
+                  aria-label={t("auth.reset.showPassword")}
                 >
                   {showPwd ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
@@ -270,7 +300,7 @@ export default function ResetPasswordPage() {
 
             {/* Confirmar contraseña */}
             <div className="form-group">
-              <label className="form-label">Confirmar contraseña</label>
+              <label className="form-label">{t("auth.reset.confirmPassword")}</label>
               <div className="input-wrapper">
                 <input
                   type={showPwd ? "text" : "password"}
@@ -300,7 +330,7 @@ export default function ResetPasswordPage() {
                   borderRadius: "50%",
                   background: password.length >= 8 ? "var(--auth-accent)" : "var(--auth-text-faint)",
                 }} />
-                {password.length >= 8 ? "Longitud correcta" : `Faltan ${8 - password.length} caracteres`}
+                {password.length >= 8 ? t("auth.reset.passwordHintOk") : t("auth.reset.passwordHintMissing").replace("{n}", String(8 - password.length))}
               </div>
             )}
 
@@ -309,15 +339,21 @@ export default function ResetPasswordPage() {
               className="form-submit"
               disabled={loading}
             >
-              {loading ? <><Spinner />Cambiando contraseña…</> : "Cambiar contraseña"}
+              {loading ? <><Spinner />{t("auth.reset.loading")}</> : t("auth.reset.submit")}
             </button>
           </form>
 
           <div className="auth-footer">
             <p>
-              <a href="/login">← Volver al inicio de sesión</a>
-              <br />© 2026 ChronoShield
+              <a href="/login">{t("auth.reset.backToLogin")}</a>
+              <br />{t("auth.copyright")}
             </p>
+            <button
+              onClick={toggleLang}
+              style={{ fontSize: "0.72rem", fontWeight: 600, color: "#55556a", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 10px", cursor: "pointer", letterSpacing: "0.05em", transition: "all 0.2s", fontFamily: "var(--font-mono-family)", display: "block", margin: "8px auto 0" }}
+            >
+              {lang === "es" ? "EN" : "ES"}
+            </button>
           </div>
         </div>
       </div>
