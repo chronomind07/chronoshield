@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Toaster } from "@/components/Toast";
 import { CreditsProvider, useCredits } from "@/contexts/CreditsContext";
 import { LanguageProvider, useTranslation } from "@/contexts/LanguageContext";
+import { LogoFull } from "@/components/logos";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface AlertItem {
@@ -100,11 +101,6 @@ const IcoHome = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
     <polyline points="9 22 9 12 15 12 15 22"/>
-  </svg>
-);
-const IcoShield = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
   </svg>
 );
 const IcoBell = () => (
@@ -648,9 +644,8 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           borderBottom: "0.8px solid #1a1a1a",
           flexShrink: 0,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <IcoShield />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#f5f5f5", letterSpacing: "-0.01em" }}>ChronoShield</span>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <LogoFull height={28} />
           </div>
           <button
             style={{ background: "none", border: "none", cursor: "pointer", color: "#71717a", padding: 4, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}
