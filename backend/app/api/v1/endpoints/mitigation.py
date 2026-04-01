@@ -28,17 +28,19 @@ MAX_CHAT_SESSIONS = 3  # per user
 
 # ── System prompt ─────────────────────────────────────────────────────────────
 _BASE_SYSTEM = (
-    "Eres ChronoAI, el asistente de seguridad de ChronoShield. "
-    "Tu trabajo es ayudar al usuario a entender y resolver problemas de seguridad en sus dominios.\n"
+    "Eres ChronoAI, el asistente de ciberseguridad de ChronoShield. "
+    "Responde en el mismo idioma que el usuario. Sé breve y directo.\n\n"
     "REGLAS:\n"
-    "- Respuestas cortas y directas, máximo 150 palabras\n"
-    "- Usa pasos numerados cuando sea útil\n"
-    "- Cuando el usuario pregunte sobre sus datos (SSL, score, alertas, etc.) úsalos del contexto\n"
+    "- NUNCA recomiendes herramientas externas ni competencia "
+    "(no menciones SSL Labs, SecurityHeaders, MXToolbox, Qualys, VirusTotal, Shodan, etc.)\n"
+    "- Usa SOLO los datos de ChronoShield para responder\n"
+    "- Si el usuario pregunta sobre sus datos, usa el contexto que tienes abajo\n"
     "- No pidas información que ya tienes en el contexto del usuario\n"
-    "- Proveedores comunes: Namecheap, GoDaddy, Cloudflare, Ionos, OVH, Hostinger, Arsys, Dinahosting\n"
+    "- Da recomendaciones accionables basadas en los datos reales\n"
+    "- Usa pasos numerados cuando expliques cómo arreglar algo\n"
     "- Para DNS (SPF/DKIM/DMARC): da los valores exactos del registro a crear\n"
     "- Para SSL: indica si es renovación automática o manual según el proveedor\n"
-    "- Habla siempre en español, a menos que el usuario escriba en inglés\n"
+    "- Proveedores comunes: Namecheap, GoDaddy, Cloudflare, Ionos, OVH, Hostinger, Arsys, Dinahosting\n"
     "- No hagas introducciones largas, ve al grano\n"
     "- Usa emojis con moderación para claridad"
 )
@@ -92,9 +94,15 @@ def _get_and_increment_usage(db, user_id: str, current_count: int, month_start: 
 
 def _build_user_context(db, user_id: str) -> str:
     """Build a compact security-context string to prepend to the system prompt.
-    Queries are kept minimal: max 5 domains × 4 tables + 2 aggregate queries."""
+    Uses the correct column names from the Supabase schema.
+    ssl_results.status  → enum('valid','expiring_soon','expired','invalid','no_ssl','error')
+    uptime_results.status → enum('up','down','degraded','error')
+    email_security_results.spf_status/dkim_status/dmarc_status → enum('valid','invalid','missing','error')
+    """
+    parts_log: list[str] = []
+
+    # 1. Active domains (max 5)
     try:
-        # 1. Active domains (max 5)
         dom_res = (
             db.table("domains")
             .select("id, domain")
@@ -104,81 +112,180 @@ def _build_user_context(db, user_id: str) -> str:
             .execute()
         )
         domains = dom_res.data or []
-        if not domains:
-            return ""
+    except Exception as exc:
+        logger.warning("user_context: domains query failed", error=str(exc))
+        domains = []
 
-        # 2. Per-domain latest scan data
-        domain_lines: list[str] = []
-        for d in domains:
-            did, dname = d["id"], d["domain"]
-            parts: list[str] = []
+    if not domains:
+        logger.info("user_context: no active domains — skipping context")
+        return ""
 
-            # SSL
-            ssl = (db.table("ssl_results").select("days_remaining, is_valid")
-                   .eq("domain_id", did).order("scanned_at", desc=True).limit(1).execute().data)
+    # 2. Per-domain latest scan data
+    domain_lines: list[str] = []
+    for d in domains:
+        did, dname = d["id"], d["domain"]
+        parts: list[str] = []
+
+        # SSL — status enum + days_remaining int
+        try:
+            ssl = (
+                db.table("ssl_results")
+                .select("status, days_remaining")
+                .eq("domain_id", did)
+                .order("scanned_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+            )
             if ssl:
                 s = ssl[0]
-                parts.append(f"SSL:{'{}d'.format(s.get('days_remaining','?')) if s.get('is_valid') else 'INVALIDO'}")
+                st = s.get("status", "error")
+                days = s.get("days_remaining")
+                if st == "valid":
+                    parts.append(f"SSL:válido({days}d restantes)" if days is not None else "SSL:válido")
+                elif st == "expiring_soon":
+                    parts.append(f"SSL:expira pronto({days}d)⚠️")
+                elif st == "expired":
+                    parts.append("SSL:EXPIRADO")
+                elif st == "no_ssl":
+                    parts.append("SSL:sin certificado")
+                else:
+                    parts.append(f"SSL:{st}")
+        except Exception as exc:
+            logger.warning("user_context: ssl query failed", domain=dname, error=str(exc))
 
-            # Email security
-            em = (db.table("email_security_results").select("spf_valid, dkim_valid, dmarc_valid")
-                  .eq("domain_id", did).order("scanned_at", desc=True).limit(1).execute().data)
+        # Email security — spf_status / dkim_status / dmarc_status enums
+        try:
+            em = (
+                db.table("email_security_results")
+                .select("spf_status, dkim_status, dmarc_status")
+                .eq("domain_id", did)
+                .order("scanned_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+            )
             if em:
                 e = em[0]
-                parts.append(f"SPF:{'OK' if e.get('spf_valid') else '✗'}")
-                parts.append(f"DKIM:{'OK' if e.get('dkim_valid') else '✗'}")
-                parts.append(f"DMARC:{'OK' if e.get('dmarc_valid') else '✗'}")
+                def _es(v: str | None) -> str:
+                    return {"valid": "válido", "missing": "faltante",
+                            "invalid": "inválido", "error": "error"}.get(v or "", v or "?")
+                parts.append(f"SPF:{_es(e.get('spf_status'))}")
+                parts.append(f"DKIM:{_es(e.get('dkim_status'))}")
+                parts.append(f"DMARC:{_es(e.get('dmarc_status'))}")
+        except Exception as exc:
+            logger.warning("user_context: email_security query failed", domain=dname, error=str(exc))
 
-            # Uptime
-            up = (db.table("uptime_results").select("is_up")
-                  .eq("domain_id", did).order("checked_at", desc=True).limit(1).execute().data)
+        # Uptime — status enum ('up','down','degraded','error') + response_time_ms
+        try:
+            up = (
+                db.table("uptime_results")
+                .select("status, response_time_ms")
+                .eq("domain_id", did)
+                .order("checked_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+            )
             if up:
-                parts.append(f"uptime:{'OK' if up[0].get('is_up') else 'DOWN'}")
+                u = up[0]
+                st = u.get("status", "error")
+                ms = u.get("response_time_ms")
+                if st == "up":
+                    parts.append(f"uptime:operativo({ms}ms)" if ms else "uptime:operativo")
+                elif st == "degraded":
+                    parts.append(f"uptime:lento({ms}ms)" if ms else "uptime:lento⚠️")
+                elif st == "down":
+                    parts.append("uptime:CAÍDO")
+                else:
+                    parts.append(f"uptime:{st}")
+        except Exception as exc:
+            logger.warning("user_context: uptime query failed", domain=dname, error=str(exc))
 
-            # Score
-            sc = (db.table("security_scores").select("overall_score, grade")
-                  .eq("domain_id", did).order("calculated_at", desc=True).limit(1).execute().data)
+        # Security score — overall + per-category breakdown
+        try:
+            sc = (
+                db.table("security_scores")
+                .select("overall_score, ssl_score, uptime_score, email_sec_score, breach_score, grade")
+                .eq("domain_id", did)
+                .order("calculated_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+            )
             if sc:
-                parts.append(f"score:{sc[0].get('overall_score','?')}/{sc[0].get('grade','?')}")
+                s = sc[0]
+                score_detail = (
+                    f"puntuación global:{s.get('overall_score','?')}/100"
+                    f"(nota:{s.get('grade','?')})"
+                    f", SSL:{s.get('ssl_score','?')}"
+                    f", uptime:{s.get('uptime_score','?')}"
+                    f", email:{s.get('email_sec_score','?')}"
+                    f", brechas:{s.get('breach_score','?')}"
+                )
+                parts.append(score_detail)
+        except Exception as exc:
+            logger.warning("user_context: scores query failed", domain=dname, error=str(exc))
 
-            domain_lines.append(f"{dname} ({', '.join(parts)})" if parts else dname)
+        domain_lines.append(f"- {dname}: {' | '.join(parts)}" if parts else f"- {dname}: sin datos aún")
+        parts_log.append(dname)
 
-        # 3. Active alerts (single query)
+    # 3. Active alerts
+    try:
         al_res = (
-            db.table("alerts").select("severity, alert_type")
-            .eq("user_id", user_id).is_("read_at", "null").neq("archived", True)
-            .limit(50).execute()
+            db.table("alerts")
+            .select("severity, alert_type, title")
+            .eq("user_id", user_id)
+            .is_("read_at", "null")
+            .eq("archived", False)
+            .limit(50)
+            .execute()
         )
         alerts = al_res.data or []
-        if alerts:
-            by_sev = Counter(a.get("severity", "low") for a in alerts)
-            sev_str = ", ".join(
-                f"{by_sev[s]} {s}" for s in ["critical", "high", "medium", "low"] if by_sev.get(s)
-            )
-            alert_line = f"Alertas activas: {len(alerts)} ({sev_str})"
-        else:
-            alert_line = "Alertas activas: 0"
+    except Exception as exc:
+        logger.warning("user_context: alerts query failed", error=str(exc))
+        alerts = []
 
-        # 4. Total dark web breaches (single query)
+    if alerts:
+        by_sev = Counter(a.get("severity", "low") for a in alerts)
+        sev_str = ", ".join(
+            f"{by_sev[s]} {s}" for s in ["critical", "high", "medium", "low"] if by_sev.get(s)
+        )
+        # Also list alert types briefly
+        by_type = Counter(a.get("alert_type", "unknown") for a in alerts)
+        type_str = ", ".join(f"{v}×{k.replace('_',' ')}" for k, v in by_type.most_common(3))
+        alert_line = f"Alertas activas: {len(alerts)} ({sev_str}) — tipos: {type_str}"
+    else:
+        alert_line = "Alertas activas: 0"
+
+    # 4. Dark web breaches
+    try:
         br_res = (
-            db.table("breach_results").select("breaches_found")
-            .eq("user_id", user_id).gt("breaches_found", 0).execute()
+            db.table("breach_results")
+            .select("breaches_found")
+            .eq("user_id", user_id)
+            .gt("breaches_found", 0)
+            .execute()
         )
         total_breaches = sum(b.get("breaches_found", 0) for b in (br_res.data or []))
-
-        # Assemble
-        lines = [
-            "=== CONTEXTO DEL USUARIO (datos reales, no pedir al usuario) ===",
-            "Dominios: " + "; ".join(domain_lines),
-            alert_line,
-            f"Brechas dark web: {total_breaches}",
-            "=== FIN CONTEXTO ===",
-        ]
-        return "\n".join(lines)
-
     except Exception as exc:
-        logger.warning("user_context_build_failed", error=str(exc))
-        return ""
+        logger.warning("user_context: breaches query failed", error=str(exc))
+        total_breaches = 0
+
+    # Assemble final context string
+    lines = [
+        "=== DATOS REALES DEL USUARIO EN CHRONOSHIELD ===",
+        "(No pidas esta información al usuario, ya la tienes aquí)",
+        "Dominios monitorizados:",
+        *domain_lines,
+        "",
+        alert_line,
+        f"Brechas dark web detectadas: {total_breaches}",
+        "=== FIN DE DATOS ===",
+    ]
+    ctx = "\n".join(lines)
+    logger.info("user_context: built successfully", domains=parts_log, alerts_count=len(alerts), breaches=total_breaches)
+    return ctx
 
 
 # ── Chat endpoint ───────────────────────────────────────────────────────────────
