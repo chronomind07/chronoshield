@@ -75,7 +75,7 @@ def uptime_check_all_domains_fast(self):
     now_utc = datetime.now(timezone.utc)
     logger.info("Fast uptime check started", count=len(domains))
 
-    TIMEOUT = 10
+    TIMEOUT = 15
     DOWN_THRESHOLD_MS = 5000
 
     for d in domains:
@@ -95,7 +95,7 @@ def uptime_check_all_domains_fast(self):
             )
             prev_status = prev[0]["status"] if prev else "up"
 
-            # Lightweight HTTP HEAD request
+            # HTTP GET (HEAD is rejected by many servers)
             url = f"https://{domain}"
             start = time.monotonic()
             status = "error"
@@ -104,11 +104,11 @@ def uptime_check_all_domains_fast(self):
             response_time_ms = None
 
             try:
-                resp = httpx.head(
+                resp = httpx.get(
                     url,
                     follow_redirects=True,
                     timeout=TIMEOUT,
-                    headers={"User-Agent": "ChronoShield-Monitor/1.0"},
+                    headers={"User-Agent": "Mozilla/5.0 (compatible; ChronoShield/1.0)"},
                 )
                 elapsed_ms = int((time.monotonic() - start) * 1000)
                 response_time_ms = elapsed_ms

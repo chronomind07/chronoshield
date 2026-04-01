@@ -11,7 +11,7 @@ from app.services.alert_service import create_alert
 
 logger = structlog.get_logger()
 
-TIMEOUT_SECONDS = 10
+TIMEOUT_SECONDS = 15
 DOWN_THRESHOLD_MS = 5000
 
 
@@ -31,7 +31,7 @@ def scan_uptime(domain_id: str, domain: str, user_id: str):
             url,
             follow_redirects=True,
             timeout=TIMEOUT_SECONDS,
-            headers={"User-Agent": "ChronoShield-Monitor/1.0"},
+            headers={"User-Agent": "Mozilla/5.0 (compatible; ChronoShield/1.0)"},
         )
         elapsed_ms = int((time.monotonic() - start) * 1000)
         response_time_ms = elapsed_ms
