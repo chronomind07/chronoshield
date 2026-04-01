@@ -153,5 +153,33 @@ export const uptimeApi = {
     api.get("/uptime/timeline", { params: { domain_id: domainId, range } }),
 };
 
+// SuperAdmin endpoints
+export const adminApi = {
+  stats: () => api.get("/superadmin/stats"),
+  users: (params?: { search?: string; plan?: string; page?: number }) =>
+    api.get("/superadmin/users", { params: { search: params?.search, plan_filter: params?.plan, page: params?.page } }),
+  userDetail: (id: string) => api.get(`/superadmin/users/${id}`),
+  changePlan: (id: string, plan: string) => api.patch(`/superadmin/users/${id}/plan`, { plan }),
+  changeCredits: (id: string, delta: number, reason = "") =>
+    api.patch(`/superadmin/users/${id}/credits`, { delta, reason }),
+  changeAiTokens: (id: string, new_limit: number, reset_used = false) =>
+    api.patch(`/superadmin/users/${id}/ai-tokens`, { new_limit, reset_used }),
+  changeStatus: (id: string, status: string, reason = "") =>
+    api.patch(`/superadmin/users/${id}/status`, { status, reason }),
+  // Team
+  team: () => api.get("/superadmin/team"),
+  addTeamMember: (email: string) => api.post("/superadmin/team", { email }),
+  removeTeamMember: (id: string) => api.delete(`/superadmin/team/${id}`),
+  // Leads
+  leads: (params?: { status?: string; search?: string; page?: number }) =>
+    api.get("/superadmin/leads", { params: { status_filter: params?.status, search: params?.search, page: params?.page } }),
+  addLead: (data: Record<string, string>) => api.post("/superadmin/leads", data),
+  updateLead: (id: string, data: Record<string, string>) => api.patch(`/superadmin/leads/${id}`, data),
+  // Audit
+  audit: (page = 1) => api.get("/superadmin/audit", { params: { page } }),
+  // Platform
+  platformScans: (hours = 24) => api.get("/superadmin/platform/scans", { params: { range_hours: hours } }),
+};
+
 export { supabase };
 export default api;

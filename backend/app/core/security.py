@@ -81,3 +81,40 @@ async def get_current_user_id(
     current_user: dict = Depends(get_current_user),
 ) -> str:
     return current_user["sub"]
+
+
+# ── Admin role dependencies ────────────────────────────────────────────────────
+
+async def get_current_user_with_role(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> dict:
+    """Validate JWT and enrich payload with role from profiles table."""
+    from app.db.supabase import get_supabase_client
+    payload = await get_current_user(credentials)
+    user_id = payload["sub"]
+    try:
+        db = get_supabase_client()
+        result = db.table("profiles").select("role").eq("id", user_id).execute()
+        role = result.data[0]["role"] if result.data else "user"
+    except Exception:
+        role = "user"
+    payload["role"] = role
+    return payload
+
+
+async def require_admin(
+    user: dict = Depends(get_current_user_with_role),
+) -> dict:
+    """Allow access only to admin or superadmin roles."""
+    if user.get("role") not in ("admin", "superadmin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
+async def require_superadmin(
+    user: dict = Depends(get_current_user_with_role),
+) -> dict:
+    """Allow access only to superadmin role."""
+    if user.get("role") != "superadmin":
+        raise HTTPException(status_code=403, detail="Superadmin access required")
+    return user
