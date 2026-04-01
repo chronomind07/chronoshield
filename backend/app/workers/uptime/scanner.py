@@ -37,7 +37,8 @@ def scan_uptime(domain_id: str, domain: str, user_id: str):
         response_time_ms = elapsed_ms
         status_code = response.status_code
 
-        if response.status_code < 400:
+        if response.status_code < 500:
+            # 2xx/3xx = normal, 4xx = server/CDN is responding (e.g. Cloudflare 403)
             if elapsed_ms > DOWN_THRESHOLD_MS:
                 status = "degraded"
             else:

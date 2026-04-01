@@ -113,7 +113,8 @@ def uptime_check_all_domains_fast(self):
                 elapsed_ms = int((time.monotonic() - start) * 1000)
                 response_time_ms = elapsed_ms
                 status_code = resp.status_code
-                if resp.status_code < 400:
+                if resp.status_code < 500:
+                    # 2xx/3xx = normal, 4xx = server/CDN is responding (e.g. Cloudflare 403)
                     status = "degraded" if elapsed_ms > DOWN_THRESHOLD_MS else "up"
                 else:
                     status = "down"
