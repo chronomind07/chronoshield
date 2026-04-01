@@ -5,6 +5,7 @@ Weights: Breach 30% | SSL 25% | Uptime 25% | Email Security 20%
 
 import dns.resolver
 from app.db.supabase import get_supabase_client
+from datetime import datetime, timezone, timedelta
 import structlog
 
 logger = structlog.get_logger()
@@ -83,12 +84,15 @@ def calculate_domain_score(domain_id: str, user_id: str) -> dict:
 
     # ── Uptime score (25%) ────────────────────────────────────────────────────
     # Worker writes: "up" | "down" | "degraded" | "error"
+    # With 5-min checks, use a 30-day time window (~8 640 checks) for an
+    # accurate SLA percentage instead of a fixed record count.
+    cutoff_30d = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     uptime_records = (
         db.table("uptime_results")
         .select("status")
         .eq("domain_id", domain_id)
-        .order("checked_at", desc=True)
-        .limit(100)
+        .gte("checked_at", cutoff_30d)
+        .limit(9000)   # safety cap; 30 d × 288 checks/d = 8 640 max
         .execute()
         .data
     )

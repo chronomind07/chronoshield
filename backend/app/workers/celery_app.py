@@ -60,7 +60,18 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour="5,20", minute=0),
     },
 
-    # ── Uptime scan: twice daily (10-min offset to avoid DB contention) ───────
+    # ── Uptime check: every 5 minutes (lightweight HTTP HEAD, no score recalc) ─
+    # State-change alert: only fires when a domain transitions up → down.
+    # Records older than 90 days are purged once per hour inside this task.
+    "uptime-check-5min": {
+        "task": "app.workers.tasks.uptime_check_all_domains_fast",
+        "schedule": 300.0,   # 300 s = 5 minutes
+    },
+
+    # ── Uptime reconciliation: twice daily ────────────────────────────────────
+    # Full GET scan + score recalculation. Kept so scores are refreshed even
+    # if the fast task misses a state change. Alert dedup (30-min window) in
+    # the scanner prevents duplicate downtime alerts.
     "scan-uptime-all": {
         "task": "app.workers.tasks.scan_uptime_all_domains",
         "schedule": crontab(hour="5,20", minute=10),

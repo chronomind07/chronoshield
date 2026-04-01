@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { historyApi } from "@/lib/api";
+import { historyApi, uptimeApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
 
@@ -26,6 +26,29 @@ interface HistoryData {
   page: number;
   per_page: number;
   entries: HistoryEntry[];
+}
+
+interface UptimeDomain {
+  id: string;
+  domain: string;
+}
+
+interface UptimePoint {
+  checked_at: string;
+  status: string;
+  response_time_ms: number | null;
+}
+
+interface UptimeTimeline {
+  domain_id: string;
+  domain: string;
+  uptime_pct: number;
+  avg_response_ms: number | null;
+  total_checks: number;
+  down_checks: number;
+  degraded_checks: number;
+  range: string;
+  points: UptimePoint[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -428,10 +451,275 @@ function Pagination({ page, total, perPage, onPage, tShowing }: {
   );
 }
 
+// ── Uptime status colours ────────────────────────────────────────────────────
+
+const UPTIME_COLORS: Record<string, string> = {
+  up:       "#3ecf8e",
+  degraded: "#f59e0b",
+  down:     "#ef4444",
+  error:    "#71717a",
+};
+
+// ── Uptime timeline bar ───────────────────────────────────────────────────────
+
+function UptimeBar({ points }: { points: UptimePoint[] }) {
+  if (!points.length) return null;
+  const total = points.length;
+  // Cap display at 500 blocks; each block is a thin rectangle
+  return (
+    <div style={{ display: "flex", gap: 1, height: 28, alignItems: "stretch", overflow: "hidden", borderRadius: 6 }}>
+      {points.map((p, i) => (
+        <div
+          key={i}
+          title={`${new Date(p.checked_at).toLocaleTimeString()} — ${p.status}${p.response_time_ms ? ` (${p.response_time_ms}ms)` : ""}`}
+          style={{
+            flex: `${1 / total}`,
+            minWidth: 2,
+            background: UPTIME_COLORS[p.status] ?? "#71717a",
+            opacity: p.status === "up" ? 0.75 : 1,
+            transition: "opacity 0.1s",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.opacity = "1"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.opacity = p.status === "up" ? "0.75" : "1"; }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Stat card ─────────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, unit, color }: { label: string; value: string | number; unit?: string; color?: string }) {
+  return (
+    <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 12,
+      padding: "16px 20px", flex: 1, minWidth: 120 }}>
+      <div style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.62rem", color: "#71717a",
+        textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
+        {label}
+      </div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "1.6rem", fontWeight: 700,
+          color: color ?? "#f5f5f5", lineHeight: 1 }}>
+          {value}
+        </span>
+        {unit && <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.75rem", color: "#71717a" }}>{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ── Uptime tab ────────────────────────────────────────────────────────────────
+
+function UptimeTab({ lang }: { lang: string }) {
+  const { t } = useTranslation();
+  const [domains, setDomains]           = useState<UptimeDomain[]>([]);
+  const [selectedId, setSelectedId]     = useState<string>("");
+  const [range, setRange]               = useState<"24h" | "7d" | "30d">("24h");
+  const [timeline, setTimeline]         = useState<UptimeTimeline | null>(null);
+  const [loading, setLoading]           = useState(false);
+  const [domainsLoading, setDomainsLoading] = useState(true);
+
+  // Load domain list on mount
+  useEffect(() => {
+    uptimeApi.domains()
+      .then(r => {
+        const list: UptimeDomain[] = r.data?.domains ?? [];
+        setDomains(list);
+        if (list.length > 0) setSelectedId(list[0].id);
+      })
+      .catch(() => toast.error(t("uptime.errorLoad")))
+      .finally(() => setDomainsLoading(false));
+  }, [t]);
+
+  // Load timeline when domain or range changes
+  const loadTimeline = useCallback(async () => {
+    if (!selectedId) return;
+    setLoading(true);
+    try {
+      const r = await uptimeApi.timeline(selectedId, range);
+      setTimeline(r.data);
+    } catch {
+      toast.error(t("uptime.errorLoad"));
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedId, range, t]);
+
+  useEffect(() => { loadTimeline(); }, [loadTimeline]);
+
+  const RANGES: { key: "24h" | "7d" | "30d"; label: string }[] = [
+    { key: "24h", label: t("uptime.range.24h") },
+    { key: "7d",  label: t("uptime.range.7d")  },
+    { key: "30d", label: t("uptime.range.30d") },
+  ];
+
+  const pctColor = !timeline ? "#f5f5f5"
+    : timeline.uptime_pct >= 99 ? "#3ecf8e"
+    : timeline.uptime_pct >= 95 ? "#f59e0b"
+    : "#ef4444";
+
+  if (domainsLoading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200 }}>
+        <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e",
+          borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      </div>
+    );
+  }
+
+  if (domains.length === 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center",
+        gap: 12, padding: "80px 0", textAlign: "center" }}>
+        <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5" }}>{t("uptime.noDomains")}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cs-fadeup-2">
+      {/* Controls: domain selector + range pills */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
+        {/* Domain selector */}
+        {domains.length > 1 && (
+          <div style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
+            border: "0.8px solid #1a1a1a", borderRadius: 8 }}>
+            {domains.map(d => {
+              const active = selectedId === d.id;
+              return (
+                <button key={d.id} onClick={() => setSelectedId(d.id)} style={{
+                  padding: "5px 12px", borderRadius: 6, fontSize: "13px", fontWeight: 600,
+                  cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
+                  border: active ? "0.8px solid rgba(62,207,142,0.2)" : "0.8px solid transparent",
+                  background: active ? "rgba(62,207,142,0.08)" : "transparent",
+                  color: active ? "#3ecf8e" : "#71717a",
+                }}>{d.domain}</button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Range pills */}
+        <div style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
+          border: "0.8px solid #1a1a1a", borderRadius: 8 }}>
+          {RANGES.map(r => {
+            const active = range === r.key;
+            return (
+              <button key={r.key} onClick={() => setRange(r.key)} style={{
+                padding: "5px 12px", borderRadius: 6, fontSize: "13px", fontWeight: 600,
+                cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
+                border: active ? "0.8px solid #1a1a1a" : "0.8px solid transparent",
+                background: active ? "#151515" : "transparent",
+                color: active ? "#f5f5f5" : "#71717a",
+              }}>{r.label}</button>
+            );
+          })}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 180 }}>
+          <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e",
+            borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        </div>
+      ) : !timeline || timeline.total_checks === 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center",
+          gap: 12, padding: "60px 0", textAlign: "center" }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(62,207,142,0.06)",
+            border: "0.8px solid rgba(62,207,142,0.15)", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: "1.2rem" }}>📡</div>
+          <div>
+            <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>
+              {t("uptime.noData")}
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 300, lineHeight: 1.6 }}>
+              {t("uptime.noDataSub")}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Stats row */}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
+            <StatCard
+              label={t("uptime.pct")}
+              value={`${timeline.uptime_pct.toFixed(2)}%`}
+              color={pctColor}
+            />
+            <StatCard
+              label={t("uptime.avgResponse")}
+              value={timeline.avg_response_ms != null ? Math.round(timeline.avg_response_ms) : "—"}
+              unit={timeline.avg_response_ms != null ? t("uptime.ms") : undefined}
+              color="#b3b4b5"
+            />
+            <StatCard
+              label={t("uptime.totalChecks")}
+              value={timeline.total_checks}
+              color="#b3b4b5"
+            />
+            <StatCard
+              label={t("uptime.incidents")}
+              value={timeline.down_checks}
+              color={timeline.down_checks > 0 ? "#ef4444" : "#3ecf8e"}
+            />
+            {timeline.degraded_checks > 0 && (
+              <StatCard
+                label={t("uptime.degraded")}
+                value={timeline.degraded_checks}
+                color="#f59e0b"
+              />
+            )}
+          </div>
+
+          {/* Timeline bar */}
+          <div style={{ background: "#151515", border: "0.8px solid #1a1a1a",
+            borderRadius: 14, padding: "18px 20px", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: 12 }}>
+              <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.65rem",
+                textTransform: "uppercase", letterSpacing: "0.1em", color: "#71717a" }}>
+                {domains.find(d => d.id === selectedId)?.domain ?? ""}
+              </span>
+              <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.65rem", color: "#71717a" }}>
+                {timeline.points.length} pts · {RANGES.find(r => r.key === range)?.label}
+              </span>
+            </div>
+            <UptimeBar points={timeline.points} />
+            {/* Legend */}
+            <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
+              {(["up", "degraded", "down", "error"] as const).map(s => (
+                <div key={s} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: UPTIME_COLORS[s] }} />
+                  <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.65rem", color: "#71717a" }}>
+                    {t(`uptime.legend.${s}`)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Time axis labels */}
+          <div style={{ display: "flex", justifyContent: "space-between",
+            fontFamily: "var(--font-dm-mono)", fontSize: "0.6rem", color: "#3a3a3a",
+            padding: "0 2px" }}>
+            {timeline.points.length > 0 && (
+              <>
+                <span>{fmtFull(timeline.points[0].checked_at, lang)}</span>
+                <span>{fmtFull(timeline.points[timeline.points.length - 1].checked_at, lang)}</span>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
   const { t, lang } = useTranslation();
+  const [activeTab, setActiveTab]       = useState<"activity" | "uptime">("activity");
   const [data, setData]                 = useState<HistoryData | null>(null);
   const [loading, setLoading]           = useState(true);
   const [dateFilter, setDateFilter]     = useState("month");
@@ -473,12 +761,14 @@ export default function HistoryPage() {
   }, [dateFilter, categoryFilter, problemsOnly, t]);
 
   useEffect(() => {
+    if (activeTab !== "activity") return;
     setPage(1);
     setExpandedId(null);
     load(1);
-  }, [dateFilter, categoryFilter, problemsOnly]); // eslint-disable-line
+  }, [dateFilter, categoryFilter, problemsOnly, activeTab]); // eslint-disable-line
 
   useEffect(() => {
+    if (activeTab !== "activity") return;
     load(page);
   }, [page]); // eslint-disable-line
 
@@ -515,7 +805,7 @@ export default function HistoryPage() {
       fontFamily: "var(--font-dm-sans)" }}>
 
       {/* Header */}
-      <div className="cs-fadeup-1" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
+      <div className="cs-fadeup-1" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f5f5f5", margin: 0, letterSpacing: "-0.01em" }}>
             {t("history.title")}
@@ -524,105 +814,133 @@ export default function HistoryPage() {
             {t("history.subtitle")}
           </p>
         </div>
-        {data && (
+        {activeTab === "activity" && data && (
           <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.68rem", color: "#71717a", marginTop: 6 }}>
             {data.total} {t("history.records").replace("{s}", data.total !== 1 ? "s" : "")}
           </span>
         )}
       </div>
 
-      {/* Filters */}
-      <div className="cs-fadeup-2" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 28 }}>
-        {/* Date filter pills */}
-        <div style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
-          border: "0.8px solid #1a1a1a", borderRadius: 8 }}>
-          {DATE_FILTERS.map(f => {
-            const active = dateFilter === f.key;
-            return (
-              <button key={f.key} onClick={() => setDateFilter(f.key)} style={{
-                padding: "5px 12px", borderRadius: 6, fontSize: "13px", fontWeight: 600,
-                cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
-                border: active ? "0.8px solid #1a1a1a" : "0.8px solid transparent",
-                background: active ? "#151515" : "transparent",
-                color: active ? "#f5f5f5" : "#71717a",
-              }}>{f.label}</button>
-            );
-          })}
-        </div>
-
-        {/* Category filter pills */}
-        <div style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
-          border: "0.8px solid #1a1a1a", borderRadius: 8 }}>
-          {CATEGORY_FILTERS.map(f => {
-            const active = categoryFilter === f.key;
-            return (
-              <button key={f.key} onClick={() => setCategoryFilter(f.key)} style={{
-                padding: "5px 12px", borderRadius: 6, fontSize: "13px", fontWeight: 600,
-                cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
-                border: active ? "0.8px solid rgba(62,207,142,0.2)" : "0.8px solid transparent",
-                background: active ? "rgba(62,207,142,0.08)" : "transparent",
-                color: active ? "#3ecf8e" : "#71717a",
-              }}>{f.label}</button>
-            );
-          })}
-        </div>
-
-        {/* Problems only toggle */}
-        <button
-          onClick={() => setProblemsOnly(p => !p)}
-          style={{
-            padding: "7px 14px", borderRadius: 8, fontSize: "13px", fontWeight: 600,
-            cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
-            background: problemsOnly ? "rgba(239,68,68,0.10)" : "#1c1c1c",
-            color: problemsOnly ? "#ef4444" : "#71717a",
-            border: problemsOnly ? "0.8px solid rgba(239,68,68,0.2)" : "0.8px solid #1a1a1a",
-          }}
-        >
-          {t("history.problemsOnly")}
-        </button>
+      {/* Tab switcher */}
+      <div className="cs-fadeup-1" style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
+        border: "0.8px solid #1a1a1a", borderRadius: 10, width: "fit-content", marginBottom: 24 }}>
+        {(["activity", "uptime"] as const).map(tab => {
+          const active = activeTab === tab;
+          const label  = tab === "activity" ? t("history.tab.activity") : t("history.tab.uptime");
+          return (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              padding: "7px 18px", borderRadius: 7, fontSize: "13px", fontWeight: 600,
+              cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
+              border: active ? "0.8px solid rgba(62,207,142,0.2)" : "0.8px solid transparent",
+              background: active ? "rgba(62,207,142,0.08)" : "transparent",
+              color: active ? "#3ecf8e" : "#71717a",
+            }}>
+              {tab === "uptime" ? "📡 " : "📋 "}{label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Content */}
-      {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 192 }}>
-          <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e",
-            borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        </div>
-      ) : !data || data.entries.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center",
-          gap: 16, padding: "80px 0", textAlign: "center" }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(59,130,246,0.06)",
-            border: "0.8px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: "1.3rem" }}>≡</div>
-          <div>
-            <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>{t("history.noActivity")}</div>
-            <div style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 280, lineHeight: 1.6 }}>
-              {problemsOnly ? t("history.noProblems") : t("history.appearsHere")}
+      {/* ── Activity tab content ─────────────────────────────────────────────── */}
+      {activeTab === "activity" && (
+        <>
+          {/* Filters */}
+          <div className="cs-fadeup-2" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 28 }}>
+            {/* Date filter pills */}
+            <div style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
+              border: "0.8px solid #1a1a1a", borderRadius: 8 }}>
+              {DATE_FILTERS.map(f => {
+                const active = dateFilter === f.key;
+                return (
+                  <button key={f.key} onClick={() => setDateFilter(f.key)} style={{
+                    padding: "5px 12px", borderRadius: 6, fontSize: "13px", fontWeight: 600,
+                    cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
+                    border: active ? "0.8px solid #1a1a1a" : "0.8px solid transparent",
+                    background: active ? "#151515" : "transparent",
+                    color: active ? "#f5f5f5" : "#71717a",
+                  }}>{f.label}</button>
+                );
+              })}
             </div>
+
+            {/* Category filter pills */}
+            <div style={{ display: "flex", gap: 4, padding: 4, background: "#1c1c1c",
+              border: "0.8px solid #1a1a1a", borderRadius: 8 }}>
+              {CATEGORY_FILTERS.map(f => {
+                const active = categoryFilter === f.key;
+                return (
+                  <button key={f.key} onClick={() => setCategoryFilter(f.key)} style={{
+                    padding: "5px 12px", borderRadius: 6, fontSize: "13px", fontWeight: 600,
+                    cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
+                    border: active ? "0.8px solid rgba(62,207,142,0.2)" : "0.8px solid transparent",
+                    background: active ? "rgba(62,207,142,0.08)" : "transparent",
+                    color: active ? "#3ecf8e" : "#71717a",
+                  }}>{f.label}</button>
+                );
+              })}
+            </div>
+
+            {/* Problems only toggle */}
+            <button
+              onClick={() => setProblemsOnly(p => !p)}
+              style={{
+                padding: "7px 14px", borderRadius: 8, fontSize: "13px", fontWeight: 600,
+                cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font-dm-sans)",
+                background: problemsOnly ? "rgba(239,68,68,0.10)" : "#1c1c1c",
+                color: problemsOnly ? "#ef4444" : "#71717a",
+                border: problemsOnly ? "0.8px solid rgba(239,68,68,0.2)" : "0.8px solid #1a1a1a",
+              }}
+            >
+              {t("history.problemsOnly")}
+            </button>
           </div>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-          {groups.map(g => (
-            <DayGroup
-              key={g.label}
-              label={g.label}
-              items={g.items}
-              expandedId={expandedId}
-              onToggle={handleToggle}
-              lang={lang}
-              tInvalid={tInvalid} tMissing={tMissing} tScore={tScore} tBreaches={tBreaches}
-              tType={tType} tResults={tResults} tNoFindings={tNoFindings}
-              tAuto={tAuto} tManual={tManual} tSystem={tSystem}
-            />
-          ))}
-        </div>
+
+          {/* Content */}
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 192 }}>
+              <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e",
+                borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+            </div>
+          ) : !data || data.entries.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center",
+              gap: 16, padding: "80px 0", textAlign: "center" }}>
+              <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(59,130,246,0.06)",
+                border: "0.8px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center",
+                justifyContent: "center", fontSize: "1.3rem" }}>≡</div>
+              <div>
+                <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f5f5f5", marginBottom: 6 }}>{t("history.noActivity")}</div>
+                <div style={{ fontSize: "0.82rem", color: "#71717a", maxWidth: 280, lineHeight: 1.6 }}>
+                  {problemsOnly ? t("history.noProblems") : t("history.appearsHere")}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+              {groups.map(g => (
+                <DayGroup
+                  key={g.label}
+                  label={g.label}
+                  items={g.items}
+                  expandedId={expandedId}
+                  onToggle={handleToggle}
+                  lang={lang}
+                  tInvalid={tInvalid} tMissing={tMissing} tScore={tScore} tBreaches={tBreaches}
+                  tType={tType} tResults={tResults} tNoFindings={tNoFindings}
+                  tAuto={tAuto} tManual={tManual} tSystem={tSystem}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {data && (
+            <Pagination page={page} total={data.total} perPage={data.per_page} onPage={handlePage} tShowing={t("history.showing")} />
+          )}
+        </>
       )}
 
-      {/* Pagination */}
-      {data && (
-        <Pagination page={page} total={data.total} perPage={data.per_page} onPage={handlePage} tShowing={t("history.showing")} />
-      )}
+      {/* ── Uptime tab content ───────────────────────────────────────────────── */}
+      {activeTab === "uptime" && <UptimeTab lang={lang} />}
 
       {/* Footer */}
       <div style={{ background: "#151515", border: "0.8px solid #1a1a1a", borderRadius: 16,

@@ -146,5 +146,12 @@ export const mitigationApi = {
   deleteSession: (id: string) => api.delete(`/mitigation/chat-sessions/${id}`),
 };
 
+// Uptime timeline endpoints
+export const uptimeApi = {
+  domains: () => api.get("/uptime/domains"),
+  timeline: (domainId: string, range: "24h" | "7d" | "30d") =>
+    api.get("/uptime/timeline", { params: { domain_id: domainId, range } }),
+};
+
 export { supabase };
 export default api;

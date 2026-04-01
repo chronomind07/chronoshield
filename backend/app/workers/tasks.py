@@ -54,7 +54,124 @@ def scan_ssl_all_domains(self):
     logger.info("SSL scan finished", count=len(domains))
 
 
-# ── Uptime ────────────────────────────────────────────────────────────────────
+# ── Uptime — fast 5-minute check ─────────────────────────────────────────────
+
+@celery_app.task(name="app.workers.tasks.uptime_check_all_domains_fast", bind=True, max_retries=0)
+def uptime_check_all_domains_fast(self):
+    """
+    Lightweight uptime check every 5 minutes.
+    - HTTP HEAD request only (no SSL, no email security, no score recalculation).
+    - Alert fires ONLY on state change: up/degraded → down.
+    - Records older than 90 days are purged once per hour.
+    - No activity_log entries.
+    """
+    import httpx
+    import time
+    from datetime import datetime, timezone, timedelta
+    from app.services.alert_service import create_alert
+
+    db = get_supabase_client()
+    domains = _get_all_active_domains()
+    now_utc = datetime.now(timezone.utc)
+    logger.info("Fast uptime check started", count=len(domains))
+
+    TIMEOUT = 10
+    DOWN_THRESHOLD_MS = 5000
+
+    for d in domains:
+        domain_id = d["id"]
+        domain    = d["domain"]
+        user_id   = d["user_id"]
+        try:
+            # Previous status for state-change detection
+            prev = (
+                db.table("uptime_results")
+                .select("status")
+                .eq("domain_id", domain_id)
+                .order("checked_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+            )
+            prev_status = prev[0]["status"] if prev else "up"
+
+            # Lightweight HTTP HEAD request
+            url = f"https://{domain}"
+            start = time.monotonic()
+            status = "error"
+            status_code = None
+            error_msg = None
+            response_time_ms = None
+
+            try:
+                resp = httpx.head(
+                    url,
+                    follow_redirects=True,
+                    timeout=TIMEOUT,
+                    headers={"User-Agent": "ChronoShield-Monitor/1.0"},
+                )
+                elapsed_ms = int((time.monotonic() - start) * 1000)
+                response_time_ms = elapsed_ms
+                status_code = resp.status_code
+                if resp.status_code < 400:
+                    status = "degraded" if elapsed_ms > DOWN_THRESHOLD_MS else "up"
+                else:
+                    status = "down"
+                    error_msg = f"HTTP {resp.status_code}"
+            except httpx.ConnectError:
+                status = "down"
+                error_msg = "Connection refused"
+            except httpx.TimeoutException:
+                status = "down"
+                error_msg = f"Timeout after {TIMEOUT}s"
+            except Exception as e:
+                status = "error"
+                error_msg = str(e)
+
+            # Persist result (no score recalc, no activity_log)
+            db.table("uptime_results").insert({
+                "domain_id":        domain_id,
+                "user_id":          user_id,
+                "status":           status,
+                "status_code":      status_code,
+                "response_time_ms": response_time_ms,
+                "error_msg":        error_msg,
+                "notified":         False,
+            }).execute()
+
+            # Alert only on state change: up/degraded → down
+            if status == "down" and prev_status in ("up", "degraded"):
+                create_alert(
+                    user_id=user_id,
+                    alert_type="downtime",
+                    severity="critical",
+                    title=f"🔴 Web caída: {domain}",
+                    message=(
+                        f"Tu web {domain} no está respondiendo. "
+                        f"{error_msg or ''}. Los clientes no pueden acceder."
+                    ),
+                    domain_id=domain_id,
+                    metadata={"error": error_msg, "status_code": status_code, "domain": domain},
+                )
+
+            logger.debug("Fast uptime check", domain=domain, status=status, ms=response_time_ms)
+
+        except Exception as e:
+            logger.error("Fast uptime check failed", domain=domain, error=str(e))
+
+    # Purge records older than 90 days — runs once per hour (when minute < 5)
+    if now_utc.minute < 5:
+        try:
+            cutoff_90d = (now_utc - timedelta(days=90)).isoformat()
+            db.table("uptime_results").delete().lt("checked_at", cutoff_90d).execute()
+            logger.info("Uptime records purged", cutoff=cutoff_90d)
+        except Exception as e:
+            logger.error("Uptime purge failed", error=str(e))
+
+    logger.info("Fast uptime check finished", count=len(domains))
+
+
+# ── Uptime — full reconciliation scan (twice daily) ───────────────────────────
 
 @celery_app.task(name="app.workers.tasks.scan_uptime_all_domains", bind=True, max_retries=2)
 def scan_uptime_all_domains(self):
