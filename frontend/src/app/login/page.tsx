@@ -493,6 +493,12 @@ const AUTH_STYLES = `
     --auth-accent-glow: rgba(0,229,191,0.12);
     --auth-accent-sec:  #6366f1;
     --auth-red:         #ff4d6a;
+    color-scheme: dark;
+  }
+
+  /* BUG-4: Ensure consistent box model and prevent Tailwind preflight bleeding */
+  .auth-layout *, .auth-layout *::before, .auth-layout *::after {
+    box-sizing: border-box;
   }
 
   /* Layout */
@@ -713,6 +719,15 @@ const AUTH_STYLES = `
     border-color: var(--auth-border-focus);
     box-shadow: 0 0 0 3px var(--auth-accent-glow);
   }
+  /* BUG-4: Override Chrome's yellow autofill background */
+  .form-input:-webkit-autofill,
+  .form-input:-webkit-autofill:hover,
+  .form-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--auth-bg-input) inset !important;
+    -webkit-text-fill-color: var(--auth-text-bright) !important;
+    caret-color: var(--auth-text-bright);
+    border-color: var(--auth-border-whisper) !important;
+  }
 
   .input-wrapper { position: relative; }
   .input-wrapper .form-input { padding-right: 44px; }
@@ -726,30 +741,35 @@ const AUTH_STYLES = `
   }
   .input-toggle:hover { color: var(--auth-text-mid); }
 
-  /* Checkbox */
+  /* Checkbox — BUG-4: use background-image SVG (reliable cross-browser) */
   .form-check {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: flex-start; gap: 10px;
     margin-bottom: 24px; cursor: pointer;
   }
   .form-check input[type="checkbox"] {
     appearance: none; -webkit-appearance: none;
-    width: 18px; height: 18px;
+    width: 18px; height: 18px; min-width: 18px;
     border: 1px solid var(--auth-border-soft);
     border-radius: 5px;
     background: var(--auth-bg-input);
-    cursor: pointer; position: relative;
-    transition: all 0.2s; flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+    margin-top: 2px;
   }
   .form-check input[type="checkbox"]:checked {
-    background: var(--auth-accent); border-color: var(--auth-accent);
+    background-color: var(--auth-accent);
+    border-color: var(--auth-accent);
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='8' viewBox='0 0 10 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L3.5 6.5L9 1' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 10px 8px;
   }
-  .form-check input[type="checkbox"]:checked::after {
-    content: '✓';
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.7rem; font-weight: 800; color: #000;
+  .form-check input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--auth-accent);
+    outline-offset: 2px;
   }
-  .form-check-label { font-size: 0.82rem; color: var(--auth-text-mid); }
+  .form-check-label { font-size: 0.82rem; color: var(--auth-text-mid); line-height: 1.5; }
   .form-check-label a { color: var(--auth-accent); text-decoration: none; }
 
   /* Login extras row */

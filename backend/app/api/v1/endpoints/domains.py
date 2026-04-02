@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from typing import List
 from uuid import UUID
+
+import structlog
 from app.core.security import get_current_user_id
 from app.db.supabase import get_db
 from app.schemas.domain import DomainCreate, DomainResponse, DomainWithMetrics
@@ -8,6 +10,19 @@ from app.services.scan_orchestrator import trigger_domain_scan
 from app.services.credits_service import consume_credit
 
 router = APIRouter(prefix="/domains", tags=["domains"])
+logger = structlog.get_logger()
+
+
+def _strip_domain(raw: str) -> str:
+    """Normalise user-supplied domain: remove protocol, www., trailing slash, lowercase."""
+    d = raw.strip()
+    if d.lower().startswith("https://"):
+        d = d[8:]
+    elif d.lower().startswith("http://"):
+        d = d[7:]
+    if d.lower().startswith("www."):
+        d = d[4:]
+    return d.rstrip("/").lower()
 
 
 @router.get("", response_model=List[DomainWithMetrics])
@@ -102,6 +117,13 @@ async def add_domain(
     db=Depends(get_db),
 ):
     """Add a new domain to monitor."""
+    # BUG-2: Strip www. prefix and normalise before saving
+    clean_domain = _strip_domain(payload.domain)
+    if not clean_domain:
+        raise HTTPException(status_code=422, detail="Nombre de dominio inválido")
+
+    logger.info("add_domain", raw=payload.domain, clean=clean_domain, user_id=user_id)
+
     # Check plan limits
     sub = db.table("subscriptions").select("max_domains").eq("user_id", user_id).single().execute()
     if not sub.data:
@@ -127,7 +149,7 @@ async def add_domain(
         db.table("domains")
         .select("id")
         .eq("user_id", user_id)
-        .eq("domain", payload.domain)
+        .eq("domain", clean_domain)
         .eq("is_active", True)
         .execute()
         .data
@@ -141,7 +163,7 @@ async def add_domain(
         db.table("domains")
         .select("id")
         .eq("user_id", user_id)
-        .eq("domain", payload.domain)
+        .eq("domain", clean_domain)
         .eq("is_active", False)
         .execute()
         .data
@@ -155,7 +177,7 @@ async def add_domain(
         )
         domain = result.data[0]
     else:
-        result = db.table("domains").insert({"user_id": user_id, "domain": payload.domain}).execute()
+        result = db.table("domains").insert({"user_id": user_id, "domain": clean_domain}).execute()
         domain = result.data[0]
 
     # Kick off initial scans in background
@@ -170,15 +192,37 @@ async def remove_domain(
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
+    did = str(domain_id)
+
+    # Soft-delete the domain row
     result = (
         db.table("domains")
         .update({"is_active": False})
-        .eq("id", str(domain_id))
+        .eq("id", did)
         .eq("user_id", user_id)
         .execute()
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Domain not found")
+
+    # BUG-1: Cascade-delete all scan results so they don't appear in NIS2/reports
+    for scan_table in (
+        "ssl_results",
+        "email_security_results",
+        "uptime_results",
+        "security_scores",
+        "ai_analyses",
+    ):
+        try:
+            db.table(scan_table).delete().eq("domain_id", did).execute()
+        except Exception as exc:
+            logger.warning("cascade delete partial failure", table=scan_table, domain_id=did, error=str(exc))
+
+    # Remove domain-specific alerts
+    try:
+        db.table("alerts").delete().eq("domain_id", did).eq("user_id", user_id).execute()
+    except Exception as exc:
+        logger.warning("cascade delete alerts failure", domain_id=did, error=str(exc))
 
 
 @router.post("/{domain_id}/scan", status_code=202)

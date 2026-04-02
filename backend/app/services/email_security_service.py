@@ -7,18 +7,36 @@ run_email_dns_check() creates a fresh resolver with no cached state.
 This prevents stale NXDOMAIN/timeout results from being reused across
 scans (a known issue when running inside long-lived Celery worker processes).
 """
+import re
+from datetime import date
+
 import dns.resolver
 import structlog
 
 logger = structlog.get_logger()
 
 # DKIM selectors to try, in priority order.
+# BUG-6: Google Workspace rotates keys monthly using YYYYMMDD selectors
+# (e.g. 20230601). We generate candidates for the last 3 years as a fallback.
+def _google_date_selectors() -> list[str]:
+    """Return YYYYMM01 selector strings for every month in the last 3 years."""
+    today = date.today()
+    out: list[str] = []
+    for year in range(today.year - 2, today.year + 1):
+        for month in range(1, 13):
+            if year == today.year and month > today.month:
+                break
+            out.append(f"{year:04d}{month:02d}01")
+    # Most-recent first so we hit the active key early
+    return list(reversed(out))
+
+
 DKIM_SELECTORS = [
     "default",       # generic fallback
     "protonmail",    # Proton Mail
     "protonmail2",
     "protonmail3",
-    "google",        # Google Workspace
+    "google",        # Google Workspace (legacy selector)
     "selector1",     # Microsoft 365
     "selector2",
     "k1",            # Mailchimp
@@ -29,6 +47,7 @@ DKIM_SELECTORS = [
     "s2",
     "mandrill",      # Mailchimp / Mandrill
     "resend",        # Resend
+    *_google_date_selectors(),   # YYYYMM01 for each month of the last 3 years
 ]
 
 _TIMEOUT  = 8   # seconds per individual DNS query
@@ -58,21 +77,50 @@ def _make_resolver() -> dns.resolver.Resolver:
     return r
 
 
-def check_spf(domain: str, resolver: dns.resolver.Resolver | None = None) -> tuple[str, str]:
+def check_spf(
+    domain: str,
+    resolver: dns.resolver.Resolver | None = None,
+    _depth: int = 0,
+) -> tuple[str, str]:
     """
     Check SPF TXT records on the bare domain.
+    BUG-3: Follows redirect= directives (e.g. v=spf1 redirect=spf.example.net).
     Returns (status, record_text).
     Status: 'valid' | 'invalid' | 'missing' | 'error'
     """
+    if _depth > 5:
+        # Guard against infinite redirect loops
+        return "invalid", f"SPF redirect depth exceeded for {domain}"
+
     r = resolver or _make_resolver()
     try:
         answers = r.resolve(domain, "TXT")
         for rdata in answers:
             txt = b"".join(rdata.strings).decode("utf-8", errors="ignore")
-            if txt.lower().startswith("v=spf1"):
-                if "~all" in txt or "-all" in txt or "+all" in txt or "?all" in txt:
-                    return "valid", txt
-                return "invalid", txt
+            if not txt.lower().startswith("v=spf1"):
+                continue
+
+            has_all = bool(re.search(r'[~\-+?]all\b', txt, re.IGNORECASE))
+
+            # If no explicit `all` mechanism, check for redirect= modifier
+            if not has_all:
+                redir = re.search(r'(?:^|\s)redirect=(\S+)', txt, re.IGNORECASE)
+                if redir:
+                    redirect_target = redir.group(1)
+                    logger.info(
+                        "SPF redirect found — following",
+                        domain=domain,
+                        redirect_to=redirect_target,
+                        depth=_depth,
+                    )
+                    return check_spf(redirect_target, r, _depth + 1)
+
+            # Record has an explicit `all` mechanism → evaluate directly
+            if has_all:
+                return "valid", txt
+
+            return "invalid", txt
+
         return "missing", ""
     except Exception as e:
         logger.warning("SPF check error", domain=domain, error=str(e))

@@ -49,8 +49,8 @@ def _build_report_data(db, user_id: str, period_start: datetime, period_end: dat
     ps = period_start.isoformat()
     pe = period_end.isoformat()
 
-    # Domains
-    domains_res = db.table("domains").select("id,domain").eq("user_id", user_id).execute()
+    # Domains — only active (exclude soft-deleted)
+    domains_res = db.table("domains").select("id,domain").eq("user_id", user_id).eq("is_active", True).execute()
     domains = domains_res.data or []
     domain_map = {d["id"]: d["domain"] for d in domains}
 
@@ -358,7 +358,8 @@ def _generate_pdf(report_data: dict, report_type: str) -> bytes:
 
 def _evaluate_nis2(db, user_id: str) -> dict:
     """Evaluate NIS2 technical compliance based on ChronoShield monitoring data."""
-    domains_res = db.table("domains").select("id,domain").eq("user_id", user_id).execute()
+    # Only include active domains (soft-deleted ones must not pollute the score)
+    domains_res = db.table("domains").select("id,domain").eq("user_id", user_id).eq("is_active", True).execute()
     domains = domains_res.data or []
 
     emails_res = db.table("monitored_emails").select("id,email").eq("user_id", user_id).execute()
