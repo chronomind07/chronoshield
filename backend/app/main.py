@@ -30,13 +30,23 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Production origins are hardcoded here so they are NEVER dropped by a stale
+# CORS_ORIGINS env var in Railway.  settings.CORS_ORIGINS adds any extra origins
+# (local dev, staging, etc.) configured via the environment variable.
+_PRODUCTION_ORIGINS: list[str] = [
+    "https://chronoshield.eu",
+    "https://www.chronoshield.eu",
+]
+_cors_origins: list[str] = list(
+    dict.fromkeys(_PRODUCTION_ORIGINS + list(settings.CORS_ORIGINS))
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    # Hardcoded regex covers Chrome extensions + chronoshield.eu (www and apex).
-    # This ensures CORS works even if Railway has a stale CORS_ORIGINS env var.
-    # TODO: Replace chrome-extension://.* with your specific Chrome extension ID once published.
-    #       e.g. chrome-extension://abcdefghijklmnopabcdefghijklmnop
+    allow_origins=_cors_origins,
+    # Regex is a belt-and-suspenders fallback for Chrome extensions and the
+    # production domain in case allow_origins is somehow overridden.
+    # TODO: Replace chrome-extension://.* with your specific extension ID once published.
     allow_origin_regex=r"(chrome-extension://.*|https://(www\.)?chronoshield\.eu)",
     allow_credentials=True,
     allow_methods=["*"],
