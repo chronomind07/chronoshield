@@ -82,8 +82,8 @@ def _build_report_data(db, user_id: str, period_start: datetime, period_end: dat
     ssl_results = []
     for d in domains:
         r = db.table("ssl_results").select(
-            "status,valid_until,issuer,last_checked"
-        ).eq("domain_id", d["id"]).order("last_checked", desc=True).limit(1).execute()
+            "status,valid_until,issuer,scanned_at"
+        ).eq("domain_id", d["id"]).order("scanned_at", desc=True).limit(1).execute()
         if r.data:
             ssl_results.append({"domain": d["domain"], **r.data[0]})
 
@@ -111,8 +111,8 @@ def _build_report_data(db, user_id: str, period_start: datetime, period_end: dat
     email_security = []
     for d in domains:
         r = db.table("email_security_results").select(
-            "spf_status,dkim_status,dmarc_status,last_checked"
-        ).eq("domain_id", d["id"]).order("last_checked", desc=True).limit(1).execute()
+            "spf_status,dkim_status,dmarc_status,scanned_at"
+        ).eq("domain_id", d["id"]).order("scanned_at", desc=True).limit(1).execute()
         if r.data:
             email_security.append({"domain": d["domain"], **r.data[0]})
 
@@ -125,15 +125,15 @@ def _build_report_data(db, user_id: str, period_start: datetime, period_end: dat
     # Breach count
     breach_count = 0
     for em in emails:
-        r = db.table("breach_results").select("id").eq("monitored_email_id", em["id"]).execute()
+        r = db.table("breach_results").select("id").eq("email_id", em["id"]).execute()
         breach_count += len(r.data or [])
 
     # Scan count
     scan_count = 0
     for d in domains:
         r = db.table("ssl_results").select("id").eq("domain_id", d["id"]).gte(
-            "last_checked", ps
-        ).lte("last_checked", pe).execute()
+            "scanned_at", ps
+        ).lte("scanned_at", pe).execute()
         scan_count += len(r.data or [])
 
     recommendations = _build_recommendations(ssl_results, email_security, scores, uptime_stats)
@@ -378,7 +378,7 @@ def _evaluate_nis2(db, user_id: str) -> dict:
     # 1. SSL/TLS (Art. 21.2.f – cifrado)
     ssl_issues = 0
     for d in domains:
-        r = db.table("ssl_results").select("status").eq("domain_id", d["id"]).order("last_checked", desc=True).limit(1).execute()
+        r = db.table("ssl_results").select("status").eq("domain_id", d["id"]).order("scanned_at", desc=True).limit(1).execute()
         if r.data and r.data[0]["status"] not in ("valid",):
             ssl_issues += 1
     if not domains:
@@ -402,7 +402,7 @@ def _evaluate_nis2(db, user_id: str) -> dict:
     # 2. Email authentication (Art. 21.2.b – supply chain / impersonation)
     spf_ok = dmarc_ok = 0
     for d in domains:
-        r = db.table("email_security_results").select("spf_status,dmarc_status").eq("domain_id", d["id"]).order("last_checked", desc=True).limit(1).execute()
+        r = db.table("email_security_results").select("spf_status,dmarc_status").eq("domain_id", d["id"]).order("scanned_at", desc=True).limit(1).execute()
         if r.data:
             if r.data[0].get("spf_status") in ("valid", "ok"):   spf_ok += 1
             if r.data[0].get("dmarc_status") in ("valid", "ok"): dmarc_ok += 1
@@ -459,7 +459,7 @@ def _evaluate_nis2(db, user_id: str) -> dict:
     # 4. Breach monitoring (Art. 21.2.b – incident handling)
     total_breaches = 0
     for em in emails:
-        r = db.table("breach_results").select("id").eq("monitored_email_id", em["id"]).execute()
+        r = db.table("breach_results").select("id").eq("email_id", em["id"]).execute()
         total_breaches += len(r.data or [])
     if not emails:
         breach_status, breach_detail = "not_applicable", "No hay emails monitorizados."
@@ -503,9 +503,12 @@ def _evaluate_nis2(db, user_id: str) -> dict:
     })
 
     # 6. Alert / incident notifications (Art. 21.2.b)
-    notif_res = db.table("notification_preferences").select("critical_alerts,medium_alerts").eq("user_id", user_id).single().execute()
+    notif_res = db.table("notification_preferences").select(
+        "email_alerts,alert_breach,alert_downtime,alert_ssl_expiry,alert_ssl_invalid"
+    ).eq("user_id", user_id).single().execute()
     notif = notif_res.data or {}
-    if notif.get("critical_alerts") or notif.get("medium_alerts"):
+    alerts_on = notif.get("email_alerts") or notif.get("alert_breach") or notif.get("alert_downtime") or notif.get("alert_ssl_expiry")
+    if alerts_on:
         alert_status = "compliant"
         alert_detail = "Notificaciones de incidentes activas y configuradas."
     else:
