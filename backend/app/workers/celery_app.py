@@ -106,6 +106,18 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=0, minute=0),
     },
 
+    # ── Automated security reports ─────────────────────────────────────────────
+    # Weekly  → every Monday at 08:00 UTC (Business plan only)
+    # Monthly → 1st of every month at 08:00 UTC (Starter + Business)
+    "generate-weekly-reports": {
+        "task": "app.workers.tasks.generate_weekly_reports",
+        "schedule": crontab(hour=8, minute=0, day_of_week=1),  # Monday
+    },
+    "generate-monthly-reports": {
+        "task": "app.workers.tasks.generate_monthly_reports",
+        "schedule": crontab(hour=8, minute=0, day_of_month=1),  # 1st of month
+    },
+
     # NOTE: recalculate-scores intentionally removed from schedule.
     # Scores are recalculated at the end of each scan task (ssl / uptime / email_security).
 }

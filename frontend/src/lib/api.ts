@@ -181,5 +181,17 @@ export const adminApi = {
   platformScans: (hours = 24) => api.get("/superadmin/platform/scans", { params: { range_hours: hours } }),
 };
 
+// Reports endpoints
+export const reportsApi = {
+  list: (reportType?: string) =>
+    api.get("/reports", { params: { report_type: reportType } }),
+  generate: (body: { period: string; period_start?: string; period_end?: string }) =>
+    api.post("/reports/generate", body),
+  get: (id: string) => api.get(`/reports/${id}`),
+  downloadPdfUrl: (id: string) =>
+    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/reports/${id}/pdf`,
+  nis2: () => api.get("/reports/nis2"),
+};
+
 export { supabase };
 export default api;

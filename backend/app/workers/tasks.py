@@ -407,3 +407,65 @@ def reset_monthly_credits(self):
     db = get_supabase_client()
     count = reset_monthly_credits_all(db)
     logger.info("Monthly credit reset complete", users_reset=count)
+
+
+# ── Automated security reports ────────────────────────────────────────────────
+
+def _generate_and_store_report(user_id: str, report_type: str, period_start, period_end):
+    """Build report data and persist it to the reports table."""
+    import json
+    from app.api.v1.endpoints.reports import _build_report_data
+    db = get_supabase_client()
+    try:
+        data = _build_report_data(db, user_id, period_start, period_end)
+        db.table("reports").insert({
+            "user_id":      user_id,
+            "type":         report_type,
+            "period_start": period_start.isoformat(),
+            "period_end":   period_end.isoformat(),
+            "data":         json.dumps(data),
+        }).execute()
+    except Exception as e:
+        logger.error("Failed to generate automated report", user_id=user_id, type=report_type, error=str(e))
+
+
+@celery_app.task(name="app.workers.tasks.generate_weekly_reports", bind=True, max_retries=1)
+def generate_weekly_reports(self):
+    """Generate weekly reports for all Business plan users (Monday 08:00 UTC)."""
+    from datetime import datetime, timedelta, timezone
+    db = get_supabase_client()
+    subs = (
+        db.table("subscriptions")
+        .select("user_id")
+        .eq("plan", "business")
+        .eq("status", "active")
+        .execute()
+        .data
+    ) or []
+    logger.info("Weekly report generation started", users=len(subs))
+    now = datetime.now(timezone.utc)
+    period_start = now - timedelta(days=7)
+    for sub in subs:
+        _generate_and_store_report(sub["user_id"], "weekly", period_start, now)
+    logger.info("Weekly report generation finished", users=len(subs))
+
+
+@celery_app.task(name="app.workers.tasks.generate_monthly_reports", bind=True, max_retries=1)
+def generate_monthly_reports(self):
+    """Generate monthly reports for all active users on the 1st of each month."""
+    from datetime import datetime, timedelta, timezone
+    db = get_supabase_client()
+    subs = (
+        db.table("subscriptions")
+        .select("user_id,plan")
+        .in_("plan", ["starter", "business"])
+        .eq("status", "active")
+        .execute()
+        .data
+    ) or []
+    logger.info("Monthly report generation started", users=len(subs))
+    now = datetime.now(timezone.utc)
+    period_start = now - timedelta(days=30)
+    for sub in subs:
+        _generate_and_store_report(sub["user_id"], "monthly", period_start, now)
+    logger.info("Monthly report generation finished", users=len(subs))

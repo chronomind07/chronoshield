@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     domains, emails, billing, dashboard, ai_analysis,
     darkweb, credits, admin, alerts, history, settings, contact, extension,
-    mitigation, uptime, superadmin,
+    mitigation, uptime, superadmin, reports,
 )
 
 api_router = APIRouter()
@@ -26,3 +26,4 @@ api_router.include_router(extension.router)
 api_router.include_router(mitigation.router)
 api_router.include_router(uptime.router)
 api_router.include_router(superadmin.router)
+api_router.include_router(reports.router)

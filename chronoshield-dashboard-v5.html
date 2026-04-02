@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChronoShield — Dashboard v5</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a;--surface:#161616;--surface-hover:#1c1c1c;--elevated:#202020;
+  --control:#252525;--control-hover:#2e2e2e;
+  --border:#1e1e1e;--border-hover:#2a2a2a;--border-active:#383838;
+  --text:#f5f5f5;--text-sec:#a8a8a8;--text-muted:#666;--text-faint:#3a3a3a;
+  --accent:#3ecf8e;--accent-bg:#3ecf8e15;
+  --green:#4ade80;--green-bg:#4ade801a;
+  --red:#f87171;--red-bg:#f871711a;
+  --amber:#fbbf24;--amber-bg:#fbbf241a;
+  --blue:#60a5fa;--blue-bg:#60a5fa1a;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --mono:'Geist Mono',monospace;
+  --sidebar-w:220px;--header-h:54px;
+  --r:12px;--r-sm:8px;--r-lg:16px;--r-xl:20px;
+}
+html{font-size:14px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;padding:14px 0;z-index:20}
+.sb-brand{padding:0 14px 18px;display:flex;align-items:center;gap:10px}
+.sb-logo{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.sb-logo svg{width:15px;height:15px;color:#000}
+.sb-name{font-size:.85rem;font-weight:700}
+
+.sb-section{padding:0 8px;margin-bottom:2px}
+.sb-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-faint);padding:14px 10px 6px;font-weight:500}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--r-sm);color:var(--text-muted);cursor:pointer;transition:all .15s;font-size:.82rem;font-weight:500}
+.sb-item:hover{color:var(--text-sec);background:#ffffff06}
+.sb-item.active{color:var(--text);background:#ffffff0d}
+.sb-item svg{width:16px;height:16px;opacity:.45}
+.sb-item.active svg{opacity:.75}
+.sb-badge{margin-left:auto;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;background:var(--red);color:#fff;font-size:.58rem;font-weight:700;border-radius:9px;padding:0 5px}
+.sb-sub{padding-left:35px}
+.sb-sub .sb-item{font-size:.78rem;padding:6px 10px}
+
+.sb-footer{margin-top:auto;padding:8px 8px 0;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--r-sm);cursor:pointer}
+.sb-user:hover{background:#ffffff06}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:var(--control);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:600;color:var(--text-sec)}
+.sb-uname{font-size:.78rem;font-weight:600}
+.sb-uplan{font-size:.58rem;color:var(--text-muted)}
+.sb-logout{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--r-sm);color:var(--text-muted);cursor:pointer;font-size:.82rem;font-weight:500;margin-top:4px}
+.sb-logout:hover{color:var(--red)}
+.sb-logout svg{width:16px;height:16px;opacity:.45}
+
+/* ═══ HEADER ═══ */
+.header{position:fixed;top:10px;left:calc(var(--sidebar-w) + 10px);right:10px;height:var(--header-h);background:rgba(22,22,22,.95);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--r-lg);display:flex;align-items:center;padding:0 12px;z-index:15;gap:8px}
+.h-ham{width:32px;height:32px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;display:none;align-items:center;justify-content:center;border-radius:var(--r-sm)}
+.h-ham svg{width:18px;height:18px}
+.h-search{flex:1;display:flex;align-items:center;gap:7px;padding:7px 11px;background:var(--control);border:1px solid transparent;border-radius:var(--r-sm);color:var(--text-muted);font-size:.78rem;cursor:text;transition:border-color .15s}
+.h-search:hover{border-color:var(--border-hover)}
+.h-search svg{width:14px;height:14px;opacity:.35;flex-shrink:0}
+.h-search span{flex:1;opacity:.6}
+.h-search kbd{font-family:var(--mono);font-size:.58rem;padding:2px 5px;border-radius:4px;border:1px solid var(--border);color:var(--text-faint);background:var(--surface)}
+.h-right{display:flex;align-items:center;gap:4px}
+.h-credits{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:16px;background:var(--control);font-family:var(--mono);font-size:.68rem;color:var(--text-muted)}
+.h-credits .n{color:var(--accent);font-weight:600}
+.h-btn{width:32px;height:32px;border-radius:var(--r-sm);background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:all .15s;position:relative}
+.h-btn:hover{background:var(--control)}
+.h-btn .dot{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+.h-profile{display:flex;align-items:center;gap:7px;padding:4px 8px 4px 4px;border-radius:var(--r-sm);cursor:pointer;transition:background .15s;margin-left:2px}
+.h-profile:hover{background:var(--control)}
+.h-pav{width:28px;height:28px;border-radius:50%;background:var(--elevated);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:600;color:var(--text-sec)}
+.h-pname{font-size:.78rem;font-weight:500;color:var(--text-sec)}
+.h-parrow{font-size:.55rem;color:var(--text-faint)}
+
+/* ═══ MAIN ═══ */
+.main{margin-left:var(--sidebar-w);padding:calc(var(--header-h) + 24px) 20px 32px}
+
+.breadcrumb{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--text-faint);margin-bottom:4px}
+.breadcrumb a{color:var(--text-muted);text-decoration:none}
+.breadcrumb a:hover{color:var(--text)}
+.pg-h{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.pg-t{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.pg-s{color:var(--text-muted);font-size:.8rem;margin-top:2px}
+.pg-a{display:flex;gap:6px}
+.btn-g{display:flex;align-items:center;gap:5px;padding:7px 12px;background:transparent;border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text-sec);font-family:var(--sans);font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-g:hover{background:var(--control);border-color:var(--border-hover)}
+.btn-g svg{width:13px;height:13px}
+.btn-p{display:flex;align-items:center;gap:5px;padding:7px 14px;background:var(--accent);color:#000;border:none;border-radius:var(--r-sm);font-family:var(--sans);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-p:hover{opacity:.9}
+.btn-p svg{width:13px;height:13px}
+
+/* ═══ WELCOME ═══ */
+.welcome{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:26px 28px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}
+.welcome::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#1a2a2a 0%,var(--surface) 50%,#1a1a2e 100%);opacity:.3;pointer-events:none}
+.welcome::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#3ecf8e30,#60a5fa20,transparent);pointer-events:none}
+.w-l{position:relative;z-index:1}
+.w-greet{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
+.w-msg{color:var(--text-muted);font-size:.82rem}
+.w-r{display:flex;align-items:center;gap:24px;position:relative;z-index:1}
+.w-clock{font-family:var(--mono);font-size:2.4rem;font-weight:600;letter-spacing:-.04em}
+.w-clock span{font-size:.88rem;color:var(--text-muted);margin-left:3px;font-weight:400}
+.w-date{text-align:right}
+.w-day{font-size:.82rem;font-weight:600}
+.w-full{font-family:var(--mono);font-size:.65rem;color:var(--text-muted);margin-top:1px}
+
+/* ═══ KPI ═══ */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:all .2s;cursor:default}
+.kpi:hover{border-color:var(--border-hover);background:var(--surface-hover)}
+.kpi-top{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.kpi-ic{width:32px;height:32px;border-radius:var(--r-sm);background:var(--control);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kpi-ic svg{width:15px;height:15px;color:var(--text-muted)}
+.kpi-lbl{font-size:.75rem;color:var(--text-muted);font-weight:500;flex:1}
+.kpi-menu{color:var(--text-faint);cursor:pointer;font-size:.78rem;letter-spacing:1px}
+.kpi-bot{display:flex;align-items:flex-end;justify-content:space-between}
+.kpi-val{font-size:1.7rem;font-weight:700;letter-spacing:-.04em;line-height:1}
+.kpi-trend{display:flex;align-items:center;gap:2px;font-size:.68rem;font-weight:500}
+.kpi-trend.up{color:var(--green)}
+.kpi-trend.down{color:var(--red)}
+.kpi-trend.flat{color:var(--text-muted)}
+.kpi-trend svg{width:11px;height:11px}
+
+/* ═══ GRID ═══ */
+.grid{display:grid;grid-template-columns:1fr 330px;gap:14px}
+
+/* ═══ CARD ═══ */
+.c{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;transition:border-color .2s}
+.c:hover{border-color:var(--border-hover)}
+.c+.c{margin-top:14px}
+.c-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.c-t{font-size:.85rem;font-weight:700}
+.c-s{font-size:.68rem;color:var(--text-muted);margin-top:1px}
+.c-link{font-size:.68rem;color:var(--accent);text-decoration:none;font-weight:500}
+.c-link:hover{opacity:.7}
+.c-sel{padding:4px 8px;background:var(--control);border:1px solid var(--border);border-radius:6px;color:var(--text-sec);font-family:var(--sans);font-size:.68rem;cursor:pointer;outline:none}
+
+/* ═══ SCORE ═══ */
+.sc-tabs{display:flex;background:var(--control);border-radius:var(--r-sm);padding:2px;margin-bottom:14px}
+.sc-tab{flex:1;padding:6px;text-align:center;font-size:.7rem;font-weight:500;color:var(--text-muted);border-radius:6px;cursor:pointer;border:none;background:none;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
+.sc-tab.active{background:var(--surface-hover);color:var(--text)}
+.sc-tab svg{width:11px;height:11px}
+.sc-ring{position:relative;width:140px;height:140px;margin:6px auto 14px}
+.sc-ring svg{width:140px;height:140px;transform:rotate(-90deg)}
+.sr-bg{fill:none;stroke:#1e1e1e;stroke-width:12}
+.sr-green{fill:none;stroke:var(--green);stroke-width:12;stroke-linecap:round;stroke-dasharray:377;stroke-dashoffset:56.5;animation:rDraw 1.2s ease forwards}
+.sr-blue{fill:none;stroke:var(--blue);stroke-width:12;stroke-linecap:round;stroke-dasharray:377;stroke-dashoffset:320;opacity:.25;animation:rDraw 1.5s ease forwards}
+.sr-amber{fill:none;stroke:var(--amber);stroke-width:12;stroke-linecap:round;stroke-dasharray:377;stroke-dashoffset:356;opacity:.15;animation:rDraw 1.8s ease forwards}
+@keyframes rDraw{from{stroke-dashoffset:377}}
+.sr-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sr-v{font-size:2rem;font-weight:700;letter-spacing:-.04em}
+.sr-l{font-size:.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:1px}
+.sm{display:flex;flex-direction:column;gap:10px}
+.sm-row{display:flex;align-items:center;gap:9px}
+.sm-ic{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sm-ic svg{width:12px;height:12px}
+.sm-info{flex:1}
+.sm-name{font-size:.75rem;font-weight:500}
+.sm-sub{font-size:.58rem;color:var(--text-muted)}
+.sm-val{font-family:var(--mono);font-size:.78rem;font-weight:600}
+
+/* ═══ ALERTS ═══ */
+.ar{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ar:last-child{border-bottom:none}
+.ar-dot{width:5px;height:5px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.ar-body{flex:1}
+.ar-t{font-size:.78rem;font-weight:600;margin-bottom:1px}
+.ar-d{font-size:.66rem;color:var(--text-muted);line-height:1.5}
+.ar-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.ar-badge{font-size:.55rem;font-weight:600;padding:2px 6px;border-radius:4px;text-transform:uppercase}
+.ar-time{font-family:var(--mono);font-size:.58rem;color:var(--text-faint)}
+
+/* ═══ DOMAINS ═══ */
+.dr{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px}
+.dr:last-child{border-bottom:none}
+.dr-ic{width:28px;height:28px;border-radius:var(--r-sm);background:var(--control);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dr-ic svg{width:13px;height:13px;color:var(--text-muted)}
+.dr-info{flex:1}
+.dr-name{font-size:.78rem;font-weight:600}
+.dr-meta{font-family:var(--mono);font-size:.58rem;color:var(--text-faint);margin-top:1px}
+.dr-badges{display:flex;gap:4px}
+.b{font-family:var(--mono);font-size:.55rem;font-weight:600;padding:2px 6px;border-radius:4px;text-transform:uppercase}
+
+/* ═══ CHART ═══ */
+.chart{height:150px;display:flex;align-items:flex-end;justify-content:space-around;padding:0 14px 10px;gap:6px}
+.chart-bar{width:100%;border-radius:3px 3px 0 0;background:var(--accent);opacity:.25;transition:opacity .2s}
+.chart-bar:hover{opacity:.55}
+
+/* ═══ FOOTER ═══ */
+.ft{margin-top:24px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-faint)}
+
+/* ═══ AI PAGE ═══ */
+.ai{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 140px);text-align:center;position:relative}
+.ai.show{display:flex}
+.ai-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center}
+.ai-model{display:flex;align-items:center;gap:5px;padding:6px 10px;background:var(--control);border:1px solid var(--border);border-radius:var(--r-sm);font-size:.75rem;color:var(--text-sec);cursor:pointer}
+.ai-model svg{width:13px;height:13px;opacity:.45}
+.ai-btns{display:flex;gap:4px}
+
+/* 3D ORB */
+.orb-wrap{width:220px;height:220px;position:relative;margin-bottom:28px}
+.orb-sphere{width:180px;height:180px;border-radius:50%;position:absolute;top:20px;left:20px;background:radial-gradient(circle at 38% 35%,#2a2a3a 0%,#111118 45%,#090910 100%);box-shadow:inset 0 0 40px rgba(0,0,0,.6),inset 0 -20px 40px rgba(0,0,0,.3);overflow:hidden}
+.orb-sphere::before{content:'';position:absolute;top:12%;left:18%;width:45%;height:30%;background:radial-gradient(ellipse,rgba(255,255,255,.12),transparent 70%);border-radius:50%;transform:rotate(-15deg);animation:orbHighlight 5s ease-in-out infinite}
+.orb-sphere::after{content:'';position:absolute;bottom:15%;right:20%;width:30%;height:15%;background:radial-gradient(ellipse,rgba(255,255,255,.04),transparent 70%);border-radius:50%;animation:orbHighlight 7s ease-in-out infinite reverse}
+@keyframes orbHighlight{0%,100%{opacity:.5;transform:rotate(-15deg) scale(1)}50%{opacity:1;transform:rotate(-10deg) scale(1.05)}}
+
+.orb-glow{position:absolute;inset:-6px;border-radius:50%;border:2px solid transparent;background:conic-gradient(from 180deg,transparent 0%,var(--accent) 12%,transparent 25%,transparent 60%,rgba(255,255,255,.6) 75%,transparent 88%) border-box;-webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:orbSpin 4s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.orb-ring{position:absolute;inset:-14px;border-radius:50%;border:1px solid #ffffff08}
+.orb-ring2{position:absolute;inset:-24px;border-radius:50%;border:1px solid #ffffff04}
+
+.ai-greet{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:36px}
+.ai-input-w{width:100%;max-width:560px;position:relative}
+.ai-input{width:100%;padding:13px 44px 13px 16px;background:var(--control);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--sans);font-size:.85rem;outline:none;transition:border-color .15s}
+.ai-input::placeholder{color:var(--text-faint)}
+.ai-input:focus{border-color:var(--border-active)}
+.ai-send{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:var(--r-sm);background:transparent;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ai-send:hover{color:var(--text)}
+.ai-send svg{width:15px;height:15px}
+
+/* ═══ OVERVIEW ═══ */
+.ov{display:block}
+.ov.hide{display:none}
+
+/* ═══ ANIM ═══ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.a{animation:fadeUp .35s ease both}
+.a1{animation-delay:.04s}.a2{animation-delay:.08s}.a3{animation-delay:.12s}.a4{animation-delay:.16s}
+.a5{animation-delay:.2s}.a6{animation-delay:.24s}.a7{animation-delay:.28s}
+
+@media(max-width:1100px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.header{left:10px}.kpis{grid-template-columns:1fr}.w-r{display:none}}
+</style>
+</head>
+<body>
+
+<div style="display:flex;min-height:100vh">
+  <aside class="sidebar">
+    <div class="sb-brand"><div class="sb-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="sb-name">ChronoShield</div></div>
+    <nav>
+      <div class="sb-section">
+        <div class="sb-label">Main</div>
+        <div class="sb-item active" id="nav-ov" onclick="go('ov')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Overview</div>
+        <div class="sb-item" id="nav-ai" onclick="go('ai')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m-9-11h2m18 0h2m-4.2-5.8-1.4 1.4M6.6 17.4l-1.4 1.4m0-12.8 1.4 1.4m10.8 10.8 1.4 1.4"/></svg>AI Assistant</div>
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Emails</div>
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg>Dominios</div>
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Dark Web<span class="sb-badge">2</span></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">Gestión</div>
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg>Alertas<span class="sb-badge">1</span></div>
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historial</div>
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Informes</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">Cuenta</div>
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m-9-11h2m18 0h2"/></svg>Ajustes</div>
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user"><div class="sb-avatar">MA</div><div><div class="sb-uname">Manu</div><div class="sb-uplan">Plan Business</div></div></div>
+      <div class="sb-logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</div>
+    </div>
+  </aside>
+
+  <header class="header">
+    <div class="h-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Buscar...</span><kbd>Ctrl+K</kbd></div>
+    <div class="h-right">
+      <div class="h-credits"><span class="n">28</span> créditos</div>
+      <div class="h-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="dot"></span></div>
+      <div class="h-profile"><div class="h-pav">MA</div><span class="h-pname">Manu</span><span class="h-parrow">▾</span></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- OVERVIEW -->
+    <div class="ov" id="pg-ov">
+      <div class="breadcrumb a">🏠 <span style="opacity:.3">›</span> Dashboard</div>
+      <div class="pg-h a a1"><div><div class="pg-t">Overview</div><div class="pg-s">Monitoriza métricas clave y gestiona tu seguridad</div></div><div class="pg-a"><button class="btn-g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar</button><button class="btn-p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Escanear</button></div></div>
+
+      <div class="welcome a a2"><div class="w-l"><div class="w-greet">Buenas noches, Manu</div><div class="w-msg">Tu infraestructura está protegida. 0 alertas críticas 🛡️</div></div><div class="w-r"><div class="w-clock" id="clk">10:09<span>PM</span></div><div class="w-date"><div class="w-day">Viernes</div><div class="w-full">28 marzo, 2026</div></div></div></div>
+
+      <div class="kpis">
+        <div class="kpi a a3"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="kpi-lbl">Security Score</span><span class="kpi-menu">⋮</span></div><div class="kpi-bot"><div class="kpi-val">89</div><div class="kpi-trend up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 13 12 8 17 13"/></svg>+3.5%</div></div></div>
+        <div class="kpi a a4"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span class="kpi-lbl">Uptime</span><span class="kpi-menu">⋮</span></div><div class="kpi-bot"><div class="kpi-val">100%</div><div class="kpi-trend up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 13 12 8 17 13"/></svg>Estable</div></div></div>
+        <div class="kpi a a5"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div><span class="kpi-lbl">Emails Protegidos</span><span class="kpi-menu">⋮</span></div><div class="kpi-bot"><div class="kpi-val">0</div><div class="kpi-trend flat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>0%</div></div></div>
+        <div class="kpi a a6"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div><span class="kpi-lbl">Brechas</span><span class="kpi-menu">⋮</span></div><div class="kpi-bot"><div class="kpi-val">0</div><div class="kpi-trend up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 13 12 8 17 13"/></svg>Limpio</div></div></div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <div class="c a a5"><div class="c-h"><div><div class="c-t">Alertas recientes</div><div class="c-s">Últimas alertas de seguridad</div></div><a class="c-link" href="#">ver todas →</a></div>
+            <div class="ar"><div class="ar-dot" style="background:var(--amber)"></div><div class="ar-body"><div class="ar-t">Seguridad de email: chronoshield.eu</div><div class="ar-d">DKIM missing, DMARC invalid.</div></div><div class="ar-meta"><span class="ar-badge" style="background:var(--amber-bg);color:var(--amber)">Media</span><span class="ar-time">1h</span></div></div>
+            <div class="ar"><div class="ar-dot" style="background:var(--green)"></div><div class="ar-body"><div class="ar-t">SSL renovado: chronoshield.eu</div><div class="ar-d">Certificado válido 76 días más.</div></div><div class="ar-meta"><span class="ar-badge" style="background:var(--green-bg);color:var(--green)">Info</span><span class="ar-time">2d</span></div></div>
+          </div>
+          <div class="c a a6"><div class="c-h"><div><div class="c-t">Dominios monitorizados</div><div class="c-s">Estado en tiempo real</div></div><a class="c-link" href="#">gestionar →</a></div>
+            <div class="dr"><div class="dr-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg></div><div class="dr-info"><div class="dr-name">chronoshield.eu</div><div class="dr-meta">Último scan · hace 1h</div></div><div class="dr-badges"><span class="b" style="background:var(--green-bg);color:var(--green)">Online</span><span class="b" style="background:var(--green-bg);color:var(--green)">SSL OK</span><span class="b" style="background:var(--blue-bg);color:var(--blue)">89</span></div></div>
+          </div>
+          <div class="c a a7"><div class="c-h"><div><div class="c-t">Actividad de escaneo</div><div class="c-s">Últimos 7 días</div></div><select class="c-sel"><option>7 días</option><option>30 días</option></select></div>
+            <div class="chart"><div class="chart-bar" style="height:35%"></div><div class="chart-bar" style="height:60%"></div><div class="chart-bar" style="height:25%"></div><div class="chart-bar" style="height:75%"></div><div class="chart-bar" style="height:50%"></div><div class="chart-bar" style="height:85%"></div><div class="chart-bar" style="height:65%"></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="c a a5"><div class="c-h"><div><div class="c-t">Security Score</div><div class="c-s">Análisis de rendimiento</div></div></div>
+            <div class="sc-tabs"><button class="sc-tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Performance</button><button class="sc-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Trends</button></div>
+            <div class="sc-ring"><svg viewBox="0 0 180 180"><circle class="sr-bg" cx="90" cy="90" r="60"/><circle class="sr-amber" cx="90" cy="90" r="60"/><circle class="sr-blue" cx="90" cy="90" r="60"/><circle class="sr-green" cx="90" cy="90" r="60"/></svg><div class="sr-center"><div class="sr-v">89%</div><div class="sr-l">Score</div></div></div>
+            <div class="sm">
+              <div class="sm-row"><div class="sm-ic" style="background:var(--green-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="sm-info"><div class="sm-name">SSL</div><div class="sm-sub">Certificado válido</div></div><div class="sm-val" style="color:var(--green)">100%</div></div>
+              <div class="sm-row"><div class="sm-ic" style="background:var(--blue-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/></svg></div><div class="sm-info"><div class="sm-name">Email Security</div><div class="sm-sub">SPF / DKIM / DMARC</div></div><div class="sm-val" style="color:var(--blue)">45%</div></div>
+              <div class="sm-row"><div class="sm-ic" style="background:var(--amber-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/></svg></div><div class="sm-info"><div class="sm-name">Dark Web</div><div class="sm-sub">Breach detection</div></div><div class="sm-val" style="color:var(--green)">100%</div></div>
+              <div class="sm-row"><div class="sm-ic" style="background:var(--accent-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="sm-info"><div class="sm-name">Uptime</div><div class="sm-sub">Disponibilidad</div></div><div class="sm-val" style="color:var(--green)">100%</div></div>
+            </div>
+          </div>
+          <div class="c a a6"><div class="c-h"><div><div class="c-t">Emails monitorizados</div></div><a class="c-link" href="#">gestionar →</a></div><div style="text-align:center;padding:14px 0;color:var(--text-muted);font-size:.75rem">No hay emails monitorizados<br><a href="#" style="color:var(--accent);text-decoration:none;font-weight:600;font-size:.7rem;margin-top:5px;display:inline-block">+ Añadir email</a></div></div>
+        </div>
+      </div>
+      <div class="ft">© 2026 ChronoShield · v1.0.0<span>chronoshield.eu</span></div>
+    </div>
+
+    <!-- AI ASSISTANT -->
+    <div class="ai" id="pg-ai">
+      <div class="ai-top">
+        <div class="ai-model"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m-9-11h2m18 0h2"/></svg>Claude Haiku <span style="opacity:.4;margin-left:2px">▾</span></div>
+        <div class="ai-btns"><div class="h-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="h-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+      </div>
+      <div class="orb-wrap">
+        <div class="orb-ring2"></div>
+        <div class="orb-ring"></div>
+        <div class="orb-glow"></div>
+        <div class="orb-sphere"></div>
+      </div>
+      <div class="ai-greet">Hola, Manu.</div>
+      <div class="ai-input-w"><input type="text" class="ai-input" placeholder="Pregúntame sobre tu seguridad..."><button class="ai-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+    </div>
+  </main>
+</div>
+
+<script>
+function updateClock(){const n=new Date,h=n.getHours(),m=n.getMinutes().toString().padStart(2,'0'),ap=h>=12?'PM':'AM',h12=h%12||12;const el=document.getElementById('clk');if(el)el.innerHTML=`${h12.toString().padStart(2,'0')}:${m}<span>${ap}</span>`}
+updateClock();setInterval(updateClock,30000);
+function go(p){
+  document.getElementById('pg-ov').className=p==='ov'?'ov':'ov hide';
+  document.getElementById('pg-ai').className=p==='ai'?'ai show':'ai';
+  document.getElementById('nav-ov').className='sb-item'+(p==='ov'?' active':'');
+  document.getElementById('nav-ai').className='sb-item'+(p==='ai'?' active':'');
+}
+</script>
+</body>
+</html>
