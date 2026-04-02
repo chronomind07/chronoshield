@@ -45,9 +45,22 @@ interface Nis2Item {
   detail: string;
 }
 
+interface DomainBreakdown {
+  domain: string;
+  ssl_status?: string;
+  days_remaining?: number;
+  spf_status?: string;
+  dkim_status?: string;
+  dmarc_status?: string;
+  uptime_pct?: number;
+  breach_count?: number;
+  emails?: string[];
+}
+
 interface Nis2Data {
   compliance_score: number;
   items: Nis2Item[];
+  domains_breakdown?: DomainBreakdown[];
   evaluated_at: string;
   disclaimer: string;
 }
@@ -411,13 +424,98 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
   );
 }
 
+// ── NIS2 Domain Breakdown Card ────────────────────────────────────────────────
+
+function DomainCard({ dom, index }: { dom: DomainBreakdown; index: number }) {
+  const checks = [
+    { label: "SSL",   status: dom.ssl_status },
+    { label: "SPF",   status: dom.spf_status },
+    { label: "DKIM",  status: dom.dkim_status },
+    { label: "DMARC", status: dom.dmarc_status },
+  ];
+
+  function statusColor(s: string | undefined): string {
+    if (!s || s === "missing" || s === "error") return "#71717a";
+    if (["valid", "ok"].includes(s)) return "#3ecf8e";
+    if (s === "expiring_soon") return "#f59e0b";
+    return "#ef4444";
+  }
+  function statusIcon(s: string | undefined): string {
+    if (!s || s === "missing" || s === "error") return "–";
+    if (["valid", "ok"].includes(s)) return "✓";
+    if (s === "expiring_soon") return "⚠";
+    return "✗";
+  }
+
+  return (
+    <div
+      style={{
+        background: "#111", border: "1px solid #1f1f1f", borderRadius: 12, padding: "16px 20px",
+        animation: "fadeUp 0.4s ease both", animationDelay: `${index * 80}ms`,
+        transition: "border-color 0.2s, background 0.15s",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.background = "#141414"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "#1f1f1f"; e.currentTarget.style.background = "#111"; }}
+    >
+      {/* Domain header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#f5f5f5", fontFamily: "var(--font-dm-mono, monospace)" }}>
+          {dom.domain}
+        </span>
+        {dom.days_remaining !== undefined && dom.days_remaining !== null && (
+          <span style={{ fontSize: "0.68rem", color: dom.days_remaining > 30 ? "#3ecf8e" : dom.days_remaining > 7 ? "#f59e0b" : "#ef4444", background: dom.days_remaining > 30 ? "rgba(62,207,142,0.08)" : dom.days_remaining > 7 ? "rgba(245,158,11,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${dom.days_remaining > 30 ? "rgba(62,207,142,0.2)" : dom.days_remaining > 7 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`, borderRadius: 4, padding: "2px 7px", fontFamily: "var(--font-dm-mono, monospace)" }}>
+            SSL: {dom.days_remaining}d restantes
+          </span>
+        )}
+      </div>
+
+      {/* Status pill row */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: dom.emails?.length ? 12 : 0 }}>
+        {checks.map(c => {
+          const col = statusColor(c.status);
+          const ico = statusIcon(c.status);
+          return (
+            <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 6, background: "#1a1a1a", border: `1px solid ${col}25` }}>
+              <span style={{ fontSize: "0.68rem", color: "#71717a", fontWeight: 600 }}>{c.label}</span>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: col }}>{ico}</span>
+            </div>
+          );
+        })}
+        {dom.uptime_pct !== undefined && dom.uptime_pct !== null && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 6, background: "#1a1a1a", border: `1px solid ${dom.uptime_pct >= 99 ? "rgba(62,207,142,0.25)" : dom.uptime_pct >= 95 ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)"}` }}>
+            <span style={{ fontSize: "0.68rem", color: "#71717a", fontWeight: 600 }}>Uptime</span>
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dom.uptime_pct >= 99 ? "#3ecf8e" : dom.uptime_pct >= 95 ? "#f59e0b" : "#ef4444" }}>{dom.uptime_pct}%</span>
+          </div>
+        )}
+        {(dom.breach_count ?? 0) > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 6, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
+            <span style={{ fontSize: "0.68rem", color: "#ef4444", fontWeight: 600 }}>Brechas</span>
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#ef4444" }}>{dom.breach_count}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Emails under domain */}
+      {dom.emails && dom.emails.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+          {dom.emails.map(email => (
+            <span key={email} style={{ fontSize: "0.68rem", color: "#71717a", background: "#1a1a1a", border: "1px solid #252525", borderRadius: 4, padding: "2px 7px", fontFamily: "var(--font-dm-mono, monospace)" }}>
+              {email}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── NIS2 Tab ──────────────────────────────────────────────────────────────────
 
 function Nis2Tab() {
   const { t } = useTranslation();
-  const [data, setData]         = useState<Nis2Data | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState("");
+  const [data, setData]           = useState<Nis2Data | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState("");
   const [catFilter, setCatFilter] = useState("all");
 
   const load = useCallback(async () => {
@@ -448,56 +546,70 @@ function Nis2Tab() {
 
   if (!data) return null;
 
-  const score = data.compliance_score;
+  const score    = data.compliance_score;
   const scoreCol = score >= 80 ? "#3ecf8e" : score >= 60 ? "#f59e0b" : "#ef4444";
-  const cats = ["all", ...Array.from(new Set(data.items.map(i => i.category)))];
+  const ringR    = 56;
+  const ringCirc = 2 * Math.PI * ringR;
+
+  const cats     = ["all", ...Array.from(new Set(data.items.map(i => i.category)))];
   const filtered = catFilter === "all" ? data.items : data.items.filter(i => i.category === catFilter);
 
-  const compliantCount   = data.items.filter(i => i.status === "compliant").length;
-  const partialCount     = data.items.filter(i => i.status === "partial").length;
-  const nonCompliantCount= data.items.filter(i => i.status === "non_compliant").length;
-  const manualCount      = data.items.filter(i => i.status === "manual_review").length;
+  const compliantCount    = data.items.filter(i => i.status === "compliant").length;
+  const partialCount      = data.items.filter(i => i.status === "partial").length;
+  const nonCompliantCount = data.items.filter(i => i.status === "non_compliant").length;
+  const manualCount       = data.items.filter(i => i.status === "manual_review").length;
 
   return (
     <div>
-      {/* Score header */}
-      <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 24, padding: 24, background: "#111", borderRadius: 14, border: "1px solid #1f1f1f", marginBottom: 20 }}>
-        {/* Score ring */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <svg width="90" height="90" viewBox="0 0 90 90" style={{ transform: "rotate(-90deg)" }}>
-            <circle cx="45" cy="45" r="36" fill="none" stroke="#1f1f1f" strokeWidth="8" />
-            <circle cx="45" cy="45" r="36" fill="none" stroke={scoreCol} strokeWidth="8"
-              strokeDasharray={`${2 * Math.PI * 36}`}
-              strokeDashoffset={`${2 * Math.PI * 36 * (1 - score / 100)}`}
+      {/* ── Score header ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 24, padding: "24px 28px", background: "#111", borderRadius: 16, border: "1px solid #1f1f1f", marginBottom: 20, alignItems: "center" }}>
+        {/* Score ring – 140 px, centered overlay */}
+        <div style={{ position: "relative", width: 140, height: 140, flexShrink: 0 }}>
+          <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)" }}>
+            <circle cx="70" cy="70" r={ringR} fill="none" stroke="#1e1e1e" strokeWidth="11" />
+            <circle cx="70" cy="70" r={ringR} fill="none" stroke={scoreCol} strokeWidth="11"
+              strokeDasharray={`${ringCirc}`}
+              strokeDashoffset={`${ringCirc * (1 - score / 100)}`}
               strokeLinecap="round"
-              style={{ transition: "stroke-dashoffset 1s ease" }} />
+              style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1), stroke 0.4s ease" }} />
           </svg>
-          <div style={{ textAlign: "center", marginTop: -72, marginBottom: 18, pointerEvents: "none" }}>
-            <div style={{ fontSize: "1.4rem", fontWeight: 800, color: scoreCol, fontFamily: "var(--font-dm-mono, monospace)", lineHeight: 1 }}>{score.toFixed(0)}%</div>
-            <div style={{ fontSize: "0.62rem", color: "#71717a", marginTop: 2 }}>{t("nis2.score")}</div>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <div style={{ fontSize: "1.8rem", fontWeight: 800, color: scoreCol, fontFamily: "var(--font-dm-mono, monospace)", lineHeight: 1 }}>{score.toFixed(0)}%</div>
+            <div style={{ fontSize: "0.58rem", color: "#71717a", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.1em" }}>{t("nis2.score")}</div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8, alignContent: "center" }}>
+        {/* Counters */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8 }}>
           {[
-            { label: t("nis2.status.compliant"),     value: compliantCount,    color: "#3ecf8e" },
-            { label: t("nis2.status.partial"),       value: partialCount,      color: "#f59e0b" },
-            { label: t("nis2.status.non_compliant"), value: nonCompliantCount, color: "#ef4444" },
-            { label: t("nis2.status.manual_review"), value: manualCount,       color: "#3b82f6" },
+            { label: t("nis2.status.compliant"),     value: compliantCount,    color: "#3ecf8e", icon: "✓" },
+            { label: t("nis2.status.partial"),       value: partialCount,      color: "#f59e0b", icon: "◑" },
+            { label: t("nis2.status.non_compliant"), value: nonCompliantCount, color: "#ef4444", icon: "✗" },
+            { label: t("nis2.status.manual_review"), value: manualCount,       color: "#3b82f6", icon: "⊙" },
           ].map(stat => (
-            <div key={stat.label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "#1a1a1a", borderRadius: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: stat.color, flexShrink: 0 }} />
-              <span style={{ fontSize: "0.78rem", color: "#b3b4b5", flex: 1 }}>{stat.label}</span>
-              <span style={{ fontSize: "0.9rem", fontWeight: 700, color: stat.color, fontFamily: "var(--font-dm-mono, monospace)" }}>{stat.value}</span>
+            <div key={stat.label}
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#1a1a1a", borderRadius: 10, transition: "background 0.15s", cursor: "default" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#212121"}
+              onMouseLeave={e => e.currentTarget.style.background = "#1a1a1a"}
+            >
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: `${stat.color}12`, border: `1px solid ${stat.color}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.95rem", color: stat.color, fontWeight: 800, flexShrink: 0 }}>
+                {stat.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "0.68rem", color: "#71717a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{stat.label}</div>
+              </div>
+              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: stat.color, fontFamily: "var(--font-dm-mono, monospace)" }}>{stat.value}</span>
             </div>
           ))}
         </div>
 
-        {/* Refresh button */}
+        {/* Refresh */}
         <div style={{ display: "flex", alignItems: "flex-start" }}>
           <button onClick={load}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid #1f1f1f", color: "#71717a", fontSize: "0.78rem", cursor: "pointer", whiteSpace: "nowrap" }}>
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid #1f1f1f", color: "#71717a", fontSize: "0.78rem", cursor: "pointer", whiteSpace: "nowrap", transition: "border-color 0.15s, color 0.15s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLButtonElement).style.color = "#b3b4b5"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1f1f1f"; (e.currentTarget as HTMLButtonElement).style.color = "#71717a"; }}
+          >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
@@ -506,7 +618,7 @@ function Nis2Tab() {
         </div>
       </div>
 
-      {/* Category filter */}
+      {/* ── Category filter ── */}
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
         {cats.map(cat => (
           <button key={cat} onClick={() => setCatFilter(cat)}
@@ -520,16 +632,24 @@ function Nis2Tab() {
         ))}
       </div>
 
-      {/* Items list */}
+      {/* ── Compliance items ── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {filtered.map(item => {
+        {filtered.map((item, i) => {
           const col = NIS2_STATUS_COLORS[item.status] ?? "#71717a";
           const bg  = NIS2_STATUS_BG[item.status]    ?? "transparent";
           const ico = NIS2_STATUS_ICON[item.status]  ?? "?";
           return (
-            <div key={item.id} style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 12, padding: "14px 16px", display: "flex", gap: 14 }}>
-              {/* Status indicator */}
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: bg, border: `1px solid ${col}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "1rem", color: col, fontWeight: 700 }}>
+            <div key={item.id}
+              style={{
+                background: "#111", border: "1px solid #1f1f1f", borderRadius: 12, padding: "14px 16px",
+                display: "flex", gap: 14, transition: "border-color 0.2s, background 0.15s",
+                animation: "fadeUp 0.4s ease both", animationDelay: `${i * 50}ms`,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.background = "#141414"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#1f1f1f"; e.currentTarget.style.background = "#111"; }}
+            >
+              {/* Status icon */}
+              <div style={{ width: 40, height: 40, borderRadius: 11, background: bg, border: `1px solid ${col}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "1.05rem", color: col, fontWeight: 800 }}>
                 {ico}
               </div>
 
@@ -539,9 +659,9 @@ function Nis2Tab() {
                   <div>
                     <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#f5f5f5", marginBottom: 2 }}>{item.title}</div>
                     <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.68rem", color: "#71717a", fontFamily: "var(--font-dm-mono, monospace)" }}>{item.article}</span>
-                      <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#3a3a3a" }} />
-                      <span style={{ fontSize: "0.68rem", color: "#71717a" }}>{item.category}</span>
+                      <span style={{ fontSize: "0.68rem", color: "#555", fontFamily: "var(--font-dm-mono, monospace)" }}>{item.article}</span>
+                      <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#333" }} />
+                      <span style={{ fontSize: "0.68rem", color: "#555" }}>{item.category}</span>
                     </div>
                   </div>
                   <span style={{ fontSize: "0.72rem", fontWeight: 700, color: col, background: bg, border: `1px solid ${col}25`, borderRadius: 5, padding: "2px 8px", flexShrink: 0 }}>
@@ -549,23 +669,34 @@ function Nis2Tab() {
                   </span>
                 </div>
                 <p style={{ fontSize: "0.78rem", color: "#71717a", margin: "6px 0 4px", lineHeight: 1.5 }}>{item.description}</p>
-                <p style={{ fontSize: "0.78rem", color: col === "#71717a" ? "#71717a" : `${col}cc`, margin: 0, lineHeight: 1.5 }}>{item.detail}</p>
+                <p style={{ fontSize: "0.78rem", color: col === "#71717a" ? "#555" : `${col}bb`, margin: 0, lineHeight: 1.5 }}>{item.detail}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Disclaimer */}
-      <div style={{ marginTop: 20, padding: "12px 16px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", borderRadius: 10, display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <p style={{ fontSize: "0.75rem", color: "#71717a", margin: 0, lineHeight: 1.5 }}>{data.disclaimer}</p>
-      </div>
+      {/* ── Per-domain breakdown ── */}
+      {data.domains_breakdown && data.domains_breakdown.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <h3 style={{ fontSize: "0.78rem", fontWeight: 700, color: "#b3b4b5", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 12px" }}>
+            Desglose por Dominio
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {data.domains_breakdown.map((dom, i) => (
+              <DomainCard key={dom.domain} dom={dom} index={i} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Disclaimer (discrete) ── */}
+      <p style={{ fontSize: "0.67rem", color: "#333", marginTop: 28, textAlign: "center", lineHeight: 1.5, maxWidth: 620, margin: "28px auto 0" }}>
+        ⓘ {data.disclaimer}
+      </p>
 
       {/* Evaluated at */}
-      <p style={{ fontSize: "0.72rem", color: "#3a3a3a", marginTop: 12, textAlign: "right" }}>
+      <p style={{ fontSize: "0.68rem", color: "#2a2a2a", marginTop: 8, textAlign: "right" }}>
         {t("nis2.evaluatedAt")}: {fmtDateTime(data.evaluated_at)}
       </p>
     </div>
@@ -632,7 +763,11 @@ export default function ReportsPage() {
 
   return (
     <div style={{ padding: "32px 0", maxWidth: 860, margin: "0 auto" }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+      `}</style>
 
       {/* Page header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>

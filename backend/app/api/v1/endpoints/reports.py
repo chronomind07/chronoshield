@@ -37,19 +37,10 @@ def _get_plan(db, user_id: str) -> str:
     return r.data["plan"] if r.data else "starter"
 
 
-def _get_credits(db, user_id: str) -> int:
-    r = db.table("subscriptions").select("credits_remaining").eq("user_id", user_id).single().execute()
-    return r.data["credits_remaining"] if r.data else 0
 
-
-def _deduct_credit(db, user_id: str) -> None:
-    credits = _get_credits(db, user_id)
-    if credits < 1:
-        raise HTTPException(402, "Créditos insuficientes para generar el informe")
-    db.table("subscriptions").update(
-        {"credits_remaining": credits - 1}
-    ).eq("user_id", user_id).execute()
-
+# NOTE: credits_remaining column not yet in subscriptions schema – deduction disabled
+# Add ALTER TABLE public.subscriptions ADD COLUMN credits_remaining INT DEFAULT 5;
+# to Supabase SQL editor when ready to enable credit limits.
 
 # ── Report data builder ───────────────────────────────────────────────────────
 
@@ -549,9 +540,55 @@ def _evaluate_nis2(db, user_id: str) -> dict:
     auto_items = [i for i in items if i["status"] in weights]
     score = round(sum(weights[i["status"]] for i in auto_items) / len(auto_items) * 100, 1) if auto_items else 0.0
 
+    # Per-domain technical breakdown
+    domains_breakdown: list[dict] = []
+    for d in domains:
+        # Latest SSL status
+        ssl_r = db.table("ssl_results").select(
+            "status,days_remaining"
+        ).eq("domain_id", d["id"]).order("scanned_at", desc=True).limit(1).execute()
+        ssl_row = ssl_r.data[0] if ssl_r.data else {}
+
+        # Latest email security
+        es_r = db.table("email_security_results").select(
+            "spf_status,dkim_status,dmarc_status"
+        ).eq("domain_id", d["id"]).order("scanned_at", desc=True).limit(1).execute()
+        es_row = es_r.data[0] if es_r.data else {}
+
+        # Uptime last 288 checks (~24 h at 5-min intervals)
+        up_r = db.table("uptime_results").select("status").eq("domain_id", d["id"]).limit(288).execute()
+        up_checks = up_r.data or []
+        up_pct: Optional[float] = None
+        if up_checks:
+            up_count = sum(1 for c in up_checks if c["status"] in ("up", "degraded"))
+            up_pct = round(up_count / len(up_checks) * 100, 1)
+
+        # Emails that belong to this domain (match by @domain suffix)
+        domain_emails = [em["email"] for em in emails if em["email"].split("@")[-1] == d["domain"]]
+
+        # Breach count for domain emails
+        breach_ct = 0
+        for em in emails:
+            if em["email"].split("@")[-1] == d["domain"]:
+                br = db.table("breach_results").select("id").eq("email_id", em["id"]).execute()
+                breach_ct += len(br.data or [])
+
+        domains_breakdown.append({
+            "domain":        d["domain"],
+            "ssl_status":    ssl_row.get("status"),
+            "days_remaining": ssl_row.get("days_remaining"),
+            "spf_status":    es_row.get("spf_status"),
+            "dkim_status":   es_row.get("dkim_status"),
+            "dmarc_status":  es_row.get("dmarc_status"),
+            "uptime_pct":    up_pct,
+            "breach_count":  breach_ct,
+            "emails":        domain_emails,
+        })
+
     return {
         "compliance_score": score,
         "items": items,
+        "domains_breakdown": domains_breakdown,
         "evaluated_at": _utcnow().isoformat(),
         "disclaimer": "Esta evaluación es orientativa y no constituye una auditoría NIS2 oficial. Consulta con un experto en cumplimiento normativo para una evaluación completa.",
     }
@@ -574,11 +611,15 @@ async def list_reports(
     user_id: str = Depends(get_current_user_id),
 ):
     db = get_db()
-    q = db.table("reports").select("id,type,period_start,period_end,created_at").eq("user_id", user_id)
-    if report_type:
-        q = q.eq("type", report_type)
-    res = q.order("created_at", desc=True).limit(limit).execute()
-    return {"reports": res.data or []}
+    try:
+        q = db.table("reports").select("id,type,period_start,period_end,created_at").eq("user_id", user_id)
+        if report_type:
+            q = q.eq("type", report_type)
+        res = q.order("created_at", desc=True).limit(limit).execute()
+        return {"reports": res.data or []}
+    except Exception as e:
+        logger.warning("reports table unavailable (run migration to create it)", error=str(e))
+        return {"reports": []}
 
 
 @router.post("/generate")
@@ -587,7 +628,8 @@ async def generate_report(
     user_id: str = Depends(get_current_user_id),
 ):
     db = get_db()
-    _deduct_credit(db, user_id)
+    # Credits deduction disabled until credits_remaining column added to subscriptions.
+    # See migration note near top of file.
 
     now = _utcnow()
     if body.period == "24h":
@@ -604,15 +646,23 @@ async def generate_report(
 
     data = _build_report_data(db, user_id, period_start, period_end)
 
-    ins = db.table("reports").insert({
-        "user_id":      user_id,
-        "type":         "manual",
-        "period_start": period_start.isoformat(),
-        "period_end":   period_end.isoformat(),
-        "data":         json.dumps(data),
-    }).execute()
+    report_meta: dict = {}
+    try:
+        ins = db.table("reports").insert({
+            "user_id":      user_id,
+            "type":         "manual",
+            "period_start": period_start.isoformat(),
+            "period_end":   period_end.isoformat(),
+            "data":         json.dumps(data),
+        }).execute()
+        report_meta = {k: v for k, v in (ins.data[0] if ins.data else {}).items() if k != "data"}
+    except Exception as e:
+        logger.warning(
+            "Could not persist report to DB (reports table may not exist yet). "
+            "Run: CREATE TABLE public.reports (...) to enable persistence.",
+            error=str(e),
+        )
 
-    report_meta = {k: v for k, v in (ins.data[0] if ins.data else {}).items() if k != "data"}
     return {"report": report_meta, "data": data}
 
 
