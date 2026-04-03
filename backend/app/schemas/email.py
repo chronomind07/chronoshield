@@ -30,8 +30,10 @@ class EmailWithBreaches(EmailResponse):
 
 
 class EmailWithSecurity(EmailResponse):
-    """Email with DNS security check results (SPF/DKIM/DMARC)."""
+    """Email with DNS security check results (SPF/DKIM/DMARC) and quarantine status."""
     spf_status: Optional[str] = None
     dkim_status: Optional[str] = None
     dmarc_status: Optional[str] = None
     last_email_sec_scan_at: Optional[datetime] = None
+    quarantine_status: Optional[str] = "active"   # active | quarantined | recovered
+    last_recovered_scan: Optional[datetime] = None

@@ -24,6 +24,10 @@ class ContactRequest(BaseModel):
     message: str
 
 
+class WaitlistRequest(BaseModel):
+    email: EmailStr
+
+
 @router.post("")
 async def send_contact_email(req: ContactRequest, request: Request):
     """Receive a contact-form submission and forward it via Resend."""
@@ -69,4 +73,19 @@ async def send_contact_email(req: ContactRequest, request: Request):
     except Exception as e:
         logger.error("Contact email failed", error=str(e))
 
+    return {"ok": True}
+
+
+@router.post("/waitlist/enterprise", status_code=201)
+async def join_enterprise_waitlist(req: WaitlistRequest):
+    """Save visitor email to the enterprise waitlist. No auth required."""
+    from app.db.supabase import get_supabase_client
+    db = get_supabase_client()
+    try:
+        db.table("enterprise_waitlist").insert({
+            "email": str(req.email),
+        }).execute()
+    except Exception:
+        # Unique constraint violation (already registered) — still return ok silently
+        pass
     return {"ok": True}

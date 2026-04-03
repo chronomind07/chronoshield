@@ -60,6 +60,7 @@ def _build_email_item(user_id: str, row: dict, db) -> dict:
         "breach_count": count,
         "status": status,
         "latest_breaches": latest_breaches,
+        "quarantine_status": row.get("quarantine_status") or "active",
     }
 
 
@@ -213,7 +214,7 @@ async def get_darkweb_summary(
 
     emails_rows = (
         db.table("monitored_emails")
-        .select("id,email")
+        .select("id,email,quarantine_status")
         .eq("user_id", user_id)
         .eq("is_active", True)
         .execute()
@@ -269,7 +270,7 @@ async def scan_email(
     """Scan a single email for dark web breaches. Costs 1 credit."""
     row = (
         db.table("monitored_emails")
-        .select("id,email")
+        .select("id,email,quarantine_status")
         .eq("id", email_id)
         .eq("user_id", user_id)
         .eq("is_active", True)
@@ -367,7 +368,7 @@ async def scan_all(
 
     emails_rows = (
         db.table("monitored_emails")
-        .select("id,email")
+        .select("id,email,quarantine_status")
         .eq("user_id", user_id)
         .eq("is_active", True)
         .execute()

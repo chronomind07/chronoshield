@@ -29,6 +29,13 @@ export const emailsApi = {
   add: (email: string) => api.post("/emails", { email }),
   remove: (id: string) => api.delete(`/emails/${id}`),
   scan: (id: string) => api.post(`/emails/${id}/scan`),
+  recover: (id: string) => api.patch(`/emails/${id}/recover`),
+};
+
+// Public endpoints (no auth)
+export const publicApi = {
+  waitlistEnterprise: (email: string) =>
+    api.post("/contact/waitlist/enterprise", { email }),
 };
 
 // Dashboard endpoints

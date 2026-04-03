@@ -202,6 +202,19 @@ CREATE TABLE public.alerts (
 -- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dkim_status TEXT;
 -- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dmarc_status TEXT;
 -- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS last_email_sec_scan_at TIMESTAMPTZ;
+-- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS quarantine_status TEXT NOT NULL DEFAULT 'active' CHECK (quarantine_status IN ('active','quarantined','recovered'));
+-- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS last_recovered_scan TIMESTAMPTZ;
+
+-- ============================================================
+-- ENTERPRISE WAITLIST
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.enterprise_waitlist (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email       TEXT NOT NULL UNIQUE,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+-- No RLS needed — public insert, no reads via API
+-- (Admin reads directly in Supabase dashboard)
 
 -- ============================================================
 -- NOTIFICATION PREFERENCES

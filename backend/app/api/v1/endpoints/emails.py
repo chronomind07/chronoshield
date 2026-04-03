@@ -151,6 +151,36 @@ async def trigger_email_scan(
     }
 
 
+@router.patch("/{email_id}/recover", status_code=200)
+async def recover_email(
+    email_id: UUID,
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """
+    User declares they've changed credentials after a breach.
+    Sets quarantine_status → 'recovered' so the auto-scanner resumes
+    at double interval before eventually returning to 'active'.
+    """
+    email_row = (
+        db.table("monitored_emails")
+        .select("id")
+        .eq("id", str(email_id))
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .single()
+        .execute()
+    )
+    if not email_row.data:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    db.table("monitored_emails").update({
+        "quarantine_status": "recovered",
+    }).eq("id", str(email_id)).eq("user_id", user_id).execute()
+
+    return {"ok": True, "quarantine_status": "recovered"}
+
+
 @router.delete("/{email_id}", status_code=204)
 async def remove_email(
     email_id: UUID,

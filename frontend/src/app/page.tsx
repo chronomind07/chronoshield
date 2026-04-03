@@ -297,6 +297,29 @@ function HowItWorks({ t }: { t: (k: string) => string }) {
 
 // ── Pricing ───────────────────────────────────────────────────────────────────
 function Pricing({ t }: { t: (k: string) => string }) {
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistState, setWaitlistState] = useState<"idle" | "loading" | "done">("idle");
+
+  const handleWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistEmail.trim() || waitlistState !== "idle") return;
+    setWaitlistState("loading");
+    try {
+      await fetch("/api/v1/contact/waitlist/enterprise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: waitlistEmail.trim() }),
+      });
+    } catch {
+      // silent — still show confirmation
+    }
+    setWaitlistState("done");
+  };
+
+  const starterFeatures = ["f1","f2","f3","f4","f5","f6","f7","f8"].map((k) => t(`landing.pricing.starter.${k}`));
+  const businessFeatures = ["f1","f2","f3","f4","f5","f6","f7","f8"].map((k) => t(`landing.pricing.business.${k}`));
+  const enterpriseFeatures = ["f1","f2","f3","f4","f5"].map((k) => t(`landing.pricing.enterprise.${k}`));
+
   return (
     <section id="pricing" style={{ padding: "120px 48px", background: "var(--bg-void)" }}>
       <div className="reveal" style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 64px" }}>
@@ -305,26 +328,28 @@ function Pricing({ t }: { t: (k: string) => string }) {
         <p style={{ fontSize: "1.05rem", color: "#9999ad", lineHeight: 1.7 }}>{t("landing.pricing.subtitle")}</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 24, maxWidth: 840, margin: "0 auto" }} className="cs-pricing-grid">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, maxWidth: 1100, margin: "0 auto" }} className="cs-pricing-grid">
+
         {/* Starter */}
-        <div className="reveal" style={{ background: "#0f0f16", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: "44px 36px", position: "relative", transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)" }}
+        <div className="reveal" style={{ background: "#0f0f16", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: "40px 32px", position: "relative", transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)", display: "flex", flexDirection: "column" }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,0.3)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
           <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#55556a", marginBottom: 16 }}>Starter</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 8 }}>
-            <span style={{ fontSize: "1.2rem", fontWeight: 600, color: "#9999ad" }}>€</span>
-            <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.5rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>29</span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+            <span style={{ fontSize: "1.1rem", fontWeight: 600, color: "#9999ad" }}>€</span>
+            <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>24</span>
             <span style={{ fontSize: "0.85rem", color: "#55556a" }}>{t("landing.pricing.month")}</span>
           </div>
-          <p style={{ fontSize: "0.85rem", color: "#9999ad", marginBottom: 32, lineHeight: 1.5 }}>{t("landing.pricing.starter.desc")}</p>
-          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 14, marginBottom: 36, padding: 0 }}>
-            {[t("landing.pricing.starter.f1"), t("landing.pricing.starter.f2"), t("landing.pricing.starter.f3"), t("landing.pricing.starter.f4"), t("landing.pricing.starter.f5")].map((f) => (
-              <li key={f} style={{ fontSize: "0.85rem", color: "#9999ad", display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ color: "#00e5bf", fontWeight: 700, fontSize: "0.8rem" }}>✓</span>{f}
+          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 20 }}>{t("landing.pricing.vatIncluded")}</div>
+          <p style={{ fontSize: "0.82rem", color: "#9999ad", marginBottom: 28, lineHeight: 1.5 }}>{t("landing.pricing.starter.desc")}</p>
+          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 11, marginBottom: 32, padding: 0, flex: 1 }}>
+            {starterFeatures.map((f) => (
+              <li key={f} style={{ fontSize: "0.82rem", color: "#9999ad", display: "flex", alignItems: "flex-start", gap: 9 }}>
+                <span style={{ color: "#00e5bf", fontWeight: 700, fontSize: "0.78rem", marginTop: 2, flexShrink: 0 }}>✓</span>{f}
               </li>
             ))}
           </ul>
-          <Link href="/register" style={{ display: "block", width: "100%", padding: 14, borderRadius: 10, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#f0f0f5", fontFamily: "var(--font-jakarta-family)", fontSize: "0.88rem", fontWeight: 700, textAlign: "center", textDecoration: "none", transition: "all 0.3s" }}
+          <Link href="/register" style={{ display: "block", width: "100%", padding: 13, borderRadius: 10, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#f0f0f5", fontFamily: "var(--font-jakarta-family)", fontSize: "0.85rem", fontWeight: 700, textAlign: "center", textDecoration: "none", transition: "all 0.3s" }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "#9999ad"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}>
             {t("landing.pricing.starter.cta")}
@@ -332,33 +357,90 @@ function Pricing({ t }: { t: (k: string) => string }) {
         </div>
 
         {/* Business (featured) */}
-        <div className="reveal reveal-d1 price-featured-badge" style={{ background: "linear-gradient(180deg,rgba(0,229,191,0.03) 0%,#0f0f16 40%)", border: "1px solid #00e5bf", borderRadius: 20, padding: "44px 36px", position: "relative", transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,0.3)"; }}
+        <div className="reveal reveal-d1" style={{ background: "linear-gradient(180deg,rgba(0,229,191,0.04) 0%,#0f0f16 50%)", border: "1px solid #00e5bf", borderRadius: 20, padding: "40px 32px", position: "relative", transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)", display: "flex", flexDirection: "column" }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 24px 70px rgba(0,229,191,0.08)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
+          {/* Popular badge */}
+          <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "#00e5bf", color: "#000", fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", padding: "3px 14px", borderRadius: 20 }}>
+            {t("landing.pricing.popular")}
+          </div>
           <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#55556a", marginBottom: 16 }}>Business</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 8 }}>
-            <span style={{ fontSize: "1.2rem", fontWeight: 600, color: "#9999ad" }}>€</span>
-            <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.5rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>59</span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+            <span style={{ fontSize: "1.1rem", fontWeight: 600, color: "#9999ad" }}>€</span>
+            <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>59</span>
             <span style={{ fontSize: "0.85rem", color: "#55556a" }}>{t("landing.pricing.month")}</span>
           </div>
-          <p style={{ fontSize: "0.85rem", color: "#9999ad", marginBottom: 32, lineHeight: 1.5 }}>{t("landing.pricing.business.desc")}</p>
-          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 14, marginBottom: 36, padding: 0 }}>
-            {[t("landing.pricing.business.f1"), t("landing.pricing.business.f2"), t("landing.pricing.business.f3"), t("landing.pricing.business.f4"), t("landing.pricing.business.f5"), t("landing.pricing.business.f6")].map((f) => (
-              <li key={f} style={{ fontSize: "0.85rem", color: "#9999ad", display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ color: "#00e5bf", fontWeight: 700, fontSize: "0.8rem" }}>✓</span>{f}
+          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 20 }}>{t("landing.pricing.vatIncluded")}</div>
+          <p style={{ fontSize: "0.82rem", color: "#9999ad", marginBottom: 28, lineHeight: 1.5 }}>{t("landing.pricing.business.desc")}</p>
+          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 11, marginBottom: 32, padding: 0, flex: 1 }}>
+            {businessFeatures.map((f) => (
+              <li key={f} style={{ fontSize: "0.82rem", color: "#9999ad", display: "flex", alignItems: "flex-start", gap: 9 }}>
+                <span style={{ color: "#00e5bf", fontWeight: 700, fontSize: "0.78rem", marginTop: 2, flexShrink: 0 }}>✓</span>{f}
               </li>
             ))}
           </ul>
           <Link href="/register"
             className="btn-shimmer"
-            style={{ display: "block", width: "100%", padding: 14, borderRadius: 10, background: "#00e5bf", border: "none", color: "#000", fontFamily: "var(--font-jakarta-family)", fontSize: "0.88rem", fontWeight: 700, textAlign: "center", textDecoration: "none", boxShadow: "0 0 24px rgba(0,229,191,0.15)", transition: "all 0.3s" }}>
+            style={{ display: "block", width: "100%", padding: 13, borderRadius: 10, background: "#00e5bf", border: "none", color: "#000", fontFamily: "var(--font-jakarta-family)", fontSize: "0.85rem", fontWeight: 700, textAlign: "center", textDecoration: "none", boxShadow: "0 0 24px rgba(0,229,191,0.15)", transition: "all 0.3s" }}>
             {t("landing.pricing.business.cta")}
           </Link>
+        </div>
+
+        {/* Enterprise (Coming Soon) */}
+        <div className="reveal reveal-d2" style={{ background: "#0f0f16", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: "40px 32px", position: "relative", transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)", display: "flex", flexDirection: "column" }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = ""; }}>
+          {/* Coming Soon badge */}
+          <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "rgba(99,102,241,0.15)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.3)", fontFamily: "var(--font-mono-family)", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", padding: "3px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>
+            {t("landing.pricing.enterprise.badge")}
+          </div>
+          <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#55556a", marginBottom: 16 }}>{t("landing.pricing.enterprise.name")}</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+            <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "2.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#55556a" }}>—</span>
+          </div>
+          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 20, opacity: 0 }}>placeholder</div>
+          <p style={{ fontSize: "0.82rem", color: "#9999ad", marginBottom: 28, lineHeight: 1.5 }}>{t("landing.pricing.enterprise.desc")}</p>
+          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 11, marginBottom: 32, padding: 0, flex: 1 }}>
+            {enterpriseFeatures.map((f) => (
+              <li key={f} style={{ fontSize: "0.82rem", color: "#9999ad", display: "flex", alignItems: "flex-start", gap: 9 }}>
+                <span style={{ color: "#818cf8", fontWeight: 700, fontSize: "0.78rem", marginTop: 2, flexShrink: 0 }}>◇</span>{f}
+              </li>
+            ))}
+          </ul>
+          {/* Waitlist form */}
+          {waitlistState === "done" ? (
+            <div style={{ padding: "14px", borderRadius: 10, background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center", fontSize: "0.82rem", color: "#818cf8", fontWeight: 600 }}>
+              {t("landing.pricing.enterprise.confirm")}
+            </div>
+          ) : (
+            <form onSubmit={handleWaitlist} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <input
+                type="email"
+                required
+                value={waitlistEmail}
+                onChange={(e) => setWaitlistEmail(e.target.value)}
+                placeholder={t("landing.pricing.enterprise.placeholder")}
+                style={{ width: "100%", padding: "11px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#f0f0f5", fontFamily: "var(--font-jakarta-family)", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+              />
+              <button
+                type="submit"
+                disabled={waitlistState === "loading"}
+                style={{ width: "100%", padding: 13, borderRadius: 10, background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)", color: "#818cf8", fontFamily: "var(--font-jakarta-family)", fontSize: "0.85rem", fontWeight: 700, cursor: waitlistState === "loading" ? "not-allowed" : "pointer", transition: "all 0.3s", opacity: waitlistState === "loading" ? 0.6 : 1 }}
+                onMouseEnter={(e) => { if (waitlistState !== "loading") { e.currentTarget.style.background = "rgba(99,102,241,0.2)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; }}}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.12)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.25)"; }}
+              >
+                {waitlistState === "loading" ? "…" : t("landing.pricing.enterprise.cta")}
+              </button>
+            </form>
+          )}
         </div>
       </div>
 
       <style>{`
-        @media (max-width: 640px) { .cs-pricing-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 900px) { .cs-pricing-grid { grid-template-columns: 1fr !important; } }
+        @media (min-width: 640px) and (max-width: 900px) { .cs-pricing-grid { grid-template-columns: repeat(2,1fr) !important; } }
       `}</style>
     </section>
   );
@@ -455,10 +537,10 @@ const JSONLD_SCHEMA = {
     {
       "@type": "Offer",
       "name": "Starter",
-      "price": "29",
+      "price": "24",
       "priceCurrency": "EUR",
       "billingIncrement": "P1M",
-      "description": "1 dominio monitorizado, 10 emails protegidos, 5 créditos/mes",
+      "description": "1 dominio monitorizado, 5 emails protegidos, 5 créditos/mes",
     },
     {
       "@type": "Offer",
@@ -466,7 +548,7 @@ const JSONLD_SCHEMA = {
       "price": "59",
       "priceCurrency": "EUR",
       "billingIncrement": "P1M",
-      "description": "3 dominios monitorizados, 30 emails protegidos, 20 créditos/mes",
+      "description": "2 dominios monitorizados, 15 emails protegidos, 15 créditos/mes",
     },
   ],
 };

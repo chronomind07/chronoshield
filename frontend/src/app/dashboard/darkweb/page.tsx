@@ -33,6 +33,7 @@ interface EmailItem {
   breach_count: number;
   status: "breached" | "clean" | "never_scanned";
   latest_breaches: BreachRecord[];
+  quarantine_status?: "active" | "quarantined" | "recovered" | null;
 }
 
 interface DomainItem {
@@ -274,15 +275,18 @@ function BreachDetail({ record }: { record: BreachRecord }) {
 
 // ── Email row ──────────────────────────────────────────────────────────────────
 function EmailRow({
-  item, onScan, setShowPacks,
+  item, onScan, setShowPacks, onRecover,
 }: {
   item: EmailItem;
   onScan: (id: string) => void;
   setShowPacks: (v: boolean) => void;
+  onRecover: (id: string, newStatus: "recovered") => void;
 }) {
   const { t, lang } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const qStatus = item.quarantine_status;
 
   const handleScan = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -295,6 +299,20 @@ function EmailRow({
       handleScanError(err, setShowPacks);
     } finally {
       setScanning(false);
+    }
+  };
+
+  const handleRecover = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRecovering(true);
+    try {
+      const { emailsApi } = await import("@/lib/api");
+      await emailsApi.recover(item.id);
+      onRecover(item.id, "recovered");
+    } catch {
+      toast.error("Error al actualizar estado de cuarentena");
+    } finally {
+      setRecovering(false);
     }
   };
 
@@ -358,11 +376,62 @@ function EmailRow({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {(qStatus === "quarantined" || qStatus === "recovered") && (
+            <span style={{
+              fontFamily: "var(--font-dm-mono)",
+              fontSize: "10px",
+              textTransform: "uppercase" as const,
+              letterSpacing: "0.06em",
+              padding: "2px 7px",
+              borderRadius: 5,
+              color: qStatus === "quarantined" ? "#fb923c" : "#818cf8",
+              background: qStatus === "quarantined" ? "rgba(249,115,22,0.10)" : "rgba(99,102,241,0.10)",
+              border: `0.8px solid ${qStatus === "quarantined" ? "rgba(249,115,22,0.25)" : "rgba(99,102,241,0.25)"}`,
+              flexShrink: 0,
+            }}>
+              {t(`darkweb.quarantine.${qStatus}`)}
+            </span>
+          )}
           <StatusPill status={item.status} />
           <ScanBtn scanning={scanning} onClick={handleScan} small />
           <span style={{ color: "#71717a", fontSize: "0.65rem", marginLeft: 2 }}>{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
+
+      {expanded && qStatus === "quarantined" && (
+        <div style={{ padding: "10px 18px", borderTop: "0.8px solid #1a1a1a", background: "rgba(249,115,22,0.04)", display: "flex", flexDirection: "column" as const, gap: 8 }}>
+          <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12px", color: "#fb923c", margin: 0, lineHeight: 1.5 }}>
+            {t("darkweb.quarantine.quarantinedInfo")}
+          </p>
+          <button
+            onClick={handleRecover}
+            disabled={recovering}
+            style={{
+              alignSelf: "flex-start",
+              padding: "5px 12px",
+              borderRadius: 7,
+              background: "rgba(99,102,241,0.12)",
+              border: "0.8px solid rgba(99,102,241,0.25)",
+              color: "#818cf8",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: recovering ? "not-allowed" : "pointer",
+              opacity: recovering ? 0.6 : 1,
+            }}
+          >
+            {recovering ? t("darkweb.quarantine.recovering") : t("darkweb.quarantine.recoverBtn")}
+          </button>
+        </div>
+      )}
+
+      {expanded && qStatus === "recovered" && (
+        <div style={{ padding: "10px 18px", borderTop: "0.8px solid #1a1a1a", background: "rgba(99,102,241,0.04)" }}>
+          <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12px", color: "#818cf8", margin: 0, lineHeight: 1.5 }}>
+            {t("darkweb.quarantine.recoveredInfo")}
+          </p>
+        </div>
+      )}
 
       {expanded && item.latest_breaches.length > 0 && (
         <div style={{ padding: "8px 18px 16px", borderTop: "0.8px solid #1a1a1a" }}>
@@ -1233,6 +1302,18 @@ export default function DarkWebPage() {
                   item={item}
                   onScan={onItemScanned}
                   setShowPacks={setShowPacks}
+                  onRecover={(id, newStatus) => {
+                    setSummary((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            emails: prev.emails.map((e) =>
+                              e.id === id ? { ...e, quarantine_status: newStatus } : e
+                            ),
+                          }
+                        : prev
+                    );
+                  }}
                 />
               ))}
             </div>

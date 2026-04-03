@@ -268,10 +268,16 @@ def finalize_domain_scores(self):
 @celery_app.task(name="app.workers.tasks.darkweb_scan_all_users", bind=True, max_retries=2)
 def darkweb_scan_all_users(self):
     """
-    Dark Web scan for all users.
+    Dark Web scan for all users with quarantine support.
     No credit cost — automatic scan included in plan.
-    Starter: email breach + domain breach, gated at ≥7 days between auto scans.
-    Business: same + typosquatting, gated at ≥2 days.
+    Starter: email breach + domain breach, normal interval 7 days.
+    Business: same + typosquatting, normal interval 3 days.
+
+    Quarantine system (per email):
+      - quarantined  → skip auto-scan (breach detected, user hasn't recovered)
+      - recovered    → scan at 2× normal interval (user changed credentials, verify)
+      - active       → normal interval
+    When a breach is newly detected, email quarantine_status → 'quarantined'.
     """
     from app.services import insecureweb_service as iw
     from app.core.config import settings
@@ -300,34 +306,18 @@ def darkweb_scan_all_users(self):
         user_id = sub["user_id"]
         plan    = sub["plan"]
 
-        # ── Frequency gate ────────────────────────────────────────────────────
-        days_interval = 7 if plan == "starter" else 2
-        cutoff_iso = (now_utc - timedelta(days=days_interval)).isoformat()
-        last_auto = (
-            db.table("dark_web_results")
-            .select("scanned_at")
-            .eq("user_id", user_id)
-            .eq("is_manual", False)
-            .order("scanned_at", desc=True)
-            .limit(1)
-            .execute()
-            .data
-        )
-        if last_auto and last_auto[0]["scanned_at"] >= cutoff_iso:
-            logger.info("Skipping dark web auto-scan — interval not reached",
-                        user_id=user_id, plan=plan, interval_days=days_interval)
-            continue
+        # ── Base interval (days) by plan ──────────────────────────────────────
+        base_interval = 7 if plan == "starter" else 3   # Business changed 2→3
 
         try:
             emails_rows = (
                 db.table("monitored_emails")
-                .select("email")
+                .select("id,email,quarantine_status")
                 .eq("user_id", user_id)
                 .eq("is_active", True)
                 .execute()
                 .data
             ) or []
-            emails = [r["email"] for r in emails_rows]
 
             domains_rows = (
                 db.table("domains")
@@ -339,21 +329,82 @@ def darkweb_scan_all_users(self):
             ) or []
             domains = [r["domain"] for r in domains_rows]
 
-            for email in emails:
+            for row in emails_rows:
+                email             = row["email"]
+                q_status          = row.get("quarantine_status") or "active"
+                email_id          = row["id"]
+
+                # ── Quarantine gate ───────────────────────────────────────────
+                if q_status == "quarantined":
+                    logger.info("Skipping quarantined email", email=email)
+                    continue
+
+                # Recovered emails scan at 2× interval
+                effective_interval = base_interval * 2 if q_status == "recovered" else base_interval
+                cutoff_iso = (now_utc - timedelta(days=effective_interval)).isoformat()
+
+                last_auto = (
+                    db.table("dark_web_results")
+                    .select("scanned_at")
+                    .eq("user_id", user_id)
+                    .eq("scan_type", "email_breach")
+                    .eq("query_value", email)
+                    .eq("is_manual", False)
+                    .order("scanned_at", desc=True)
+                    .limit(1)
+                    .execute()
+                    .data
+                )
+                if last_auto and last_auto[0]["scanned_at"] >= cutoff_iso:
+                    continue
+
                 try:
                     data = iw.search_dark_web(emails=[email])
+                    total = data.get("totalResults", 0)
                     db.table("dark_web_results").insert({
                         "user_id":       user_id,
                         "scan_type":     "email_breach",
                         "query_value":   email,
-                        "total_results": data.get("totalResults", 0),
+                        "total_results": total,
                         "results":       data.get("results", []),
                         "is_manual":     False,
                     }).execute()
+
+                    # ── Quarantine trigger ────────────────────────────────────
+                    if total > 0 and q_status in ("active", "recovered"):
+                        db.table("monitored_emails").update({
+                            "quarantine_status": "quarantined",
+                        }).eq("id", email_id).eq("user_id", user_id).execute()
+                        logger.info("Email quarantined after breach", email=email)
+                    elif total == 0 and q_status == "recovered":
+                        # Clean scan after recovery — upgrade back to active
+                        db.table("monitored_emails").update({
+                            "quarantine_status": "active",
+                        }).eq("id", email_id).eq("user_id", user_id).execute()
+                        logger.info("Email cleared quarantine — back to active", email=email)
+
                 except Exception as e:
                     logger.error("Auto email breach scan failed", email=email, error=str(e))
 
+            all_emails = [r["email"] for r in emails_rows]  # for typosquatting org
+
             for domain in domains:
+                # Domain frequency gate — use base_interval (no quarantine for domains)
+                dom_cutoff = (now_utc - timedelta(days=base_interval)).isoformat()
+                dom_last = (
+                    db.table("dark_web_results")
+                    .select("scanned_at")
+                    .eq("user_id", user_id)
+                    .eq("scan_type", "domain_breach")
+                    .eq("query_value", domain)
+                    .eq("is_manual", False)
+                    .order("scanned_at", desc=True)
+                    .limit(1)
+                    .execute()
+                    .data
+                )
+                if dom_last and dom_last[0]["scanned_at"] >= dom_cutoff:
+                    continue
                 try:
                     data = iw.search_dark_web(domains=[domain])
                     db.table("dark_web_results").insert({
@@ -378,7 +429,7 @@ def darkweb_scan_all_users(self):
                         .data
                     )
                     org_name = (profile[0].get("company_name") or "ChronoShield Org") if profile else "ChronoShield Org"
-                    org_id   = iw.ensure_org(user_id, org_name, domains, emails, db)
+                    org_id   = iw.ensure_org(user_id, org_name, domains, all_emails, db)
                     typo_data = iw.get_typosquatting_threats(org_id)
                     threats   = typo_data.get("content", typo_data.get("results", []))
                     db.table("dark_web_results").insert({

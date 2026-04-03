@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/Toast";
 import { emailsApi } from "@/lib/api";
 import { useTranslation } from "@/contexts/LanguageContext";
+import type { AxiosError } from "axios";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,7 @@ interface MonitoredEmail {
   dkim_status: string | null;
   dmarc_status: string | null;
   last_email_sec_scan_at: string | null;
+  quarantine_status?: "active" | "quarantined" | "recovered" | null;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -190,27 +192,59 @@ function OverallBadge({ email, tFn }: { email: MonitoredEmail; tFn?: (k: string)
   );
 }
 
+// ─── Quarantine Badge ─────────────────────────────────────────────────────────
+
+function QuarantineBadge({ status }: { status: "quarantined" | "recovered" }) {
+  const { t } = useTranslation();
+  const isQ = status === "quarantined";
+  return (
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      padding: "3px 10px",
+      borderRadius: "6px",
+      background: isQ ? "rgba(249,115,22,0.10)" : "rgba(99,102,241,0.10)",
+      border: `0.8px solid ${isQ ? "rgba(249,115,22,0.25)" : "rgba(99,102,241,0.25)"}`,
+      fontFamily: "var(--font-dm-mono)",
+      fontSize: "10px",
+      fontWeight: 700,
+      color: isQ ? "#fb923c" : "#818cf8",
+      whiteSpace: "nowrap",
+      textTransform: "uppercase",
+      letterSpacing: "0.05em",
+    }}>
+      {isQ ? "⚠ " : "↻ "}
+      {t(`darkweb.quarantine.${status}`)}
+    </span>
+  );
+}
+
 // ─── Email Card ───────────────────────────────────────────────────────────────
 
 interface EmailCardProps {
   emailItem: MonitoredEmail;
   isExpanded: boolean;
   isScanning: boolean;
+  isRecovering: boolean;
   onToggle: () => void;
   onScan: (e: React.MouseEvent, emailItem: MonitoredEmail) => void;
   onDelete: (e: React.MouseEvent, id: string) => void;
+  onRecover: (e: React.MouseEvent, id: string) => void;
 }
 
 function EmailCard({
   emailItem,
   isExpanded,
   isScanning,
+  isRecovering,
   onToggle,
   onScan,
   onDelete,
+  onRecover,
 }: EmailCardProps) {
   const { t, lang } = useTranslation();
   const overall = getOverallStatus(emailItem, t);
+  const qStatus = emailItem.quarantine_status;
 
   const dnsChecks: Array<{
     key: string;
@@ -321,6 +355,13 @@ function EmailCard({
           ))}
         </div>
 
+        {/* Quarantine badge */}
+        {(qStatus === "quarantined" || qStatus === "recovered") && (
+          <div style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+            <QuarantineBadge status={qStatus} />
+          </div>
+        )}
+
         {/* Overall badge */}
         <div
           style={{ flexShrink: 0 }}
@@ -413,6 +454,56 @@ function EmailCard({
             background: "rgba(255,255,255,0.01)",
           }}
         >
+          {/* Quarantine info banner */}
+          {qStatus === "quarantined" && (
+            <div style={{
+              padding: "12px 14px",
+              borderRadius: "8px",
+              background: "rgba(249,115,22,0.06)",
+              border: "0.8px solid rgba(249,115,22,0.2)",
+              marginBottom: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}>
+              <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12px", color: "#fb923c", margin: 0, lineHeight: 1.5 }}>
+                {t("darkweb.quarantine.quarantinedInfo")}
+              </p>
+              <button
+                onClick={(e) => onRecover(e, emailItem.id)}
+                disabled={isRecovering}
+                style={{
+                  alignSelf: "flex-start",
+                  padding: "6px 14px",
+                  borderRadius: "7px",
+                  background: isRecovering ? "rgba(99,102,241,0.08)" : "rgba(99,102,241,0.12)",
+                  border: "0.8px solid rgba(99,102,241,0.25)",
+                  color: "#818cf8",
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: isRecovering ? "not-allowed" : "pointer",
+                  opacity: isRecovering ? 0.6 : 1,
+                  transition: "all 150ms",
+                }}
+              >
+                {isRecovering ? t("darkweb.quarantine.recovering") : t("darkweb.quarantine.recoverBtn")}
+              </button>
+            </div>
+          )}
+          {qStatus === "recovered" && (
+            <div style={{
+              padding: "12px 14px",
+              borderRadius: "8px",
+              background: "rgba(99,102,241,0.06)",
+              border: "0.8px solid rgba(99,102,241,0.2)",
+              marginBottom: "12px",
+            }}>
+              <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12px", color: "#818cf8", margin: 0, lineHeight: 1.5 }}>
+                {t("darkweb.quarantine.recoveredInfo")}
+              </p>
+            </div>
+          )}
           {/* DNS rows */}
           <div
             style={{
@@ -532,6 +623,7 @@ export default function EmailsPage() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [scanning, setScanning] = useState<string | null>(null);
+  const [recovering, setRecovering] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [adding, setAdding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -626,6 +718,25 @@ export default function EmailsPage() {
       toast.success(t("emails.deletedOk"));
     } catch {
       toast.error(t("emails.errorDelete"));
+    }
+  };
+
+  const handleRecover = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setRecovering(id);
+    try {
+      await emailsApi.recover(id);
+      setEmails((prev) =>
+        prev.map((em) =>
+          em.id === id ? { ...em, quarantine_status: "recovered" } : em
+        )
+      );
+      toast.success(t("darkweb.quarantine.recoveredInfo").slice(0, 60) + "…");
+    } catch (err: unknown) {
+      const axErr = err as AxiosError;
+      toast.error(typeof axErr?.message === "string" ? axErr.message : "Error al actualizar");
+    } finally {
+      setRecovering(null);
     }
   };
 
@@ -824,9 +935,11 @@ export default function EmailsPage() {
                 emailItem={emailItem}
                 isExpanded={expandedId === emailItem.id}
                 isScanning={scanning === emailItem.id}
+                isRecovering={recovering === emailItem.id}
                 onToggle={() => handleToggle(emailItem.id)}
                 onScan={handleScan}
                 onDelete={handleDelete}
+                onRecover={handleRecover}
               />
             ))}
           </div>
