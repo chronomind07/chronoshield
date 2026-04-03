@@ -417,7 +417,7 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
               <button onClick={async () => {
                 try {
                   const { alertsApi: api } = await import("@/lib/api");
-                  await api.deleteResolved();
+                  await api.deleteAll();
                   setAlerts([]);
                   setUnreadCount(0);
                 } catch { /* silent */ }

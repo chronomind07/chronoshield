@@ -3,7 +3,6 @@ Public contact-form endpoint.
 No authentication required — any visitor can send a message.
 """
 import html
-import time
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr
 import resend
@@ -13,9 +12,6 @@ from app.core.config import settings
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/contact", tags=["contact"])
-
-# ── In-memory rate limiting: max 3 requests per IP per hour ──────────────────
-_contact_rate_limit: dict[str, list[float]] = {}
 
 
 class ContactRequest(BaseModel):
@@ -31,19 +27,24 @@ class WaitlistRequest(BaseModel):
 @router.post("")
 async def send_contact_email(req: ContactRequest, request: Request):
     """Receive a contact-form submission and forward it via Resend."""
-    # Rate limiting: max 3 requests per IP per hour
+    # Rate limiting via Redis: max 3 requests per IP per hour
     client_ip = request.client.host if request.client else "unknown"
-    now = time.time()
-    timestamps = _contact_rate_limit.get(client_ip, [])
-    # Remove timestamps older than 1 hour
-    timestamps = [t for t in timestamps if now - t < 3600]
-    if len(timestamps) >= 3:
-        raise HTTPException(
-            status_code=429,
-            detail="Too many requests. Maximum 3 contact requests per hour.",
-        )
-    timestamps.append(now)
-    _contact_rate_limit[client_ip] = timestamps
+    try:
+        import redis as redis_lib
+        _r = redis_lib.from_url(settings.REDIS_URL, decode_responses=True)
+        _key = f"contact_rl:{client_ip}"
+        _count = _r.incr(_key)
+        if _count == 1:
+            _r.expire(_key, 3600)
+        if _count > 3:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many requests. Maximum 3 contact requests per hour.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Redis unavailable — allow request through
 
     # Escape user-provided data before interpolating into HTML
     safe_name = html.escape(str(req.name))

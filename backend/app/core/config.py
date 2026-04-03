@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     # Plan credits per month
     PLAN_STARTER_CREDITS: int = 5
-    PLAN_BUSINESS_CREDITS: int = 20
+    PLAN_BUSINESS_CREDITS: int = 15
 
     # Admin — set ADMIN_SECRET_KEY in Railway env vars
     ADMIN_SECRET_KEY: str = "change-me-in-railway"
@@ -58,7 +58,6 @@ class Settings(BaseSettings):
     # CORS — do NOT set CORS_ORIGINS in Railway; delete that var if it exists.
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
-        "https://app.chronoshield.io",
         "https://chronoshield-brown.vercel.app",
         "https://chronoshield-9e4lqlu9h-chronomind07s-projects.vercel.app",
         "https://chronoshield-8zfsq6oz4-chronomind07s-projects.vercel.app",
@@ -68,9 +67,9 @@ class Settings(BaseSettings):
 
     # Plans config
     PLAN_STARTER_DOMAINS: int = 1
-    PLAN_STARTER_EMAILS: int = 10
-    PLAN_BUSINESS_DOMAINS: int = 3
-    PLAN_BUSINESS_EMAILS: int = 30
+    PLAN_STARTER_EMAILS: int = 5
+    PLAN_BUSINESS_DOMAINS: int = 2
+    PLAN_BUSINESS_EMAILS: int = 15
 
     # Google Safe Browsing API (Chrome extension phishing detection)
     GOOGLE_SAFE_BROWSING_API_KEY: str = ""

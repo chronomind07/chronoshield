@@ -190,7 +190,7 @@ def _generate_pdf(report_data: dict, report_type: str) -> bytes:
             TableStyle,
         )
     except ImportError:
-        raise HTTPException(500, "PDF generation requires reportlab. Run: pip install reportlab")
+        raise HTTPException(500, detail="PDF generation is temporarily unavailable. Please try again later.")
 
     ACCENT = colors.HexColor("#3ecf8e")
     GRAY   = colors.HexColor("#71717a")

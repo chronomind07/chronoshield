@@ -12,7 +12,7 @@ logger = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("ChronoShield API starting", version=settings.APP_VERSION)
+    logger.info("ChronoShield API starting", version=settings.APP_VERSION, debug=settings.DEBUG)
     if not settings.ADMIN_SECRET_KEY or settings.ADMIN_SECRET_KEY == "change-me-in-railway":
         logger.warning(
             "SECURITY WARNING: ADMIN_SECRET_KEY is set to the insecure default value. "
@@ -47,9 +47,9 @@ app.add_middleware(
     # Regex is a belt-and-suspenders fallback for Chrome extensions and the
     # production domain in case allow_origins is somehow overridden.
     # TODO: Replace chrome-extension://.* with your specific extension ID once published.
-    allow_origin_regex=r"(chrome-extension://.*|https://(www\.)?chronoshield\.eu)",
+    allow_origin_regex=r"(chrome-extension://REPLACE_WITH_EXTENSION_ID|https://(www\.)?chronoshield\.eu)",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

@@ -696,7 +696,7 @@ export default function AlertsPage() {
   const handleArchive = useCallback(async (id: string) => {
     setArchivingId(id);
     try {
-      await alertsApi.archiveAlert(id);
+      await alertsApi.delete(id);
       setData(prev => {
         if (!prev) return prev;
         const updated = (prev.alerts ?? []).filter(a => a.id !== id);
@@ -713,7 +713,7 @@ export default function AlertsPage() {
   const handleArchiveResolved = async () => {
     setArchivingAll(true);
     try {
-      await alertsApi.archiveResolved();
+      await alertsApi.deleteAll();
       setData(prev => {
         if (!prev) return prev;
         const active = (prev.alerts ?? []).filter(a => a.is_unread);

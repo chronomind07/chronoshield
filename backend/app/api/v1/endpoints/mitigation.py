@@ -18,10 +18,11 @@ router = APIRouter(prefix="/mitigation", tags=["mitigation"])
 
 # ── Plan limits ────────────────────────────────────────────────────────────────
 MITIGATION_LIMITS: dict[str, int] = {
-    "starter":  3,
-    "business": 15,
-    "free":     0,
-    "trial":    3,
+    "starter":    5,
+    "business":   20,
+    "enterprise": 50,
+    "free":       0,
+    "trial":      5,
 }
 
 MAX_CHAT_SESSIONS = 3  # per user

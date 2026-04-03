@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { historyApi, uptimeApi } from "@/lib/api";
+import { historyApi, uptimeApi, billingApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
 
@@ -148,7 +148,16 @@ function DnsChip({ label, status, tInvalid, tMissing }: {
   );
 }
 
-function ScoreBar({ label, score }: { label: string; score: number }) {
+function ScoreBar({ label, score }: { label: string; score: number | null | undefined }) {
+  if (score == null) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.7rem", color: "#71717a", width: 80, flexShrink: 0 }}>{label}</span>
+        <div style={{ flex: 1, height: 4, background: "#1a1a1a", borderRadius: 2 }} />
+        <span style={{ fontFamily: "var(--font-dm-mono)", fontSize: "0.7rem", color: "#3a3a3a", width: 28, textAlign: "right", flexShrink: 0 }}>—</span>
+      </div>
+    );
+  }
   const color = score >= 80 ? "#3ecf8e" : score >= 60 ? "#f59e0b" : "#ef4444";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -175,9 +184,9 @@ function DomainScanDetails({ details, tScore, tBreaches }: { details: Record<str
           {score}/100{grade ? ` · ${grade}` : ""}
         </span>
       </div>
-      <ScoreBar label="SSL"       score={(details.ssl_score as number) ?? 0} />
-      <ScoreBar label="Uptime"    score={(details.uptime_score as number) ?? 0} />
-      <ScoreBar label="Email DNS" score={(details.email_sec_score as number) ?? 0} />
+      <ScoreBar label="SSL"       score={details.ssl_score != null ? (details.ssl_score as number) : null} />
+      <ScoreBar label="Uptime"    score={details.uptime_score != null ? (details.uptime_score as number) : null} />
+      <ScoreBar label="Email DNS" score={details.email_sec_score != null ? (details.email_sec_score as number) : null} />
       <ScoreBar label="Dark Web"  score={(details.breach_score as number) ?? 0} />
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
         {([
@@ -518,8 +527,9 @@ function UptimeTab({ lang }: { lang: string }) {
   const [timeline, setTimeline]         = useState<UptimeTimeline | null>(null);
   const [loading, setLoading]           = useState(false);
   const [domainsLoading, setDomainsLoading] = useState(true);
+  const [plan, setPlan]                 = useState<string>("trial");
 
-  // Load domain list on mount
+  // Load domain list and plan on mount
   useEffect(() => {
     uptimeApi.domains()
       .then(r => {
@@ -529,6 +539,9 @@ function UptimeTab({ lang }: { lang: string }) {
       })
       .catch(() => toast.error(t("uptime.errorLoad")))
       .finally(() => setDomainsLoading(false));
+    billingApi.subscription()
+      .then(r => { if (r.data?.plan) setPlan(r.data.plan); })
+      .catch(() => { /* non-critical */ });
   }, [t]);
 
   // Load timeline when domain or range changes
@@ -578,6 +591,10 @@ function UptimeTab({ lang }: { lang: string }) {
 
   return (
     <div className="cs-fadeup-2">
+      {/* Subtitle showing plan-specific check interval */}
+      <p style={{ color: "#71717a", fontSize: "0.78rem", margin: "0 0 16px" }}>
+        {t(["starter","business","enterprise","trial"].includes(plan) ? `uptime.subtitle.${plan}` : "uptime.subtitle")}
+      </p>
       {/* Controls: domain selector + range pills */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
         {/* Domain selector */}

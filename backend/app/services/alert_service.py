@@ -87,7 +87,7 @@ def _send_alert_email(user_id: str, title: str, message: str, severity: str, db)
           <div style="border: 1px solid #e5e7eb; padding: 24px; border-radius: 0 0 8px 8px;">
             <h3 style="color: #111827;">{safe_title}</h3>
             <p style="color: #6b7280;">{safe_message}</p>
-            <a href="https://app.chronoshield.io/dashboard"
+            <a href="https://chronoshield.eu/dashboard"
                style="background: #2563eb; color: white; padding: 12px 24px;
                       border-radius: 6px; text-decoration: none; display: inline-block; margin-top: 16px;">
               Ver Dashboard

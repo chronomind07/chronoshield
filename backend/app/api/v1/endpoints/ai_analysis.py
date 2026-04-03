@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from uuid import UUID
 from pydantic import BaseModel
@@ -7,6 +8,14 @@ from app.db.supabase import get_db
 from app.services.ai_service import generate_security_analysis
 
 router = APIRouter(prefix="/ai", tags=["ai"])
+
+# Monthly AI analysis limits per plan
+_AI_LIMITS: dict[str, int] = {
+    "trial":      3,
+    "starter":    5,
+    "business":   15,
+    "enterprise": 50,
+}
 
 
 class AnalysisRequest(BaseModel):
@@ -27,6 +36,23 @@ async def analyze_security(
     db=Depends(get_db),
 ):
     """Generate AI analysis of current security posture."""
+    # ── Plan-based monthly rate limit ─────────────────────────────────────────
+    try:
+        sub = db.table("subscriptions").select("plan").eq("user_id", user_id).single().execute()
+        plan = (sub.data or {}).get("plan", "trial")
+    except Exception:
+        plan = "trial"
+    limit = _AI_LIMITS.get(plan, 3)
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    usage_res = db.table("ai_analyses").select("id", count="exact").eq("user_id", user_id).gte("created_at", month_start).execute()
+    usage_count = usage_res.count or 0
+    if usage_count >= limit:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Monthly AI analysis limit reached ({limit} analyses/month for {plan} plan).",
+        )
+
     # Gather context
     context = {}
 

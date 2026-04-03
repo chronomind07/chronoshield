@@ -167,6 +167,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     "emails.status.protected":"Protegido",
     "emails.status.attention":"Atención",
     "emails.status.unscanned":"Sin escanear",
+    "emails.status.invalid":  "Inválido",
+    "emails.status.missing":  "Falta",
     "emails.deleteBtn":       "Eliminar",
     "emails.addedSuccess":    "Email añadido",
     "emails.deletedSuccess":  "Email eliminado",
@@ -375,7 +377,11 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     // ── Uptime tab ──
     "uptime.title":           "Monitor de disponibilidad",
-    "uptime.subtitle":        "Checks de disponibilidad cada 5 minutos",
+    "uptime.subtitle":        "Checks periódicos de disponibilidad",
+    "uptime.subtitle.starter":    "Checks cada 5 min",
+    "uptime.subtitle.business":   "Checks cada 2 min",
+    "uptime.subtitle.enterprise": "Checks cada 2 min",
+    "uptime.subtitle.trial":      "Checks cada 5 min",
     "uptime.selectDomain":    "Dominio",
     "uptime.range.24h":       "24 horas",
     "uptime.range.7d":        "7 días",
@@ -399,8 +405,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     "assistant.howHelp":      "¿Cómo puedo ayudarte con la seguridad hoy?",
     "assistant.shiftEnter":   "Shift+Enter para nueva línea",
     "assistant.tokensUsed":   "Tokens usados:",
-    "assistant.analyzeActive":"Analiza mis alertas activas",
-    "assistant.analyzePlease":"Por favor, analiza estas alertas y dime cuáles son las más urgentes y cómo resolverlas.",
+    "assistant.analyzeActive":  "Analiza mis alertas activas",
+    "assistant.analyzePlease":  "Por favor, analiza estas alertas y dime cuáles son las más urgentes y cómo resolverlas.",
+    "assistant.noActiveAlerts": "No tienes alertas activas en este momento. ¡Todo está en orden! 🛡️",
 
     // ── Alerts page extras ──
     "alerts.filter.read":     "Leídas",
@@ -855,6 +862,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     "emails.status.protected":"Protected",
     "emails.status.attention":"Attention",
     "emails.status.unscanned":"Unscanned",
+    "emails.status.invalid":  "Invalid",
+    "emails.status.missing":  "Missing",
     "emails.deleteBtn":       "Delete",
     "emails.addedSuccess":    "Email added",
     "emails.deletedSuccess":  "Email deleted",
@@ -1063,7 +1072,11 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     // ── Uptime tab ──
     "uptime.title":           "Availability monitor",
-    "uptime.subtitle":        "Availability checks every 5 minutes",
+    "uptime.subtitle":        "Periodic availability checks",
+    "uptime.subtitle.starter":    "Checks every 5 min",
+    "uptime.subtitle.business":   "Checks every 2 min",
+    "uptime.subtitle.enterprise": "Checks every 2 min",
+    "uptime.subtitle.trial":      "Checks every 5 min",
     "uptime.selectDomain":    "Domain",
     "uptime.range.24h":       "24 hours",
     "uptime.range.7d":        "7 days",
@@ -1087,8 +1100,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     "assistant.howHelp":      "How can I help you with security today?",
     "assistant.shiftEnter":   "Shift+Enter for new line",
     "assistant.tokensUsed":   "Tokens used:",
-    "assistant.analyzeActive":"Analyze my active alerts",
-    "assistant.analyzePlease":"Please analyze these alerts and tell me which are most urgent and how to resolve them.",
+    "assistant.analyzeActive":  "Analyze my active alerts",
+    "assistant.analyzePlease":  "Please analyze these alerts and tell me which are most urgent and how to resolve them.",
+    "assistant.noActiveAlerts": "You have no active alerts right now. Everything looks good! 🛡️",
 
     // ── Alerts page extras ──
     "alerts.filter.read":     "Read",

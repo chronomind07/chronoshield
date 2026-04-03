@@ -18,8 +18,9 @@ PLAN_PRICES = {
 }
 
 PLAN_LIMITS = {
-    "starter": {"max_domains": 1, "max_emails": 10},
-    "business": {"max_domains": 3, "max_emails": 30},
+    "starter":    {"max_domains": 1, "max_emails": 5},
+    "business":   {"max_domains": 2, "max_emails": 15},
+    "enterprise": {"max_domains": 5, "max_emails": 25},
 }
 
 
@@ -43,8 +44,14 @@ async def create_checkout_session(
     if plan not in PLAN_PRICES:
         raise HTTPException(status_code=400, detail="Invalid plan")
 
-    profile = db.table("profiles").select("*").eq("id", user_id).single().execute()
-    sub = db.table("subscriptions").select("*").eq("user_id", user_id).single().execute()
+    try:
+        profile = db.table("profiles").select("*").eq("id", user_id).single().execute()
+    except Exception:
+        profile = type("_R", (), {"data": None})()
+    try:
+        sub = db.table("subscriptions").select("*").eq("user_id", user_id).single().execute()
+    except Exception:
+        sub = type("_R", (), {"data": None})()
 
     # Get or create Stripe customer
     stripe_customer_id = sub.data.get("stripe_customer_id") if sub.data else None
@@ -63,8 +70,8 @@ async def create_checkout_session(
         payment_method_types=["card"],
         line_items=[{"price": PLAN_PRICES[plan], "quantity": 1}],
         mode="subscription",
-        success_url="https://app.chronoshield.io/dashboard?upgrade=success",
-        cancel_url="https://app.chronoshield.io/billing?upgrade=canceled",
+        success_url="https://chronoshield.eu/dashboard?upgrade=success",
+        cancel_url="https://chronoshield.eu/billing?upgrade=canceled",
         metadata={"user_id": user_id, "plan": plan},
     )
     return CheckoutSession(url=session.url)
@@ -81,7 +88,7 @@ async def create_billing_portal(
 
     session = stripe.billing_portal.Session.create(
         customer=sub.data["stripe_customer_id"],
-        return_url="https://app.chronoshield.io/billing",
+        return_url="https://chronoshield.eu/billing",
     )
     return BillingPortalSession(url=session.url)
 

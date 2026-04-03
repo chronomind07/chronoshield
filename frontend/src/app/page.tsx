@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { TRANSLATIONS, type Lang } from "@/lib/translations";
 import { DynamicMeta } from "@/components/DynamicMeta";
+import { publicApi } from "@/lib/api";
 
 // ── Scroll reveal setup ───────────────────────────────────────────────────────
 function useScrollReveal() {
@@ -305,11 +306,7 @@ function Pricing({ t }: { t: (k: string) => string }) {
     if (!waitlistEmail.trim() || waitlistState !== "idle") return;
     setWaitlistState("loading");
     try {
-      await fetch("/api/v1/contact/waitlist/enterprise", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: waitlistEmail.trim() }),
-      });
+      await publicApi.waitlistEnterprise(waitlistEmail.trim());
     } catch {
       // silent — still show confirmation
     }
@@ -398,7 +395,7 @@ function Pricing({ t }: { t: (k: string) => string }) {
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
             <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "2.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#55556a" }}>—</span>
           </div>
-          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 20, opacity: 0 }}>placeholder</div>
+          <div aria-hidden="true" style={{ display: "none" }} />
           <p style={{ fontSize: "0.82rem", color: "#9999ad", marginBottom: 28, lineHeight: 1.5 }}>{t("landing.pricing.enterprise.desc")}</p>
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 11, marginBottom: 32, padding: 0, flex: 1 }}>
             {enterpriseFeatures.map((f) => (

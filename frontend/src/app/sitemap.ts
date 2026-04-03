@@ -3,47 +3,46 @@ import { MetadataRoute } from "next";
 const BASE_URL = "https://chronoshield.eu";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
   return [
     {
       url: BASE_URL,
-      lastModified: now,
+      lastModified: new Date("2026-04-01"),
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
       url: `${BASE_URL}/login`,
-      lastModified: now,
+      lastModified: new Date("2026-01-15"),
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${BASE_URL}/register`,
-      lastModified: now,
+      lastModified: new Date("2026-01-15"),
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${BASE_URL}/forgot-password`,
-      lastModified: now,
+      lastModified: new Date("2026-01-01"),
       changeFrequency: "yearly",
       priority: 0.2,
     },
     {
       url: `${BASE_URL}/privacidad`,
-      lastModified: now,
+      lastModified: new Date("2026-01-01"),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/terminos`,
-      lastModified: now,
+      lastModified: new Date("2026-01-01"),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/contacto`,
-      lastModified: now,
+      lastModified: new Date("2026-02-01"),
       changeFrequency: "monthly",
       priority: 0.4,
     },

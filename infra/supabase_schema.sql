@@ -15,6 +15,7 @@ CREATE TABLE public.profiles (
     company_name    TEXT,
     phone           TEXT,
     avatar_url      TEXT,
+    role            TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin', 'superadmin')),
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -196,14 +197,16 @@ CREATE TABLE public.alerts (
     email_sent      BOOLEAN DEFAULT FALSE,
     archived        BOOLEAN DEFAULT FALSE
 );
--- Migration: ALTER TABLE public.alerts ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE;
--- Migration: ALTER TABLE public.domains ADD COLUMN IF NOT EXISTS last_scanned_at TIMESTAMPTZ;
--- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS spf_status TEXT;
--- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dkim_status TEXT;
--- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dmarc_status TEXT;
--- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS last_email_sec_scan_at TIMESTAMPTZ;
--- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS quarantine_status TEXT NOT NULL DEFAULT 'active' CHECK (quarantine_status IN ('active','quarantined','recovered'));
--- Migration: ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS last_recovered_scan TIMESTAMPTZ;
+-- ── Post-launch column migrations (run once in Supabase SQL editor) ──────────
+ALTER TABLE public.alerts ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.domains ADD COLUMN IF NOT EXISTS last_scanned_at TIMESTAMPTZ;
+ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS spf_status TEXT;
+ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dkim_status TEXT;
+ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS dmarc_status TEXT;
+ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS last_email_sec_scan_at TIMESTAMPTZ;
+ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS quarantine_status TEXT NOT NULL DEFAULT 'active' CHECK (quarantine_status IN ('active','quarantined','recovered'));
+ALTER TABLE public.monitored_emails ADD COLUMN IF NOT EXISTS last_recovered_scan TIMESTAMPTZ;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin', 'superadmin'));
 
 -- ============================================================
 -- ENTERPRISE WAITLIST

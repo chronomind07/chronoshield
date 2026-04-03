@@ -343,6 +343,15 @@ export default function AssistantPage() {
 
     try {
       const summaryRes = await mitigationApi.alertsSummary();
+      const count = summaryRes.data.count as number;
+
+      if (count === 0) {
+        const noAlertsMsg: ChatMsg = { role: "assistant", content: t("assistant.noActiveAlerts"), timestamp: new Date() };
+        setMessages(prev => [...prev, noAlertsMsg]);
+        setSending(false);
+        return;
+      }
+
       const summary = summaryRes.data.summary as string;
 
       const res = await mitigationApi.chat({
