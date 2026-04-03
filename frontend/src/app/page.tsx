@@ -318,7 +318,7 @@ function Pricing({ t }: { t: (k: string) => string }) {
 
   const starterFeatures = ["f1","f2","f3","f4","f5","f6","f7","f8"].map((k) => t(`landing.pricing.starter.${k}`));
   const businessFeatures = ["f1","f2","f3","f4","f5","f6","f7","f8"].map((k) => t(`landing.pricing.business.${k}`));
-  const enterpriseFeatures = ["f1","f2","f3","f4","f5"].map((k) => t(`landing.pricing.enterprise.${k}`));
+  const enterpriseFeatures = ["f1","f2","f3","f4","f5","f6","f7","f8","f9","f10"].map((k) => t(`landing.pricing.enterprise.${k}`));
 
   return (
     <section id="pricing" style={{ padding: "120px 48px", background: "var(--bg-void)" }}>
