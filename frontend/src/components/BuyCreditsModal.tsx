@@ -13,9 +13,9 @@ interface Pack {
 }
 
 const PACKS: Pack[] = [
-  { key: "s", credits: 5,  price: "9.99€",  label: "Pack S" },
-  { key: "m", credits: 10, price: "18.99€", label: "Pack M", highlight: true },
-  { key: "l", credits: 20, price: "34.99€", label: "Pack L" },
+  { key: "s", credits: 5,  price: "6,99€",  label: "Pack S" },
+  { key: "m", credits: 12, price: "10,99€", label: "Pack M" },
+  { key: "l", credits: 30, price: "20,99€", label: "Pack L", highlight: true },
 ];
 
 interface Props {
@@ -103,6 +103,8 @@ export default function BuyCreditsModal({ onClose }: Props) {
                 </div>
                 <span className="font-mono text-[12px] text-[#5A6B7A]">
                   {pack.credits} créditos
+                  {pack.key === "m" && <span className="ml-1 text-[#3ecf8e]">+2 extra</span>}
+                  {pack.key === "l" && <span className="ml-1 text-[#3ecf8e]">+5 extra</span>}
                 </span>
               </div>
               <button

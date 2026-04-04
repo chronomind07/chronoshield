@@ -55,15 +55,28 @@ async def create_checkout_session(
 
     # Get or create Stripe customer
     stripe_customer_id = sub.data.get("stripe_customer_id") if sub.data else None
-    if not stripe_customer_id:
-        customer = stripe.Customer.create(
+
+    def _create_new_customer() -> str:
+        """Create a fresh Stripe customer and persist it to DB."""
+        c = stripe.Customer.create(
             metadata={"supabase_user_id": user_id},
             email=profile.data.get("email") if profile.data else None,
         )
-        stripe_customer_id = customer.id
-        db.table("subscriptions").update({"stripe_customer_id": stripe_customer_id}).eq(
-            "user_id", user_id
-        ).execute()
+        db.table("subscriptions").update({"stripe_customer_id": c.id}).eq("user_id", user_id).execute()
+        return c.id
+
+    if not stripe_customer_id:
+        stripe_customer_id = _create_new_customer()
+    else:
+        # Validate the customer still exists in this Stripe account (guard against stale IDs)
+        try:
+            stripe.Customer.retrieve(stripe_customer_id)
+        except stripe.error.InvalidRequestError as e:
+            if "No such customer" in str(e):
+                logger.warning("Stale Stripe customer, creating new one", old_id=stripe_customer_id, user_id=user_id)
+                stripe_customer_id = _create_new_customer()
+            else:
+                raise
 
     session = stripe.checkout.Session.create(
         customer=stripe_customer_id,
@@ -82,14 +95,22 @@ async def create_billing_portal(
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
-    sub = db.table("subscriptions").select("stripe_customer_id").eq("user_id", user_id).single().execute()
+    try:
+        sub = db.table("subscriptions").select("stripe_customer_id").eq("user_id", user_id).single().execute()
+    except Exception:
+        sub = type("_R", (), {"data": None})()
     if not sub.data or not sub.data.get("stripe_customer_id"):
         raise HTTPException(status_code=400, detail="No Stripe customer found")
 
-    session = stripe.billing_portal.Session.create(
-        customer=sub.data["stripe_customer_id"],
-        return_url="https://chronoshield.eu/billing",
-    )
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=sub.data["stripe_customer_id"],
+            return_url="https://chronoshield.eu/billing",
+        )
+    except stripe.error.InvalidRequestError as e:
+        if "No such customer" in str(e):
+            raise HTTPException(status_code=400, detail="Billing portal unavailable. Please contact support.")
+        raise
     return BillingPortalSession(url=session.url)
 
 

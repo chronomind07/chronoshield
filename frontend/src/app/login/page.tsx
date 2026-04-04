@@ -147,7 +147,7 @@ function AuthPageInner() {
     try {
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/dashboard` },
+        options: { redirectTo: `${window.location.origin}/select-plan` },
       });
       if (err) throw err;
     } catch (err: unknown) {

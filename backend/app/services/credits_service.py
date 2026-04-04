@@ -7,9 +7,9 @@ Plan allowances:
   trial    → 0 credits / month
 
 Credit packs (one-time Stripe purchase):
-  Pack S → 5 credits  (9.99€)
-  Pack M → 10 credits (18.99€)
-  Pack L → 20 credits (34.99€)
+  Pack S → 5 credits  (6.99€)
+  Pack M → 12 credits (10.99€)
+  Pack L → 30 credits (20.99€)
 """
 
 from datetime import date, datetime

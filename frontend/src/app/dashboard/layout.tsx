@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { alertsApi } from "@/lib/api";
+import { alertsApi, billingApi } from "@/lib/api";
 import Link from "next/link";
 import { Toaster } from "@/components/Toast";
 import { CreditsProvider, useCredits } from "@/contexts/CreditsContext";
@@ -496,11 +496,30 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     return () => clearInterval(t);
   }, []);
 
-  // Auth guard
+  // Auth + plan guard
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.replace("/login");
-      else setUserEmail(data.session.user.email ?? null);
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) { router.replace("/login"); return; }
+      setUserEmail(data.session.user.email ?? null);
+
+      // Skip plan check when returning from a successful Stripe payment
+      const params = new URLSearchParams(window.location.search);
+      const upgradeSuccess = params.get("upgrade") === "success";
+
+      if (!upgradeSuccess) {
+        try {
+          const res = await billingApi.subscription();
+          const plan   = res.data?.plan;
+          const status = res.data?.status;
+          if (!plan || plan === "trial" || status === "trialing") {
+            router.replace("/select-plan");
+            return;
+          }
+        } catch {
+          // If subscription fetch fails, allow through (don't block dashboard)
+        }
+      }
+
       setChecking(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
