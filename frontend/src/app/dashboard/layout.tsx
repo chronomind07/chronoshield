@@ -263,9 +263,9 @@ function AlertRow({ alert, onDismiss, onDelete, onClose }: {
 
 // ── Buy credits modal ─────────────────────────────────────────────────────────
 const PACKS = [
-  { key: "s" as const, label: "Pack S", credits: 5,  price: "9,99€",  per: "2,00€/créd." },
-  { key: "m" as const, label: "Pack M", credits: 10, price: "18,99€", per: "1,90€/créd." },
-  { key: "l" as const, label: "Pack L", credits: 20, price: "34,99€", per: "1,75€/créd.", popular: true },
+  { key: "s" as const, label: "Pack S", credits: 5,  price: "6,99€",  per: "1,40€/créd." },
+  { key: "m" as const, label: "Pack M", credits: 12, price: "10,99€", per: "0,92€/créd." },
+  { key: "l" as const, label: "Pack L", credits: 30, price: "20,99€", per: "0,70€/créd.", popular: true },
 ];
 
 function BuyCreditsModal({ creditsAvailable, onClose }: { creditsAvailable: number | null; onClose: () => void }) {
@@ -483,6 +483,8 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>("free");
+  const [showBanner, setShowBanner] = useState(true);
   const { credits, refreshCredits } = useCredits();
   const { t } = useTranslation();
 
@@ -502,22 +504,14 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       if (!data.session) { router.replace("/login"); return; }
       setUserEmail(data.session.user.email ?? null);
 
-      // Skip plan check when returning from a successful Stripe payment
-      const params = new URLSearchParams(window.location.search);
-      const upgradeSuccess = params.get("upgrade") === "success";
-
-      if (!upgradeSuccess) {
-        try {
-          const res = await billingApi.subscription();
-          const plan   = res.data?.plan;
-          const status = res.data?.status;
-          if (!plan || plan === "trial" || status === "trialing") {
-            router.replace("/select-plan");
-            return;
-          }
-        } catch {
-          // If subscription fetch fails, allow through (don't block dashboard)
-        }
+      // Fetch subscription to know the plan (but never redirect for free/trial)
+      try {
+        const res = await billingApi.subscription();
+        const plan = res.data?.plan ?? "free";
+        setUserPlan(plan);
+      } catch {
+        // If subscription fetch fails, treat as free plan
+        setUserPlan("free");
       }
 
       setChecking(false);
@@ -722,8 +716,15 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
               {initials}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 400, color: "#f5f5f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {username}
+              <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "nowrap" }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: "#f5f5f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>
+                  {username}
+                </span>
+                {(userPlan === "trial" || userPlan === "free") && (
+                  <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 4, padding: "1px 5px", letterSpacing: "0.08em", flexShrink: 0 }}>
+                    FREE
+                  </span>
+                )}
               </div>
             </div>
             <button onClick={handleLogout} title={t("nav.settings")}
@@ -788,8 +789,43 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        {/* Upgrade banner for free/trial users */}
+        {(userPlan === "trial" || userPlan === "free") && showBanner && (
+          <div style={{
+            position: "sticky", top: 64, zIndex: 29,
+            background: "rgba(245,158,11,0.07)",
+            borderBottom: "1px solid rgba(245,158,11,0.15)",
+            padding: "10px 24px",
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          }}>
+            <span style={{ fontSize: "0.82rem", color: "#d4a017" }}>
+              Estás en el plan gratuito. Mejora tu plan para desbloquear monitoreo continuo y todas las funciones.
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              <Link
+                href="/select-plan"
+                style={{
+                  fontSize: "0.78rem", fontWeight: 700, color: "#f59e0b",
+                  background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)",
+                  borderRadius: 6, padding: "4px 12px", textDecoration: "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                Mejorar plan →
+              </Link>
+              <button
+                onClick={() => setShowBanner(false)}
+                style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 4px" }}
+                aria-label="Cerrar banner"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Page content */}
-        <main style={{ paddingTop: 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
+        <main style={{ paddingTop: (userPlan === "trial" || userPlan === "free") && showBanner ? 64 : 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
           {children}
         </main>
 

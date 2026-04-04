@@ -23,7 +23,7 @@ const BUSINESS_FEATURES = [
   "Alertas instantáneas",
   "ChronoAI: 20 consultas/mes",
   "Informes semanales y mensuales",
-  "Historial 6 meses",
+  "Historial 90 días",
 ];
 
 // ── Noise texture overlay ─────────────────────────────────────────────────────
@@ -60,11 +60,12 @@ export default function SelectPlanPage() {
         return;
       }
       // If user already has an active paid plan → go to dashboard
+      // (but allow trial/free users to stay on select-plan to upgrade)
       try {
         const res = await billingApi.subscription();
         const plan = res.data?.plan;
         const status = res.data?.status;
-        if (plan && plan !== "trial" && status === "active") {
+        if (plan && plan !== "trial" && plan !== "free" && status === "active") {
           router.replace("/dashboard");
           return;
         }
@@ -74,6 +75,11 @@ export default function SelectPlanPage() {
       setChecking(false);
     });
   }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
 
   const handleSelect = useCallback(async (plan: "starter" | "business") => {
     setLoading(plan);
@@ -99,6 +105,21 @@ export default function SelectPlanPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0b0b0b", position: "relative", fontFamily: "var(--font-dm-sans, system-ui, sans-serif)" }}>
+      {/* Cerrar sesión */}
+      <button
+        onClick={handleLogout}
+        style={{
+          position: "absolute", top: 24, right: 24, zIndex: 10,
+          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+          color: "#71717a", fontSize: "0.78rem", fontWeight: 500,
+          padding: "6px 14px", borderRadius: 8, cursor: "pointer",
+          fontFamily: "inherit", transition: "color 0.2s",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.color = "#f5f5f5")}
+        onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
+      >
+        Cerrar sesión
+      </button>
       <div style={noiseStyle} />
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -108,9 +129,10 @@ export default function SelectPlanPage() {
         }
         .sp-card {
           animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
-          transition: border-color 0.3s, transform 0.3s;
+          transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
         }
-        .sp-card:hover { transform: translateY(-5px); }
+        .sp-card:hover { transform: translateY(-5px); box-shadow: 0 0 0 1px rgba(62,207,142,0.12); }
+        .sp-card-business:hover { box-shadow: 0 0 24px rgba(62,207,142,0.08), 0 0 0 1px rgba(62,207,142,0.2) !important; }
         .sp-btn { transition: opacity 0.2s, transform 0.1s; }
         .sp-btn:hover:not(:disabled) { opacity: 0.88; }
         .sp-btn:active:not(:disabled) { transform: scale(0.98); }
@@ -203,7 +225,7 @@ export default function SelectPlanPage() {
 
           {/* ── Business (Popular) ── */}
           <div
-            className="sp-card"
+            className="sp-card sp-card-business"
             style={{
               background: "linear-gradient(160deg, rgba(62,207,142,0.06) 0%, #0f0f12 60%)",
               border: "1px solid rgba(62,207,142,0.25)",

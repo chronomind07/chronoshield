@@ -37,9 +37,13 @@ class Settings(BaseSettings):
     INSECUREWEB_BASE_URL: str = "https://app.insecureweb.com"
 
     # Stripe — Credit packs (one-time payments)
-    STRIPE_CREDITS_S_PRICE_ID: str = ""   # Pack S: 9.99€ → 5 credits
-    STRIPE_CREDITS_M_PRICE_ID: str = ""   # Pack M: 18.99€ → 10 credits
-    STRIPE_CREDITS_L_PRICE_ID: str = ""   # Pack L: 34.99€ → 20 credits
+    STRIPE_CREDITS_S_PRICE_ID: str = ""   # Pack S: 6.99€ → 5 credits
+    STRIPE_CREDITS_M_PRICE_ID: str = ""   # Pack M: 10.99€ → 12 credits
+    STRIPE_CREDITS_L_PRICE_ID: str = ""   # Pack L: 20.99€ → 30 credits
+
+    # Free / trial plan limits
+    PLAN_FREE_DOMAINS: int = 1
+    PLAN_FREE_EMAILS: int = 1
 
     # Plan credits per month
     PLAN_STARTER_CREDITS: int = 5

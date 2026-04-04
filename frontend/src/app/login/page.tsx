@@ -406,8 +406,6 @@ function AuthPageInner() {
         </div>
       </div>
 
-      {/* Styles */}
-      <style>{AUTH_STYLES}</style>
     </div>
   );
 }
@@ -908,12 +906,16 @@ const AUTH_STYLES = `
 // ── Page export (wrapped in Suspense for useSearchParams) ────────────────────
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: "100vh", background: "#050507", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 32, height: 32, border: "2px solid rgba(0,229,191,0.2)", borderTopColor: "#00e5bf", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
-      </div>
-    }>
-      <AuthPageInner />
-    </Suspense>
+    <>
+      {/* Inject styles outside Suspense so they are available during SSR and initial paint */}
+      <style>{AUTH_STYLES}</style>
+      <Suspense fallback={
+        <div style={{ minHeight: "100vh", background: "#050507", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 32, height: 32, border: "2px solid rgba(0,229,191,0.2)", borderTopColor: "#00e5bf", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+        </div>
+      }>
+        <AuthPageInner />
+      </Suspense>
+    </>
   );
 }

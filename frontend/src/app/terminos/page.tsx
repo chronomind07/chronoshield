@@ -137,9 +137,9 @@ export default function TerminosPage() {
         Adicionalmente, el usuario puede adquirir packs de créditos adicionales:
       </P>
       <Ul items={[
-        "Pack S: 5 créditos por 9,99€",
-        "Pack M: 10 créditos por 18,99€",
-        "Pack L: 20 créditos por 34,99€ (más popular)",
+        "Pack S: 5 créditos por 6,99€",
+        "Pack M: 12 créditos por 10,99€",
+        "Pack L: 30 créditos por 20,99€ (más popular)",
       ]} />
       <P>
         Los créditos adquiridos mediante packs adicionales no caducan y son acumulables. Los créditos incluidos en

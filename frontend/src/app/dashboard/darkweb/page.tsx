@@ -893,9 +893,9 @@ function CreditPackModal({
   onBuy: (pack: "s" | "m" | "l") => void;
 }) {
   const packs = [
-    { key: "s" as const, label: "Pack S", credits: 5,  price: "9,99€",  per: "2,00€/créd." },
-    { key: "m" as const, label: "Pack M", credits: 10, price: "18,99€", per: "1,90€/créd." },
-    { key: "l" as const, label: "Pack L", credits: 20, price: "34,99€", per: "1,75€/créd.", popular: true },
+    { key: "s" as const, label: "Pack S", credits: 5,  price: "6,99€",  per: "1,40€/créd." },
+    { key: "m" as const, label: "Pack M", credits: 12, price: "10,99€", per: "0,92€/créd." },
+    { key: "l" as const, label: "Pack L", credits: 30, price: "20,99€", per: "0,70€/créd.", popular: true },
   ];
 
   return (
