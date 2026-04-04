@@ -26,9 +26,9 @@ PLAN_MONTHLY_CREDITS = {
 }
 
 CREDIT_PACKS = {
-    "s": {"credits": 5,  "amount_eur": 9.99,  "price_id": settings.STRIPE_CREDITS_S_PRICE_ID},
-    "m": {"credits": 10, "amount_eur": 18.99, "price_id": settings.STRIPE_CREDITS_M_PRICE_ID},
-    "l": {"credits": 20, "amount_eur": 34.99, "price_id": settings.STRIPE_CREDITS_L_PRICE_ID},
+    "s": {"credits": 5,  "amount_eur": 6.99,  "price_id": settings.STRIPE_CREDITS_S_PRICE_ID},
+    "m": {"credits": 12, "amount_eur": 10.99, "price_id": settings.STRIPE_CREDITS_M_PRICE_ID},
+    "l": {"credits": 30, "amount_eur": 20.99, "price_id": settings.STRIPE_CREDITS_L_PRICE_ID},
 }
 
 
