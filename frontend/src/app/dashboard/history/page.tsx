@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { historyApi, uptimeApi, billingApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
+import FeatureGate from "@/components/FeatureGate";
+import { usePlan } from "@/contexts/PlanContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -735,6 +737,7 @@ function UptimeTab({ lang }: { lang: string }) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
+  const { isFree } = usePlan();
   const { t, lang } = useTranslation();
   const [activeTab, setActiveTab]       = useState<"activity" | "uptime">("activity");
   const [data, setData]                 = useState<HistoryData | null>(null);
@@ -818,6 +821,13 @@ export default function HistoryPage() {
   ) : [];
 
   return (
+    <FeatureGate
+      feature="history"
+      title="Historial de Escaneos"
+      subtitle="Accede al historial completo de todos tus escaneos, compara resultados a lo largo del tiempo y detecta tendencias."
+      requiredPlan="starter"
+      isFree={isFree}
+    >
     <div style={{ padding: "28px 32px 60px", background: "#0b0b0b", minHeight: "100vh",
       fontFamily: "var(--font-dm-sans)" }}>
 
@@ -969,5 +979,6 @@ export default function HistoryPage() {
         </span>
       </div>
     </div>
+    </FeatureGate>
   );
 }

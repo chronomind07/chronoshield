@@ -268,6 +268,10 @@ async def scan_email(
     db=Depends(get_db),
 ):
     """Scan a single email for dark web breaches. Costs 1 credit."""
+    # Plan check: free/trial users cannot trigger scans
+    if _get_plan(user_id, db) in ("trial", "free"):
+        raise HTTPException(status_code=403, detail="plan_upgrade_required")
+
     row = (
         db.table("monitored_emails")
         .select("id,email,quarantine_status")
@@ -297,6 +301,10 @@ async def scan_domain(
     db=Depends(get_db),
 ):
     """Scan a single domain for dark web breaches. Costs 1 credit."""
+    # Plan check: free/trial users cannot trigger scans
+    if _get_plan(user_id, db) in ("trial", "free"):
+        raise HTTPException(status_code=403, detail="plan_upgrade_required")
+
     row = (
         db.table("domains")
         .select("id,domain")
@@ -365,6 +373,9 @@ async def scan_all(
     Costs 1 credit per item.
     """
     plan = _get_plan(user_id, db)
+    # Plan check: free/trial users cannot trigger scans
+    if plan in ("trial", "free"):
+        raise HTTPException(status_code=403, detail="plan_upgrade_required")
 
     emails_rows = (
         db.table("monitored_emails")

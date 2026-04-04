@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { creditsApi } from "@/lib/api";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 interface Pack {
@@ -20,9 +21,10 @@ const PACKS: Pack[] = [
 
 interface Props {
   onClose: () => void;
+  isFree?: boolean;
 }
 
-export default function BuyCreditsModal({ onClose }: Props) {
+export default function BuyCreditsModal({ onClose, isFree }: Props) {
   const [buying, setBuying] = useState<string | null>(null);
 
   const handleBuy = async (pack: "s" | "m" | "l") => {
@@ -41,6 +43,49 @@ export default function BuyCreditsModal({ onClose }: Props) {
       setBuying(null);
     }
   };
+
+  if (isFree) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: "rgba(8,12,16,0.85)", backdropFilter: "blur(6px)" }}
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      >
+        <div
+          className="w-full max-w-md rounded-2xl p-7 relative"
+          style={{ background: "#0D1218", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-[#5A6B7A] hover:text-[#E8EDF2] transition-colors"
+          >
+            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+
+          <div style={{ textAlign: "center", padding: "20px 0 10px" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(62,207,142,0.08)", border: "1px solid rgba(62,207,142,0.18)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", color: "#71717a" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+            </div>
+            <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#E8EDF2", margin: "0 0 8px" }}>Créditos disponibles con plan de pago</h2>
+            <p style={{ fontSize: "0.82rem", color: "#5A6B7A", margin: "0 0 24px", lineHeight: 1.6 }}>
+              Los créditos se activan al suscribirte a un plan Starter o Business.
+            </p>
+            <Link
+              href="/select-plan"
+              onClick={onClose}
+              style={{ display: "inline-block", padding: "10px 24px", borderRadius: 10, background: "linear-gradient(135deg, #3ecf8e, #2db87a)", color: "#0a0a0a", fontSize: "0.88rem", fontWeight: 700, textDecoration: "none" }}
+            >
+              Ver planes →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

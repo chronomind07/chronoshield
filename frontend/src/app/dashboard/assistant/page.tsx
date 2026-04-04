@@ -5,6 +5,8 @@ import { mitigationApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
+import FeatureGate from "@/components/FeatureGate";
+import { usePlan } from "@/contexts/PlanContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ChatMsg {
@@ -208,6 +210,7 @@ function Bubble({ msg }: { msg: ChatMsg }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AssistantPage() {
+  const { isFree } = usePlan();
   const { t, lang } = useTranslation();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
@@ -426,6 +429,13 @@ export default function AssistantPage() {
   const canSend = input.trim().length > 0 && !sending;
 
   return (
+    <FeatureGate
+      feature="assistant"
+      title="AI Assistant — ChronoAI"
+      subtitle="Tu asistente de ciberseguridad con IA que analiza tu cuenta, responde preguntas y te guía para mejorar tu seguridad."
+      requiredPlan="starter"
+      isFree={isFree}
+    >
     <div
       style={{
         height: "calc(100vh - 64px)",
@@ -900,5 +910,6 @@ export default function AssistantPage() {
         </div>
       </div>
     </div>
+    </FeatureGate>
   );
 }

@@ -42,6 +42,9 @@ async def analyze_security(
         plan = (sub.data or {}).get("plan", "trial")
     except Exception:
         plan = "trial"
+    # Free/trial users cannot access AI analysis
+    if plan in ("trial", "free"):
+        raise HTTPException(status_code=403, detail="plan_upgrade_required")
     limit = _AI_LIMITS.get(plan, 3)
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()

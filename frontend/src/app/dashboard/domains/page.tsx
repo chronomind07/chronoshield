@@ -7,6 +7,7 @@ import BuyCreditsModal from "@/components/BuyCreditsModal";
 import { toast } from "@/components/Toast";
 import { useCredits } from "@/contexts/CreditsContext";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { usePlan } from "@/contexts/PlanContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Domain {
@@ -768,6 +769,7 @@ export default function DomainsPage() {
   const { techMode } = useTechMode();
   const { decrementCredits, refreshCredits } = useCredits();
   const { t, lang } = useTranslation();
+  const { isFree } = usePlan();
   const [domains, setDomains]         = useState<Domain[]>([]);
   const [loading, setLoading]         = useState(true);
   const [adding, setAdding]           = useState(false);
@@ -824,6 +826,10 @@ export default function DomainsPage() {
 
   const handleScan = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (isFree) {
+      toast.error("Los escaneos manuales requieren créditos. Mejora tu plan →");
+      return;
+    }
     setScanning(id);
     try {
       const res = await domainsApi.scan(id);
@@ -901,7 +907,7 @@ export default function DomainsPage() {
       }}
     >
       {/* Modals */}
-      {showCredits && <BuyCreditsModal onClose={() => setShowCredits(false)} />}
+      {showCredits && <BuyCreditsModal onClose={() => setShowCredits(false)} isFree={isFree} />}
 
       {/* Page Header */}
       <div className="cs-fadeup-1" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 24 }}>

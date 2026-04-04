@@ -629,6 +629,15 @@ async def generate_report(
     user_id: str = Depends(get_current_user_id),
 ):
     db = get_db()
+    # Plan check: free/trial users cannot generate reports
+    try:
+        sub = db.table("subscriptions").select("plan").eq("user_id", user_id).single().execute()
+        user_plan = (sub.data or {}).get("plan", "trial")
+    except Exception:
+        user_plan = "trial"
+    if user_plan in ("trial", "free"):
+        raise HTTPException(status_code=403, detail="plan_upgrade_required")
+
     # Credits deduction disabled until credits_remaining column added to subscriptions.
     # See migration note near top of file.
 

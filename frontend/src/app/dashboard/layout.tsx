@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { alertsApi, billingApi } from "@/lib/api";
+import { alertsApi } from "@/lib/api";
 import Link from "next/link";
 import { Toaster } from "@/components/Toast";
 import { CreditsProvider, useCredits } from "@/contexts/CreditsContext";
 import { LanguageProvider, useTranslation } from "@/contexts/LanguageContext";
+import { PlanProvider, usePlan } from "@/contexts/PlanContext";
 import { LogoFull } from "@/components/logos";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -470,7 +471,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <LanguageProvider>
       <CreditsProvider>
-        <LayoutInner>{children}</LayoutInner>
+        <PlanProvider>
+          <LayoutInner>{children}</LayoutInner>
+        </PlanProvider>
       </CreditsProvider>
     </LanguageProvider>
   );
@@ -483,10 +486,10 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
-  const [userPlan, setUserPlan] = useState<string>("free");
   const [showBanner, setShowBanner] = useState(true);
   const { credits, refreshCredits } = useCredits();
   const { t } = useTranslation();
+  const { plan: userPlan, isFree } = usePlan();
 
   // Poll unread count every 2 min
   useEffect(() => {
@@ -498,22 +501,11 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     return () => clearInterval(t);
   }, []);
 
-  // Auth + plan guard
+  // Auth guard
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) { router.replace("/login"); return; }
       setUserEmail(data.session.user.email ?? null);
-
-      // Fetch subscription to know the plan (but never redirect for free/trial)
-      try {
-        const res = await billingApi.subscription();
-        const plan = res.data?.plan ?? "free";
-        setUserPlan(plan);
-      } catch {
-        // If subscription fetch fails, treat as free plan
-        setUserPlan("free");
-      }
-
       setChecking(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
@@ -720,7 +712,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 <span style={{ fontSize: 13, fontWeight: 400, color: "#f5f5f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>
                   {username}
                 </span>
-                {(userPlan === "trial" || userPlan === "free") && (
+                {isFree && (
                   <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 4, padding: "1px 5px", letterSpacing: "0.08em", flexShrink: 0 }}>
                     FREE
                   </span>
@@ -790,7 +782,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Upgrade banner for free/trial users */}
-        {(userPlan === "trial" || userPlan === "free") && showBanner && (
+        {isFree && showBanner && (
           <div style={{
             position: "sticky", top: 64, zIndex: 29,
             background: "rgba(245,158,11,0.07)",
@@ -825,7 +817,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Page content */}
-        <main style={{ paddingTop: (userPlan === "trial" || userPlan === "free") && showBanner ? 64 : 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
+        <main style={{ paddingTop: isFree && showBanner ? 64 : 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
           {children}
         </main>
 

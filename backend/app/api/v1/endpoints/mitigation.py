@@ -298,6 +298,8 @@ async def mitigation_chat(
 ):
     # 1. Check plan
     plan, limit = _get_plan_limit(db, user_id)
+    if plan in ("trial", "free"):
+        raise HTTPException(status_code=403, detail="plan_upgrade_required")
     if limit == 0:
         raise HTTPException(
             status_code=402,

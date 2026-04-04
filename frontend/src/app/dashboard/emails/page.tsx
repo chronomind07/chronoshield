@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/Toast";
 import { emailsApi } from "@/lib/api";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { usePlan } from "@/contexts/PlanContext";
 import type { AxiosError } from "axios";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -619,6 +620,7 @@ function EmailCard({
 
 export default function EmailsPage() {
   const { t, lang } = useTranslation();
+  const { isFree } = usePlan();
   const [emails, setEmails] = useState<MonitoredEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -654,6 +656,10 @@ export default function EmailsPage() {
     emailItem: MonitoredEmail
   ) => {
     e.stopPropagation();
+    if (isFree) {
+      toast.error("Los escaneos manuales requieren créditos. Mejora tu plan →");
+      return;
+    }
     setScanning(emailItem.id);
     try {
       const res = await emailsApi.scan(emailItem.id);
