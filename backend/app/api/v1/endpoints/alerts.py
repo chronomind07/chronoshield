@@ -280,9 +280,9 @@ async def delete_alert(
 
 
 @router.delete("", status_code=204)
-async def delete_resolved_alerts(
+async def delete_all_alerts(
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
-    """Hard-delete all read alerts for the current user in bulk."""
-    db.table("alerts").delete().eq("user_id", user_id).not_.is_("read_at", "null").execute()
+    """Hard-delete ALL alerts for the current user."""
+    db.table("alerts").delete().eq("user_id", user_id).execute()

@@ -346,7 +346,8 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
   const fetchAlerts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await alertsApi.list();
+      // Bell only shows unread notifications — reading them dismisses from the bell
+      const res = await alertsApi.list({ unread_only: true });
       setAlerts((res.data.alerts as AlertItem[]).slice(0, 8));
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
@@ -362,13 +363,12 @@ function NotificationBell({ unreadCount, setUnreadCount }: { unreadCount: number
   };
 
   const handleDelete = async (id: string) => {
+    // "Dismiss" from the bell = mark as read, NOT a real delete.
+    // The alert remains in /dashboard/alerts; it just disappears from the bell.
     try {
-      const alert = alerts.find(a => a.id === id);
-      await alertsApi.delete(id);
+      await alertsApi.markRead(id);
       setAlerts(prev => prev.filter(a => a.id !== id));
-      if (alert?.is_unread) {
-        setUnreadCount(Math.max(0, unreadCount - 1));
-      }
+      setUnreadCount(Math.max(0, unreadCount - 1));
     } catch { /* silent */ }
   };
 
