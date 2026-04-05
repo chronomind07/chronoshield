@@ -14,7 +14,7 @@ const PlanContext = createContext<PlanContextValue>({
   plan: "free",
   status: "trialing",
   loading: true,
-  isFree: true,
+  isFree: false,   // Don't assume free while loading — avoids banner flicker
   refresh: () => {},
 });
 
@@ -37,7 +37,9 @@ export function PlanProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { fetchPlan(); }, []);
 
-  const isFree = plan === "free" || plan === "trial" || status === "trialing";
+  // Only mark as free AFTER the plan has been fetched — avoids showing the
+  // upgrade banner briefly on every reload for paying users.
+  const isFree = !loading && (plan === "free" || plan === "trial" || status === "trialing");
 
   return (
     <PlanContext.Provider value={{ plan, status, loading, isFree, refresh: fetchPlan }}>
