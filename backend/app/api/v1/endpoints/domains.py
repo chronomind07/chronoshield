@@ -124,10 +124,9 @@ async def add_domain(
 
     logger.info("add_domain", raw=payload.domain, clean=clean_domain, user_id=user_id)
 
-    # Check plan limits
+    # Check plan limits — fall back to free tier (1 domain) if no subscription row exists
     sub = db.table("subscriptions").select("max_domains").eq("user_id", user_id).single().execute()
-    if not sub.data:
-        raise HTTPException(status_code=402, detail="No active subscription")
+    max_domains = sub.data["max_domains"] if sub.data and sub.data.get("max_domains") is not None else 1
 
     current_count = (
         db.table("domains")
@@ -137,10 +136,10 @@ async def add_domain(
         .execute()
         .count
     )
-    if current_count >= sub.data["max_domains"]:
+    if current_count >= max_domains:
         raise HTTPException(
             status_code=402,
-            detail=f"Plan limit reached ({sub.data['max_domains']} domains). Please upgrade.",
+            detail=f"Plan limit reached ({max_domains} domains). Please upgrade.",
         )
 
     # Check duplicate — only among *active* domains for this user.

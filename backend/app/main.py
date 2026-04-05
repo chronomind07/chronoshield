@@ -47,7 +47,7 @@ app.add_middleware(
     # Regex is a belt-and-suspenders fallback for Chrome extensions and the
     # production domain in case allow_origins is somehow overridden.
     # TODO: Replace chrome-extension://.* with your specific extension ID once published.
-    allow_origin_regex=r"(chrome-extension://REPLACE_WITH_EXTENSION_ID|https://(www\.)?chronoshield\.eu)",
+    allow_origin_regex=r"https://(www\.)?chronoshield\.eu",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],

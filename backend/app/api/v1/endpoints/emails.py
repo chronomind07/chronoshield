@@ -32,9 +32,9 @@ async def add_email(
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
+    # Check plan limits — fall back to free tier (1 email) if no subscription row exists
     sub = db.table("subscriptions").select("max_emails").eq("user_id", user_id).single().execute()
-    if not sub.data:
-        raise HTTPException(status_code=402, detail="No active subscription")
+    max_emails = sub.data["max_emails"] if sub.data and sub.data.get("max_emails") is not None else 1
 
     current_count = (
         db.table("monitored_emails")
@@ -44,10 +44,10 @@ async def add_email(
         .execute()
         .count
     )
-    if current_count >= sub.data["max_emails"]:
+    if current_count >= max_emails:
         raise HTTPException(
             status_code=402,
-            detail=f"Plan limit reached ({sub.data['max_emails']} emails). Please upgrade.",
+            detail=f"Plan limit reached ({max_emails} emails). Please upgrade.",
         )
 
     existing = (

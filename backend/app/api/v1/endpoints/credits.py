@@ -45,6 +45,20 @@ async def credits_checkout(
     if pack not in CREDIT_PACKS:
         raise HTTPException(status_code=400, detail=f"Pack inválido. Opciones: {', '.join(CREDIT_PACKS)}")
 
+    # Free / trial users cannot purchase credits — they need a paid plan first
+    try:
+        sub_plan = db.table("subscriptions").select("plan, status").eq("user_id", user_id).single().execute()
+        plan_name = sub_plan.data.get("plan", "free") if sub_plan.data else "free"
+        plan_status = sub_plan.data.get("status", "") if sub_plan.data else ""
+    except Exception:
+        plan_name, plan_status = "free", ""
+
+    if plan_name in ("free", "trial") or plan_status == "trialing":
+        raise HTTPException(
+            status_code=403,
+            detail="Los créditos están disponibles con un plan de pago. Mejora tu plan primero.",
+        )
+
     pack_info = CREDIT_PACKS[pack]
     price_id = pack_info["price_id"]
 
