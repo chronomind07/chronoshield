@@ -276,9 +276,7 @@ async def delete_alert(
     db=Depends(get_db),
 ):
     """Hard-delete a single alert owned by the current user."""
-    result = db.table("alerts").delete().eq("id", str(alert_id)).eq("user_id", user_id).execute()
-    if not result.data:
-        raise HTTPException(status_code=404, detail="Alert not found")
+    db.table("alerts").delete().eq("id", str(alert_id)).eq("user_id", user_id).execute()
 
 
 @router.delete("", status_code=204)
