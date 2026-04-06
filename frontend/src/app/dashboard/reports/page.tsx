@@ -708,7 +708,7 @@ function Nis2Tab() {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
-  const { isFree } = usePlan();
+  const { isFree, loading: planLoading } = usePlan();
   const { t } = useTranslation();
   const { credits, refreshCredits } = useCredits();
   const [activeTab,  setActiveTab]  = useState<"reports" | "nis2">("reports");
@@ -720,6 +720,7 @@ export default function ReportsPage() {
   const [preview,    setPreview]    = useState<{ data: ReportData; meta: Partial<ReportMeta> } | null>(null);
 
   const loadReports = useCallback(async () => {
+    if (planLoading || isFree) { setLoading(false); return; }
     setLoading(true);
     setError("");
     try {
@@ -730,7 +731,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [typeFilter, t]);
+  }, [planLoading, isFree, typeFilter, t]);
 
   useEffect(() => { if (activeTab === "reports") loadReports(); }, [activeTab, loadReports]);
 

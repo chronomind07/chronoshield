@@ -1007,7 +1007,7 @@ function CreditPackModal({
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function DarkWebPage() {
-  const { isFree } = usePlan();
+  const { isFree, loading: planLoading } = usePlan();
   const { t, lang } = useTranslation();
   const [summary, setSummary]         = useState<DarkWebSummary | null>(null);
   const [loading, setLoading]         = useState(true);
@@ -1016,6 +1016,7 @@ export default function DarkWebPage() {
   const [showPacks, setShowPacks]     = useState(false);
 
   const load = useCallback(async () => {
+    if (planLoading || isFree) { setLoading(false); return; }
     try {
       const res = await darkwebApi.summary();
       setSummary(res.data);
@@ -1024,7 +1025,7 @@ export default function DarkWebPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [planLoading, isFree, t]);
 
   useEffect(() => { load(); }, [load]);
 

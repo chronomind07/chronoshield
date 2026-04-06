@@ -638,7 +638,7 @@ function FilterBar({
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function AlertsPage() {
   const { t, lang } = useTranslation();
-  const { isFree } = usePlan();
+  const { isFree, loading: planLoading } = usePlan();
   const [data, setData]             = useState<AlertsData | null>(null);
   const [loading, setLoading]       = useState(true);
   const [filter, setFilter]         = useState("all");
@@ -647,6 +647,7 @@ export default function AlertsPage() {
   const [archivingAll, setArchivingAll] = useState(false);
 
   const load = useCallback(async () => {
+    if (planLoading || isFree) { setLoading(false); return; }
     try {
       const res = await alertsApi.list();
       setData(res.data);
@@ -655,7 +656,7 @@ export default function AlertsPage() {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [planLoading, isFree, t]);
 
   useEffect(() => { load(); }, [load]);
 

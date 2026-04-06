@@ -621,7 +621,7 @@ function EmailCard({
 
 export default function EmailsPage() {
   const { t, lang } = useTranslation();
-  const { isFree } = usePlan();
+  const { isFree, loading: planLoading } = usePlan();
   const [emails, setEmails] = useState<MonitoredEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -634,6 +634,7 @@ export default function EmailsPage() {
   // ── Load emails ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    if (planLoading || isFree) { setLoading(false); return; }
     (async () => {
       try {
         const res = await emailsApi.list();
@@ -644,7 +645,7 @@ export default function EmailsPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [planLoading, isFree]); // eslint-disable-line
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 

@@ -737,7 +737,7 @@ function UptimeTab({ lang }: { lang: string }) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
-  const { isFree } = usePlan();
+  const { isFree, loading: planLoading } = usePlan();
   const { t, lang } = useTranslation();
   const [activeTab, setActiveTab]       = useState<"activity" | "uptime">("activity");
   const [data, setData]                 = useState<HistoryData | null>(null);
@@ -781,16 +781,18 @@ export default function HistoryPage() {
   }, [dateFilter, categoryFilter, problemsOnly, t]);
 
   useEffect(() => {
+    if (planLoading || isFree) { setLoading(false); return; }
     if (activeTab !== "activity") return;
     setPage(1);
     setExpandedId(null);
     load(1);
-  }, [dateFilter, categoryFilter, problemsOnly, activeTab]); // eslint-disable-line
+  }, [planLoading, isFree, dateFilter, categoryFilter, problemsOnly, activeTab]); // eslint-disable-line
 
   useEffect(() => {
+    if (planLoading || isFree) { setLoading(false); return; }
     if (activeTab !== "activity") return;
     load(page);
-  }, [page]); // eslint-disable-line
+  }, [planLoading, isFree, page]); // eslint-disable-line
 
   const handlePage = (p: number) => {
     setPage(p);
