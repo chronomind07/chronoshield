@@ -18,6 +18,14 @@ CREATE TABLE IF NOT EXISTS public.dark_web_results (
     notified        BOOLEAN DEFAULT FALSE
 );
 
+-- Ensure all columns exist (safe when table already existed with an older schema)
+ALTER TABLE public.dark_web_results ADD COLUMN IF NOT EXISTS email_id       UUID REFERENCES public.monitored_emails(id) ON DELETE SET NULL;
+ALTER TABLE public.dark_web_results ADD COLUMN IF NOT EXISTS domain_id      UUID REFERENCES public.domains(id) ON DELETE SET NULL;
+ALTER TABLE public.dark_web_results ADD COLUMN IF NOT EXISTS scan_type      TEXT NOT NULL DEFAULT 'email';
+ALTER TABLE public.dark_web_results ADD COLUMN IF NOT EXISTS findings_count INT NOT NULL DEFAULT 0;
+ALTER TABLE public.dark_web_results ADD COLUMN IF NOT EXISTS findings       JSONB;
+ALTER TABLE public.dark_web_results ADD COLUMN IF NOT EXISTS notified       BOOLEAN DEFAULT FALSE;
+
 CREATE INDEX IF NOT EXISTS idx_dark_web_results_user_id   ON public.dark_web_results(user_id);
 CREATE INDEX IF NOT EXISTS idx_dark_web_results_scanned_at ON public.dark_web_results(scanned_at DESC);
 CREATE INDEX IF NOT EXISTS idx_dark_web_results_email_id  ON public.dark_web_results(email_id);
