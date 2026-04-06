@@ -5,6 +5,7 @@ import { toast } from "@/components/Toast";
 import { emailsApi } from "@/lib/api";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { usePlan } from "@/contexts/PlanContext";
+import FeatureGate from "@/components/FeatureGate";
 import type { AxiosError } from "axios";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -753,6 +754,13 @@ export default function EmailsPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
+    <FeatureGate
+      feature="emails"
+      title="Seguridad de Email"
+      subtitle="Monitoriza SPF, DKIM y DMARC de tus dominios y detecta configuraciones que permiten suplantación de identidad."
+      requiredPlan="starter"
+      isFree={isFree}
+    >
     <div
       style={{
         minHeight: "100vh",
@@ -971,5 +979,6 @@ export default function EmailsPage() {
         </div>
       </div>
     </div>
+    </FeatureGate>
   );
 }

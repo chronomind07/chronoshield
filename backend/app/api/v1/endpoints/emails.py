@@ -32,6 +32,16 @@ async def add_email(
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
+    # Block free/trial — email security requires a paid plan
+    try:
+        sub_check = db.table("subscriptions").select("plan, status").eq("user_id", user_id).single().execute()
+        _plan   = (sub_check.data or {}).get("plan", "free")
+        _status = (sub_check.data or {}).get("status", "")
+    except Exception:
+        _plan, _status = "free", ""
+    if _plan in ("free", "trial") or _status == "trialing":
+        raise HTTPException(status_code=403, detail="PLAN_UPGRADE_REQUIRED")
+
     # Check plan limits — fall back to free tier (1 email) if no subscription row exists
     sub = db.table("subscriptions").select("max_emails").eq("user_id", user_id).single().execute()
     max_emails = sub.data["max_emails"] if sub.data and sub.data.get("max_emails") is not None else 1

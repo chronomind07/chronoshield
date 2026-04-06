@@ -9,7 +9,7 @@ Sources (all read-only):
   5. security_scores   → domain_scan events (aggregated scan results)
   6. email_security_results → email_security events (per-domain DNS scans)
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.core.security import get_current_user_id
 from app.db.supabase import get_db
 from typing import Optional, List, Any
@@ -84,6 +84,16 @@ async def get_history(
     user_id: str = Depends(get_current_user_id),
     db=Depends(get_db),
 ):
+    # History requires a paid plan
+    try:
+        _sub = db.table("subscriptions").select("plan, status").eq("user_id", user_id).single().execute()
+        _plan   = (_sub.data or {}).get("plan", "free")
+        _status = (_sub.data or {}).get("status", "")
+    except Exception:
+        _plan, _status = "free", ""
+    if _plan in ("free", "trial") or _status == "trialing":
+        raise HTTPException(status_code=403, detail="PLAN_UPGRADE_REQUIRED")
+
     cutoff = _cutoff(date_filter)
     entries: List[HistoryEntry] = []
 

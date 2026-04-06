@@ -124,23 +124,46 @@ async def add_domain(
 
     logger.info("add_domain", raw=payload.domain, clean=clean_domain, user_id=user_id)
 
-    # Check plan limits — fall back to free tier (1 domain) if no subscription row exists
-    sub = db.table("subscriptions").select("max_domains").eq("user_id", user_id).single().execute()
-    max_domains = sub.data["max_domains"] if sub.data and sub.data.get("max_domains") is not None else 1
+    # ── Fetch plan ────────────────────────────────────────────────────────────
+    try:
+        sub = db.table("subscriptions").select("plan, status, max_domains").eq("user_id", user_id).single().execute()
+        plan_name   = (sub.data or {}).get("plan", "free")
+        plan_status = (sub.data or {}).get("status", "")
+        max_domains = (sub.data or {}).get("max_domains") or 1
+    except Exception:
+        plan_name, plan_status, max_domains = "free", "", 1
 
-    current_count = (
-        db.table("domains")
-        .select("id", count="exact")
-        .eq("user_id", user_id)
-        .eq("is_active", True)
-        .execute()
-        .count
-    )
-    if current_count >= max_domains:
-        raise HTTPException(
-            status_code=402,
-            detail=f"Plan limit reached ({max_domains} domains). Please upgrade.",
+    is_free = plan_name in ("free", "trial") or plan_status == "trialing"
+
+    if is_free:
+        # Free/trial: one domain per lifetime, tracked by initial_scans_used.
+        # Deleting the domain does NOT reset this counter.
+        try:
+            prof = db.table("profiles").select("initial_scans_used").eq("id", user_id).single().execute()
+            initial_scans_used = (prof.data or {}).get("initial_scans_used") or 0
+        except Exception:
+            initial_scans_used = 0
+
+        if initial_scans_used >= 1:
+            raise HTTPException(
+                status_code=403,
+                detail="Ya has usado tu dominio gratuito. Mejora tu plan para añadir más dominios.",
+            )
+    else:
+        # Paid plans: enforce active-domain count against plan limit
+        current_count = (
+            db.table("domains")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .eq("is_active", True)
+            .execute()
+            .count
         )
+        if current_count >= max_domains:
+            raise HTTPException(
+                status_code=402,
+                detail=f"Plan limit reached ({max_domains} domains). Please upgrade.",
+            )
 
     # Check duplicate — only among *active* domains for this user.
     # Soft-deleted rows (is_active=False) are not counted; we reactivate them instead.
@@ -178,6 +201,16 @@ async def add_domain(
     else:
         result = db.table("domains").insert({"user_id": user_id, "domain": clean_domain}).execute()
         domain = result.data[0]
+
+    # Free users: increment lifetime counter (never decremented on delete)
+    if is_free:
+        try:
+            db.table("profiles").update(
+                {"initial_scans_used": initial_scans_used + 1}
+            ).eq("id", user_id).execute()
+            logger.info("add_domain: incremented initial_scans_used", user_id=user_id)
+        except Exception as e:
+            logger.warning("add_domain: failed to increment initial_scans_used", user_id=user_id, error=str(e))
 
     # Kick off initial scans in background
     background_tasks.add_task(trigger_domain_scan, domain["id"], user_id)

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { alertsApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { usePlan } from "@/contexts/PlanContext";
+import FeatureGate from "@/components/FeatureGate";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Alert {
@@ -636,6 +638,7 @@ function FilterBar({
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function AlertsPage() {
   const { t, lang } = useTranslation();
+  const { isFree } = usePlan();
   const [data, setData]             = useState<AlertsData | null>(null);
   const [loading, setLoading]       = useState(true);
   const [filter, setFilter]         = useState("all");
@@ -784,6 +787,13 @@ export default function AlertsPage() {
         .replace("{s}", data.total !== 1 ? "s" : "");
 
   return (
+    <FeatureGate
+      feature="alerts"
+      title="Centro de Alertas"
+      subtitle="Recibe alertas inteligentes en tiempo real, clasificadas por severidad y analizadas automáticamente por ChronoAI."
+      requiredPlan="starter"
+      isFree={isFree}
+    >
     <div
       style={{
         padding: "28px 32px 60px",
@@ -900,5 +910,6 @@ export default function AlertsPage() {
         <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
       </div>
     </div>
+    </FeatureGate>
   );
 }

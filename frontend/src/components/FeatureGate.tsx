@@ -11,6 +11,12 @@ function ChatIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fil
 function ListIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="#3ecf8e"/><circle cx="3" cy="12" r="1" fill="#3ecf8e"/><circle cx="3" cy="18" r="1" fill="#3ecf8e"/></svg>; }
 function FileIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>; }
 function CertIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>; }
+function MailIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>; }
+function ShieldCheckIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>; }
+function DnsIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>; }
+function BellAlertIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>; }
+function SeverityIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>; }
+function AiAlertIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M12 11V7"/><circle cx="12" cy="4" r="2"/><path d="M8 11v-1a4 4 0 018 0v1"/><circle cx="8" cy="16" r="1" fill="#3ecf8e"/><circle cx="16" cy="16" r="1" fill="#3ecf8e"/></svg>; }
 function ShareIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>; }
 function ClockIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>; }
 function ChartIcon() { return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>; }
@@ -22,6 +28,16 @@ function XIcon() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="
 interface Slide { icon: ReactNode; title: string; desc: string; }
 
 const DEMO_SLIDES: Record<string, Slide[]> = {
+  emails: [
+    { icon: <MailIcon />, title: "Protege tus dominios contra suplantación", desc: "Los atacantes falsifican tu dominio para enviar emails fraudulentos. ChronoShield detecta si tu configuración lo permite." },
+    { icon: <DnsIcon />, title: "Verificamos SPF, DKIM y DMARC automáticamente", desc: "Analizamos los registros DNS de tus dominios dos veces al día y te alertamos si alguna protección falla o desaparece." },
+    { icon: <ShieldCheckIcon />, title: "Recibe alertas si tu configuración cambia", desc: "Si alguien modifica tus registros de email security, recibirás una alerta inmediata antes de que los atacantes puedan explotarlo." },
+  ],
+  alerts: [
+    { icon: <BellAlertIcon />, title: "Alertas inteligentes en tiempo real", desc: "Recibe notificaciones instantáneas cuando detectamos un problema: SSL caducado, dominio caído, brecha de datos o configuración comprometida." },
+    { icon: <SeverityIcon />, title: "Clasificadas por severidad", desc: "Cada alerta incluye nivel de riesgo (crítico, medio, bajo), descripción del impacto y pasos concretos para solucionarlo." },
+    { icon: <AiAlertIcon />, title: "Análisis con IA integrado", desc: "ChronoAI analiza el contexto de cada alerta y genera recomendaciones personalizadas basadas en el estado real de tu infraestructura." },
+  ],
   darkweb: [
     { icon: <RadarIcon />, title: "Monitorizamos la dark web 24/7", desc: "Rastreamos más de 10 millones de registros expuestos en tiempo real para detectar si tus datos aparecen." },
     { icon: <AlertIcon />, title: "Detectamos filtraciones al instante", desc: "Cuando encontramos tu email o contraseña en una base de datos filtrada, te alertamos de inmediato." },
@@ -115,7 +131,7 @@ function DemoModal({ feature, onClose }: { feature: string; onClose: () => void 
 
 // ── FeatureGate main export ───────────────────────────────────────────────────
 interface FeatureGateProps {
-  feature: "darkweb" | "assistant" | "reports" | "history";
+  feature: "emails" | "alerts" | "darkweb" | "assistant" | "reports" | "history";
   title: string;
   subtitle: string;
   requiredPlan?: "starter" | "business";
