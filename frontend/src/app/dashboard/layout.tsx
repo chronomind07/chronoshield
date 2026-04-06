@@ -699,6 +699,13 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         .cs-profile-item:hover { background: rgba(255,255,255,0.05); }
         .cs-profile-item-danger:hover { background: rgba(239,68,68,0.08); color: #ef4444; }
 
+        /* ── Page transition ── */
+        @keyframes csPageIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .cs-page { animation: csPageIn 0.3s cubic-bezier(.4,0,.2,1) both; }
+
         /* ── Reduced motion ── */
         @media (prefers-reduced-motion: reduce) {
           .cs-fadeup-1,.cs-fadeup-2,.cs-fadeup-3,.cs-fadeup-4 { animation: none !important; opacity: 1 !important; transform: none !important; }
@@ -708,6 +715,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           .cs-amb { animation: none !important; }
           .cs-btn::after { animation: none !important; }
           .cs-skeleton { animation: none !important; }
+          .cs-page { animation: none !important; }
         }
       `}</style>
 
@@ -961,7 +969,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Page content */}
-        <main style={{ paddingTop: isFree && showBanner ? 64 : 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
+        <main key={pathname} className="cs-page" style={{ paddingTop: isFree && showBanner ? 64 : 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
           {children}
         </main>
 

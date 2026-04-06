@@ -6,6 +6,7 @@ import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
 import FeatureGate from "@/components/FeatureGate";
 import { usePlan } from "@/contexts/PlanContext";
+import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Credits {
@@ -1057,25 +1058,7 @@ export default function DarkWebPage() {
   }, [load]);
 
   if (loading) {
-    return (
-      <div style={{
-        padding: 40,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: 256,
-        background: "#0b0b0b",
-      }}>
-        <div style={{
-          width: 28,
-          height: 28,
-          border: "2px solid #3ecf8e",
-          borderTopColor: "transparent",
-          borderRadius: "50%",
-          animation: "spin 0.8s linear infinite",
-        }} />
-      </div>
-    );
+    return <GenericPageSkeleton rows={5} statCards={3} />;
   }
 
   if (!planLoading && isFree) {

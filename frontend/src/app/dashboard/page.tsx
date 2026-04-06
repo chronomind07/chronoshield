@@ -7,6 +7,7 @@ import Link from "next/link";
 import { toast } from "@/components/Toast";
 import { useCredits } from "@/contexts/CreditsContext";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { OverviewSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface DashboardSummary {
@@ -505,9 +506,8 @@ export default function DashboardPage() {
   // ── Loading ──
   if (loading) {
     return (
-      <div style={{ padding: "40px 32px", background: "#0b0b0b", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ background: "#0b0b0b", minHeight: "100vh", padding: "28px 0 60px" }}>
+        <OverviewSkeleton />
       </div>
     );
   }

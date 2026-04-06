@@ -6,6 +6,7 @@ import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
 import FeatureGate from "@/components/FeatureGate";
 import { usePlan } from "@/contexts/PlanContext";
+import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -605,10 +606,7 @@ export default function HistoryPage() {
 
       {/* Content */}
       {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 192 }}>
-          <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e",
-            borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        </div>
+        <GenericPageSkeleton rows={7} statCards={0} />
       ) : !data || data.entries.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center",
           gap: 16, padding: "80px 0", textAlign: "center" }}>

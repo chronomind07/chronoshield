@@ -8,6 +8,7 @@ import { toast } from "@/components/Toast";
 import { useCredits } from "@/contexts/CreditsContext";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { usePlan } from "@/contexts/PlanContext";
+import { DomainsSkeleton } from "@/components/Skeleton";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Domain {
@@ -1061,18 +1062,7 @@ export default function DomainsPage() {
 
       {/* Domain list */}
       {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0" }}>
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              border: "2px solid rgba(62,207,142,0.15)",
-              borderTopColor: "#3ecf8e",
-              borderRadius: "50%",
-            }}
-            className="animate-spin"
-          />
-        </div>
+        <DomainsSkeleton />
       ) : domains.length === 0 ? (
         <div
           style={{

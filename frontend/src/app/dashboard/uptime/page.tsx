@@ -6,6 +6,7 @@ import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
 import FeatureGate from "@/components/FeatureGate";
 import { usePlan } from "@/contexts/PlanContext";
+import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -172,14 +173,7 @@ export default function UptimePage() {
 
   // ── Loading domains ──────────────────────────────────────────────────────────
   if (domainsLoading) {
-    return (
-      <div style={{ padding: "28px 32px 60px", background: "#0b0b0b", minHeight: "100vh",
-        display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e",
-          borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      </div>
-    );
+    return <GenericPageSkeleton rows={4} statCards={4} />;
   }
 
   // ── No domains ───────────────────────────────────────────────────────────────
@@ -251,10 +245,7 @@ export default function UptimePage() {
       </div>
 
       {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 180 }}>
-          <div style={{ width: 28, height: 28, border: "2px solid #3ecf8e",
-            borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        </div>
+        <GenericPageSkeleton rows={4} statCards={4} />
       ) : !timeline || timeline.total_checks === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center",
           gap: 12, padding: "60px 0", textAlign: "center" }}>

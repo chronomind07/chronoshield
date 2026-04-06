@@ -6,6 +6,7 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { useCredits } from "@/contexts/CreditsContext";
 import FeatureGate from "@/components/FeatureGate";
 import { usePlan } from "@/contexts/PlanContext";
+import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -535,12 +536,7 @@ function Nis2Tab() {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 80, gap: 10, color: "#71717a", fontSize: "0.88rem" }}>
-      <span style={{ width: 18, height: 18, border: "2px solid #3ecf8e", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
-      {t("nis2.loading")}
-    </div>
-  );
+  if (loading) return <GenericPageSkeleton rows={4} statCards={2} />;
 
   if (error) return (
     <div style={{ padding: 40, textAlign: "center", color: "#ef4444", fontSize: "0.88rem" }}>{error}</div>
@@ -849,10 +845,7 @@ export default function ReportsPage() {
 
           {/* Loading */}
           {loading ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 60, gap: 10, color: "#71717a", fontSize: "0.88rem" }}>
-              <span style={{ width: 18, height: 18, border: "2px solid #3ecf8e", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
-              {t("common.loading")}
-            </div>
+            <GenericPageSkeleton rows={4} statCards={0} />
           ) : reports.length === 0 ? (
             /* Empty state */
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 72, gap: 14, background: "#0f0f0f", borderRadius: 16, border: "1px dashed #1f1f1f" }}>

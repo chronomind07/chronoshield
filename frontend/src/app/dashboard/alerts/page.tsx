@@ -6,6 +6,7 @@ import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { usePlan } from "@/contexts/PlanContext";
 import FeatureGate from "@/components/FeatureGate";
+import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Alert {
@@ -733,29 +734,7 @@ export default function AlertsPage() {
 
   // ── Loading state ────────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div
-        style={{
-          padding: "28px 32px 60px",
-          background: "#0b0b0b",
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            border: "2px solid #3ecf8e",
-            borderTopColor: "transparent",
-            borderRadius: "50%",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
-      </div>
-    );
+    return <GenericPageSkeleton rows={6} statCards={3} />;
   }
 
   if (!planLoading && isFree) {
