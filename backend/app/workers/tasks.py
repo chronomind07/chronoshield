@@ -35,6 +35,52 @@ def _get_all_active_emails():
     )
 
 
+def _get_paid_user_ids() -> set:
+    """Return the set of user_ids that have an active paid subscription."""
+    db = get_supabase_client()
+    rows = (
+        db.table("subscriptions")
+        .select("user_id")
+        .in_("plan", ["starter", "business", "enterprise"])
+        .eq("status", "active")
+        .execute()
+        .data
+    ) or []
+    return {r["user_id"] for r in rows}
+
+
+def _get_paid_active_domains():
+    """Active domains belonging to paid (starter/business/enterprise) users only."""
+    paid = _get_paid_user_ids()
+    if not paid:
+        return []
+    db = get_supabase_client()
+    return (
+        db.table("domains")
+        .select("id,domain,user_id")
+        .eq("is_active", True)
+        .in_("user_id", list(paid))
+        .execute()
+        .data
+    ) or []
+
+
+def _get_paid_active_emails():
+    """Active emails belonging to paid (starter/business/enterprise) users only."""
+    paid = _get_paid_user_ids()
+    if not paid:
+        return []
+    db = get_supabase_client()
+    return (
+        db.table("monitored_emails")
+        .select("id,email,user_id")
+        .eq("is_active", True)
+        .in_("user_id", list(paid))
+        .execute()
+        .data
+    ) or []
+
+
 # ── SSL ───────────────────────────────────────────────────────────────────────
 
 @celery_app.task(name="app.workers.tasks.scan_ssl_all_domains", bind=True, max_retries=2)
@@ -42,7 +88,7 @@ def scan_ssl_all_domains(self):
     from app.workers.ssl.scanner import scan_ssl
     from app.services.score_calculator import calculate_domain_score
 
-    domains = _get_all_active_domains()
+    domains = _get_paid_active_domains()
     logger.info("SSL scan started", count=len(domains))
     for d in domains:
         try:
@@ -71,7 +117,7 @@ def uptime_check_all_domains_fast(self):
     from app.services.alert_service import create_alert
 
     db = get_supabase_client()
-    domains = _get_all_active_domains()
+    domains = _get_paid_active_domains()
     now_utc = datetime.now(timezone.utc)
     logger.info("Fast uptime check started", count=len(domains))
 
@@ -179,7 +225,7 @@ def scan_uptime_all_domains(self):
     from app.workers.uptime.scanner import scan_uptime
     from app.services.score_calculator import calculate_domain_score
 
-    domains = _get_all_active_domains()
+    domains = _get_paid_active_domains()
     logger.info("Uptime scan started", count=len(domains))
     for d in domains:
         try:
@@ -198,7 +244,7 @@ def scan_email_security_all_domains(self):
     from app.workers.email_security.scanner import scan_email_security
     from app.services.score_calculator import calculate_domain_score
 
-    domains = _get_all_active_domains()
+    domains = _get_paid_active_domains()
     logger.info("Email security scan started", count=len(domains))
     for d in domains:
         try:
@@ -215,7 +261,7 @@ def scan_email_security_all_domains(self):
 @celery_app.task(name="app.workers.tasks.scan_breaches_all_emails", bind=True, max_retries=2)
 def scan_breaches_all_emails(self):
     from app.workers.breach.scanner import scan_email_breaches
-    emails = _get_all_active_emails()
+    emails = _get_paid_active_emails()
     logger.info("Breach scan started", count=len(emails))
     for e in emails:
         try:
@@ -233,7 +279,7 @@ def recalculate_all_scores(self):
     by finalize_domain_scores after each scan cycle instead.
     """
     from app.services.score_calculator import calculate_domain_score
-    domains = _get_all_active_domains()
+    domains = _get_paid_active_domains()
     logger.info("Manual score recalculation started", count=len(domains))
     for d in domains:
         try:
@@ -253,7 +299,7 @@ def finalize_domain_scores(self):
     One score recalculation per scan cycle = one history entry per domain per cycle.
     """
     from app.services.score_calculator import calculate_domain_score
-    domains = _get_all_active_domains()
+    domains = _get_paid_active_domains()
     logger.info("Score finalization started", count=len(domains))
     for d in domains:
         try:

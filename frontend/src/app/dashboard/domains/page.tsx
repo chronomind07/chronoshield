@@ -224,6 +224,7 @@ function getRecommendations(d: Domain): { icon: string; text: string }[] {
 
 // ── DomainCard ─────────────────────────────────────────────────────────────────
 interface DomainCardProps {
+  isFree?: boolean;
   domain: Domain;
   isExpanded: boolean;
   isScanning: boolean;
@@ -232,7 +233,7 @@ interface DomainCardProps {
   onDelete: (id: string, name: string) => void;
 }
 
-function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDelete }: DomainCardProps) {
+function DomainCard({ domain: d, isExpanded, isScanning, isFree = false, onToggle, onScan, onDelete }: DomainCardProps) {
   const { t, lang } = useTranslation();
   const recs = getRecommendations(d);
   const borderColor = domainBorderColor(d);
@@ -403,45 +404,51 @@ function DomainCard({ domain: d, isExpanded, isScanning, onToggle, onScan, onDel
           })()}
           {d.security_score !== null && <ScorePill score={d.security_score} />}
 
-          {/* Scan button */}
-          <button
-            className="cs-btn"
-            onClick={(e) => { e.stopPropagation(); onScan(e, d.id); }}
-            disabled={isScanning}
-            title={t("domains.scanTooltip")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              background: "#3ecf8e",
-              color: "#000",
-              borderRadius: 8,
-              padding: "8px 16px",
-              fontSize: "13px",
-              fontWeight: 600,
-              border: "none",
-              cursor: isScanning ? "not-allowed" : "pointer",
-              opacity: isScanning ? 0.6 : 1,
-              transition: "opacity 0.15s",
-              fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
-            }}
-          >
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              style={{ width: 12, height: 12 }}
-              className={isScanning ? "animate-spin" : ""}
+          {/* Scan button — hidden/locked for free users */}
+          {isFree ? (
+            <span
+              title="Mejora tu plan para escanear manualmente"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                background: "rgba(255,255,255,0.03)",
+                color: "#3a3a3a", borderRadius: 8, padding: "8px 16px",
+                fontSize: "13px", fontWeight: 600,
+                border: "1px solid rgba(255,255,255,0.05)",
+                cursor: "not-allowed", opacity: 0.45,
+                fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+                userSelect: "none",
+              }}
             >
-              <path
-                d="M13.5 8A5.5 5.5 0 1 1 8 2.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor" />
-            </svg>
-            {t("domains.scanBtn")}
-          </button>
+              <svg viewBox="0 0 16 16" fill="none" style={{ width: 11, height: 11 }}>
+                <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+              {t("domains.scanBtn")}
+            </span>
+          ) : (
+            <button
+              className="cs-btn"
+              onClick={(e) => { e.stopPropagation(); onScan(e, d.id); }}
+              disabled={isScanning}
+              title={t("domains.scanTooltip")}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                background: "#3ecf8e", color: "#000",
+                borderRadius: 8, padding: "8px 16px",
+                fontSize: "13px", fontWeight: 600, border: "none",
+                cursor: isScanning ? "not-allowed" : "pointer",
+                opacity: isScanning ? 0.6 : 1,
+                transition: "opacity 0.15s",
+                fontFamily: "var(--font-dm-sans, system-ui, sans-serif)",
+              }}
+            >
+              <svg viewBox="0 0 16 16" fill="none" style={{ width: 12, height: 12 }} className={isScanning ? "animate-spin" : ""}>
+                <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M8 1v3l2-1.5L8 1Z" fill="currentColor"/>
+              </svg>
+              {t("domains.scanBtn")}
+            </button>
+          )}
 
           {/* Delete button */}
           <button
@@ -921,7 +928,7 @@ export default function DomainsPage() {
               : t("domains.subtitle")}
           </p>
         </div>
-        <button
+        {!isFree && <button
           onClick={() => setShowCredits(true)}
           style={{
             display: "inline-flex",
@@ -952,7 +959,7 @@ export default function DomainsPage() {
             <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           {t("domains.buyCredits")}
-        </button>
+        </button>}
       </div>
 
       {/* Add domain card */}
@@ -1112,6 +1119,7 @@ export default function DomainsPage() {
               domain={d}
               isExpanded={expandedId === d.id}
               isScanning={scanning === d.id}
+              isFree={isFree}
               onToggle={() => setExpandedId(expandedId === d.id ? null : d.id)}
               onScan={handleScan}
               onDelete={handleRemove}
