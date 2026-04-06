@@ -188,7 +188,7 @@ export default function SelectPlanPage() {
             </div>
             {/* Strikethrough real price */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>35,99€/mes</span>
+              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>29,99€/mes</span>
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
               <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>
@@ -266,7 +266,7 @@ export default function SelectPlanPage() {
             </div>
             {/* Strikethrough real price */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>72,99€/mes</span>
+              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>68,99€/mes</span>
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
               <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>
@@ -316,7 +316,7 @@ export default function SelectPlanPage() {
 
         {/* Footer notes */}
         <p style={{ textAlign: "center", color: "#4a4a4a", fontSize: "0.75rem", marginTop: 32, fontFamily: "var(--font-dm-mono, monospace)", lineHeight: 1.7 }}>
-          A partir del segundo mes: <span style={{ color: "#71717a" }}>35,99€/mes (Starter)</span> · <span style={{ color: "#71717a" }}>72,99€/mes (Business)</span>
+          A partir del segundo mes: <span style={{ color: "#71717a" }}>29,99€/mes (Starter)</span> · <span style={{ color: "#71717a" }}>68,99€/mes (Business)</span>
         </p>
         <p style={{ textAlign: "center", color: "#3a3a3a", fontSize: "0.75rem", marginTop: 8, fontFamily: "var(--font-dm-mono, monospace)" }}>
           Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras

@@ -332,7 +332,7 @@ function Pricing({ t }: { t: (k: string) => string }) {
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,0.3)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
           <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#55556a", marginBottom: 16 }}>Starter</div>
-          <div style={{ fontSize: "0.75rem", color: "#3a3a3a", textDecoration: "line-through", marginBottom: 4 }}>35,99€/mes</div>
+          <div style={{ fontSize: "0.75rem", color: "#3a3a3a", textDecoration: "line-through", marginBottom: 4 }}>29,99€/mes</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
             <span style={{ fontSize: "1.1rem", fontWeight: 600, color: "#9999ad" }}>€</span>
             <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>24</span>
@@ -364,7 +364,7 @@ function Pricing({ t }: { t: (k: string) => string }) {
             {t("landing.pricing.popular")}
           </div>
           <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#55556a", marginBottom: 16 }}>Business</div>
-          <div style={{ fontSize: "0.75rem", color: "#3a3a3a", textDecoration: "line-through", marginBottom: 4 }}>72,99€/mes</div>
+          <div style={{ fontSize: "0.75rem", color: "#3a3a3a", textDecoration: "line-through", marginBottom: 4 }}>68,99€/mes</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
             <span style={{ fontSize: "1.1rem", fontWeight: 600, color: "#9999ad" }}>€</span>
             <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>59</span>
