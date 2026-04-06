@@ -155,9 +155,16 @@ export default function SelectPlanPage() {
           <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)", fontWeight: 700, color: "#f5f5f5", margin: "0 0 14px", letterSpacing: "-0.03em", lineHeight: 1.15 }}>
             Elige tu plan
           </h1>
-          <p style={{ color: "#71717a", fontSize: "0.95rem", margin: 0, maxWidth: 460, marginInline: "auto", lineHeight: 1.6 }}>
+          <p style={{ color: "#71717a", fontSize: "0.95rem", margin: "0 0 14px", maxWidth: 460, marginInline: "auto", lineHeight: 1.6 }}>
             Protege tu negocio desde el primer día. Sin permanencia, cancela cuando quieras.
           </p>
+          {/* Launch badge */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(62,207,142,0.08)", border: "1px solid rgba(62,207,142,0.22)", borderRadius: 20, padding: "5px 14px" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3ecf8e", display: "inline-block", flexShrink: 0 }} />
+            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#3ecf8e", fontFamily: "var(--font-dm-mono, monospace)", letterSpacing: "0.04em" }}>
+              PRECIO DE LANZAMIENTO · SOLO EL PRIMER MES
+            </span>
+          </div>
         </div>
 
         {/* Plan cards */}
@@ -179,13 +186,18 @@ export default function SelectPlanPage() {
             <div style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#71717a", marginBottom: 20 }}>
               Starter
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
+            {/* Strikethrough real price */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>35,99€/mes</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
               <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 24€
               </span>
               <span style={{ fontSize: "0.82rem", color: "#71717a" }}>/mes</span>
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#3a3a3a", marginBottom: 28 }}>IVA incluido</div>
+            <div style={{ fontSize: "0.72rem", color: "#3ecf8e", marginBottom: 4, fontWeight: 500 }}>Precio de lanzamiento · Solo el primer mes</div>
+            <div style={{ fontSize: "0.72rem", color: "#3a3a3a", marginBottom: 24 }}>IVA incluido</div>
 
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 36px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
               {STARTER_FEATURES.map((f) => (
@@ -252,13 +264,18 @@ export default function SelectPlanPage() {
             <div style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#3ecf8e", marginBottom: 20 }}>
               Business
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
+            {/* Strikethrough real price */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>72,99€/mes</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
               <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 59€
               </span>
               <span style={{ fontSize: "0.82rem", color: "#71717a" }}>/mes</span>
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#3a3a3a", marginBottom: 28 }}>IVA incluido</div>
+            <div style={{ fontSize: "0.72rem", color: "#3ecf8e", marginBottom: 4, fontWeight: 500 }}>Precio de lanzamiento · Solo el primer mes</div>
+            <div style={{ fontSize: "0.72rem", color: "#3a3a3a", marginBottom: 24 }}>IVA incluido</div>
 
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 36px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
               {BUSINESS_FEATURES.map((f) => (
@@ -297,8 +314,11 @@ export default function SelectPlanPage() {
           </div>
         </div>
 
-        {/* Footer note */}
-        <p style={{ textAlign: "center", color: "#3a3a3a", fontSize: "0.75rem", marginTop: 36, fontFamily: "var(--font-dm-mono, monospace)" }}>
+        {/* Footer notes */}
+        <p style={{ textAlign: "center", color: "#4a4a4a", fontSize: "0.75rem", marginTop: 32, fontFamily: "var(--font-dm-mono, monospace)", lineHeight: 1.7 }}>
+          A partir del segundo mes: <span style={{ color: "#71717a" }}>35,99€/mes (Starter)</span> · <span style={{ color: "#71717a" }}>72,99€/mes (Business)</span>
+        </p>
+        <p style={{ textAlign: "center", color: "#3a3a3a", fontSize: "0.75rem", marginTop: 8, fontFamily: "var(--font-dm-mono, monospace)" }}>
           Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
         </p>
       </div>

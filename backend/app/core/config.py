@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_STARTER_PRICE_ID: str = ""
     STRIPE_BUSINESS_PRICE_ID: str = ""
+    STRIPE_STARTER_COUPON_ID: str = ""   # Launch discount: 11.99€ off month 1
+    STRIPE_BUSINESS_COUPON_ID: str = ""  # Launch discount: 13.99€ off month 1
 
     # InsecureWeb
     # Auth method 1 (API-key plan): set INSECUREWEB_API_KEY in Railway

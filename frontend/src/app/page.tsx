@@ -332,12 +332,14 @@ function Pricing({ t }: { t: (k: string) => string }) {
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,0.3)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
           <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#55556a", marginBottom: 16 }}>Starter</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+          <div style={{ fontSize: "0.75rem", color: "#3a3a3a", textDecoration: "line-through", marginBottom: 4 }}>35,99€/mes</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
             <span style={{ fontSize: "1.1rem", fontWeight: 600, color: "#9999ad" }}>€</span>
             <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>24</span>
             <span style={{ fontSize: "0.85rem", color: "#55556a" }}>{t("landing.pricing.month")}</span>
           </div>
-          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 20 }}>{t("landing.pricing.vatIncluded")}</div>
+          <div style={{ fontSize: "0.7rem", color: "#00e5bf", fontWeight: 500, marginBottom: 4 }}>Precio de lanzamiento · Solo el primer mes</div>
+          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 16 }}>{t("landing.pricing.vatIncluded")}</div>
           <p style={{ fontSize: "0.82rem", color: "#9999ad", marginBottom: 28, lineHeight: 1.5 }}>{t("landing.pricing.starter.desc")}</p>
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 11, marginBottom: 32, padding: 0, flex: 1 }}>
             {starterFeatures.map((f) => (
@@ -362,12 +364,14 @@ function Pricing({ t }: { t: (k: string) => string }) {
             {t("landing.pricing.popular")}
           </div>
           <div style={{ fontFamily: "var(--font-mono-family)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#55556a", marginBottom: 16 }}>Business</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+          <div style={{ fontSize: "0.75rem", color: "#3a3a3a", textDecoration: "line-through", marginBottom: 4 }}>72,99€/mes</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
             <span style={{ fontSize: "1.1rem", fontWeight: 600, color: "#9999ad" }}>€</span>
             <span style={{ fontFamily: "var(--font-serif-family)", fontSize: "3.2rem", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1, color: "#f0f0f5" }}>59</span>
             <span style={{ fontSize: "0.85rem", color: "#55556a" }}>{t("landing.pricing.month")}</span>
           </div>
-          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 20 }}>{t("landing.pricing.vatIncluded")}</div>
+          <div style={{ fontSize: "0.7rem", color: "#00e5bf", fontWeight: 500, marginBottom: 4 }}>Precio de lanzamiento · Solo el primer mes</div>
+          <div style={{ fontSize: "0.72rem", color: "#55556a", marginBottom: 16 }}>{t("landing.pricing.vatIncluded")}</div>
           <p style={{ fontSize: "0.82rem", color: "#9999ad", marginBottom: 28, lineHeight: 1.5 }}>{t("landing.pricing.business.desc")}</p>
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 11, marginBottom: 32, padding: 0, flex: 1 }}>
             {businessFeatures.map((f) => (
