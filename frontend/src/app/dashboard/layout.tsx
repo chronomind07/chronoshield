@@ -10,6 +10,7 @@ import { CreditsProvider, useCredits } from "@/contexts/CreditsContext";
 import { LanguageProvider, useTranslation } from "@/contexts/LanguageContext";
 import { PlanProvider, usePlan } from "@/contexts/PlanContext";
 import { LogoFull } from "@/components/logos";
+import WelcomeToast from "@/components/WelcomeToast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface AlertItem {
@@ -518,6 +519,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("dark");
@@ -541,6 +543,10 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       if (!data.session) { router.replace("/login"); return; }
       setUserEmail(data.session.user.email ?? null);
       setChecking(false);
+      if (sessionStorage.getItem("cs-welcome") === "1") {
+        sessionStorage.removeItem("cs-welcome");
+        setShowWelcome(true);
+      }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") router.replace("/login");
@@ -975,6 +981,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
 
       </div>
       <Toaster />
+      {showWelcome && <WelcomeToast onDone={() => setShowWelcome(false)} />}
     </div>
   );
 }

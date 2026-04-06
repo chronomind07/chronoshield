@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import toast from "react-hot-toast";
+// react-hot-toast removed — welcome toast handled by WelcomeToast component in dashboard layout
 import { LogoFull } from "@/components/logos";
 import { TRANSLATIONS, type Lang } from "@/lib/translations";
 
@@ -95,7 +95,7 @@ function AuthPageInner() {
     try {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) throw err;
-      toast.success(t("auth.login.welcome") + " a ChronoShield!");
+      sessionStorage.setItem("cs-welcome", "1");
       router.push("/dashboard");
       router.refresh();
     } catch (err: unknown) {
