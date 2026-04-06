@@ -1078,6 +1078,20 @@ export default function DarkWebPage() {
     );
   }
 
+  if (!planLoading && isFree) {
+    return (
+      <FeatureGate
+        feature="darkweb"
+        title="Dark Web Monitor"
+        subtitle="Detecta si tus emails y contraseñas han sido filtrados en la dark web. Recibe alertas instantáneas y guías de recuperación."
+        requiredPlan="starter"
+        isFree={isFree}
+      >
+        <></>
+      </FeatureGate>
+    );
+  }
+
   if (!summary) return null;
 
   const totalEmailDanger   = (summary.emails ?? []).filter((e) => e.status === "breached").length;

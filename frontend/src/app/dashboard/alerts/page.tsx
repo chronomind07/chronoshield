@@ -758,6 +758,20 @@ export default function AlertsPage() {
     );
   }
 
+  if (!planLoading && isFree) {
+    return (
+      <FeatureGate
+        feature="alerts"
+        title="Centro de Alertas"
+        subtitle="Recibe alertas inteligentes en tiempo real, clasificadas por severidad y analizadas automáticamente por ChronoAI."
+        requiredPlan="starter"
+        isFree={isFree}
+      >
+        <></>
+      </FeatureGate>
+    );
+  }
+
   if (!data) return null;
 
   const allAlerts = Array.isArray(data.alerts) ? data.alerts : [];
