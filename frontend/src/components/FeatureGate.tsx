@@ -58,6 +58,11 @@ const DEMO_SLIDES: Record<string, Slide[]> = {
     { icon: <ChartIcon />, title: "Compara a lo largo del tiempo", desc: "Visualiza cómo evoluciona tu seguridad mes a mes con gráficos de tendencia y comparativas." },
     { icon: <TrendIcon />, title: "Detecta tendencias y mejoras", desc: "Identifica patrones, periodos de riesgo y el impacto de los cambios que has implementado." },
   ],
+  uptime: [
+    { icon: <RadarIcon />, title: "Monitoreo de disponibilidad 24/7", desc: "Verificamos que tus dominios estén activos cada 5 minutos y registramos los tiempos de respuesta automáticamente." },
+    { icon: <ChartIcon />, title: "Historial visual con hasta 30 días", desc: "Visualiza semanas de uptime en una barra de tiempo interactiva. Detecta patrones de caída al instante." },
+    { icon: <BellAlertIcon />, title: "Alertas de caída en segundos", desc: "Cuando tu dominio cae, recibes una alerta instantánea. ChronoShield documenta cada incidente automáticamente." },
+  ],
 };
 
 // ── Demo modal (carousel) ─────────────────────────────────────────────────────
@@ -131,7 +136,7 @@ function DemoModal({ feature, onClose }: { feature: string; onClose: () => void 
 
 // ── FeatureGate main export ───────────────────────────────────────────────────
 interface FeatureGateProps {
-  feature: "emails" | "alerts" | "darkweb" | "assistant" | "reports" | "history";
+  feature: "emails" | "alerts" | "darkweb" | "assistant" | "reports" | "history" | "uptime";
   title: string;
   subtitle: string;
   requiredPlan?: "starter" | "business";

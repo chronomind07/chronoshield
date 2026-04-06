@@ -107,6 +107,32 @@ const IcoLogout = () => (
     <line x1="21" y1="12" x2="9" y2="12"/>
   </svg>
 );
+const IcoUptime = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+  </svg>
+);
+const IcoSun = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+);
+const IcoMoon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+const IcoMonitor = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+    <line x1="8" y1="21" x2="16" y2="21"/>
+    <line x1="12" y1="17" x2="12" y2="21"/>
+  </svg>
+);
 const IcoHome = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -465,6 +491,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/dashboard/domains": "nav.domains",
   "/dashboard/darkweb": "nav.darkweb",
   "/dashboard/alerts": "nav.alerts",
+  "/dashboard/uptime": "nav.uptime",
   "/dashboard/history": "nav.history",
   "/dashboard/reports": "nav.reports",
   "/dashboard/settings": "nav.settings",
@@ -491,6 +518,9 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("dark");
   const { credits, refreshCredits } = useCredits();
   const { t } = useTranslation();
   const { plan: userPlan, isFree } = usePlan();
@@ -522,6 +552,39 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     router.replace("/login");
   };
+
+  const applyTheme = useCallback((t: "light" | "dark" | "system") => {
+    if (typeof window === "undefined") return;
+    const root = document.documentElement;
+    if (t === "system") {
+      root.setAttribute("data-theme", window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    } else {
+      root.setAttribute("data-theme", t);
+    }
+  }, []);
+
+  const handleTheme = useCallback((t: "light" | "dark" | "system") => {
+    setTheme(t);
+    localStorage.setItem("cs-theme", t);
+    applyTheme(t);
+  }, [applyTheme]);
+
+  // Init theme from localStorage
+  useEffect(() => {
+    const saved = (localStorage.getItem("cs-theme") ?? "dark") as "light" | "dark" | "system";
+    setTheme(saved);
+    applyTheme(saved);
+  }, [applyTheme]);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    if (!profileOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [profileOpen]);
 
   if (checking) {
     return (
@@ -626,6 +689,16 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           background-size: 400px 100%; animation: csSkeleton 1.4s ease infinite;
         }
 
+        /* ── Profile dropdown ── */
+        @keyframes csDropUp {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .cs-profile-drop { animation: csDropUp 0.18s ease both; }
+        .cs-profile-item { display: flex; align-items: center; gap: 10; padding: 8px 14px; font-size: 0.82rem; color: #b3b4b5; text-decoration: none; cursor: pointer; width: 100%; background: transparent; border: none; text-align: left; font-family: inherit; transition: background 0.12s; }
+        .cs-profile-item:hover { background: rgba(255,255,255,0.05); }
+        .cs-profile-item-danger:hover { background: rgba(239,68,68,0.08); color: #ef4444; }
+
         /* ── Reduced motion ── */
         @media (prefers-reduced-motion: reduce) {
           .cs-fadeup-1,.cs-fadeup-2,.cs-fadeup-3,.cs-fadeup-4 { animation: none !important; opacity: 1 !important; transform: none !important; }
@@ -692,27 +765,95 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             <NavItem href="/dashboard/alerts" icon={<IcoAlerts />} label={t("nav.alerts")} active={pathname === "/dashboard/alerts"} badge={unreadAlerts} />
           </NavSection>
 
-          <NavSection label={t("nav.section.account")}>
-            <NavItem href="/dashboard/history" icon={<IcoHistory />} label={t("nav.history")} active={pathname === "/dashboard/history"} />
-            <NavItem href="/dashboard/reports" icon={<IcoReports />} label={t("nav.reports")} active={pathname.startsWith("/dashboard/reports")} />
-            <NavItem href="/dashboard/settings" icon={<IcoSettings />} label={t("nav.settings")} active={pathname === "/dashboard/settings"} />
-          </NavSection>
         </nav>
 
-        {/* User footer */}
-        <div style={{ borderTop: "0.8px solid #1a1a1a", padding: "12px 12px 0 12px", flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: "50%",
-              background: "#262626",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 11, fontWeight: 600, color: "#b3b4b5",
-              fontFamily: "var(--font-dm-mono)", flexShrink: 0,
+        {/* User footer — profile menu */}
+        <div ref={profileRef} style={{ borderTop: "0.8px solid #1a1a1a", padding: "8px", position: "relative", flexShrink: 0 }}>
+          {/* Dropdown (opens upward) */}
+          {profileOpen && (
+            <div className="cs-profile-drop" style={{
+              position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0,
+              background: "#151515", border: "1px solid #262626", borderRadius: 12,
+              boxShadow: "0 -8px 32px rgba(0,0,0,0.5)", zIndex: 50, overflow: "hidden",
             }}>
+              {/* User info header */}
+              <div style={{ padding: "12px 14px 10px", borderBottom: "1px solid #1a1a1a" }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f5f5f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{username}</div>
+                <div style={{ fontSize: "0.72rem", color: "#71717a", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail}</div>
+              </div>
+
+              {/* Navigation items */}
+              <div style={{ padding: "4px 0" }}>
+                {[
+                  { href: "/dashboard/uptime",  icon: <IcoUptime />,  label: t("nav.uptime") },
+                  { href: "/dashboard/history",  icon: <IcoHistory />, label: t("nav.history") },
+                  { href: "/dashboard/reports",  icon: <IcoReports />, label: t("nav.reports") },
+                ].map(item => (
+                  <Link key={item.href} href={item.href} onClick={() => setProfileOpen(false)} className="cs-profile-item">
+                    <span style={{ width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#71717a" }}>{item.icon}</span>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+
+              {/* Separator */}
+              <div style={{ height: 1, background: "#1a1a1a" }} />
+
+              {/* Theme toggle */}
+              <div style={{ padding: "10px 14px" }}>
+                <div style={{ fontSize: "0.68rem", color: "#71717a", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Tema</div>
+                <div style={{ display: "flex", background: "#1c1c1c", borderRadius: 8, padding: 2, gap: 1 }}>
+                  {(["light", "dark", "system"] as const).map(th => (
+                    <button key={th} onClick={() => handleTheme(th)} style={{
+                      flex: 1, padding: "5px 2px", borderRadius: 6, fontSize: "0.7rem", fontWeight: 600,
+                      cursor: "pointer", border: "none", fontFamily: "inherit",
+                      background: theme === th ? "#2a2a2a" : "transparent",
+                      color: theme === th ? "#f5f5f5" : "#71717a",
+                      transition: "all 0.15s",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                    }}>
+                      {th === "light" ? <IcoSun /> : th === "dark" ? <IcoMoon /> : <IcoMonitor />}
+                      {th === "light" ? "Claro" : th === "dark" ? "Oscuro" : "Sistema"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Separator */}
+              <div style={{ height: 1, background: "#1a1a1a" }} />
+
+              {/* Settings + Logout */}
+              <div style={{ padding: "4px 0" }}>
+                <Link href="/dashboard/settings" onClick={() => setProfileOpen(false)} className="cs-profile-item">
+                  <span style={{ width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#71717a" }}><IcoSettings /></span>
+                  {t("nav.settings")}
+                </Link>
+                <button onClick={handleLogout} className="cs-profile-item cs-profile-item-danger">
+                  <span style={{ width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><IcoLogout /></span>
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Profile trigger button */}
+          <button
+            onClick={() => setProfileOpen(o => !o)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 6px",
+              background: profileOpen ? "rgba(255,255,255,0.05)" : "transparent",
+              border: "none", cursor: "pointer", borderRadius: 8, transition: "background 0.15s",
+            }}
+            onMouseEnter={e => { if (!profileOpen) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+            onMouseLeave={e => { if (!profileOpen) e.currentTarget.style.background = "transparent"; }}
+          >
+            {/* Avatar */}
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#262626", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "#b3b4b5", fontFamily: "var(--font-dm-mono)", flexShrink: 0 }}>
               {initials}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "nowrap" }}>
+            {/* Name + badge */}
+            <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <span style={{ fontSize: 13, fontWeight: 400, color: "#f5f5f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>
                   {username}
                 </span>
@@ -723,14 +864,13 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 )}
               </div>
             </div>
-            <button onClick={handleLogout} title={t("nav.settings")}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#71717a", padding: 4, borderRadius: 6, display: "flex", transition: "color 0.15s" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
-            >
-              <IcoLogout />
-            </button>
-          </div>
+            {/* Chevron */}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              {profileOpen
+                ? <polyline points="18 15 12 9 6 15"/>
+                : <polyline points="6 9 12 15 18 9"/>}
+            </svg>
+          </button>
         </div>
       </aside>
 
