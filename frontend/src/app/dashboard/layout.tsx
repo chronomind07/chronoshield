@@ -246,7 +246,7 @@ function AlertRow({ alert, onDismiss, onDelete, onClose }: {
               setDeleting(false);
             }}
             disabled={deleting}
-            title="Eliminar notificación"
+            title="Marcar como leída"
             style={{
               fontSize: "0.68rem", fontWeight: 500, color: "#71717a",
               padding: "3px 7px", background: "rgba(255,255,255,0.04)",
@@ -254,7 +254,11 @@ function AlertRow({ alert, onDismiss, onDelete, onClose }: {
               cursor: "pointer", display: "flex", alignItems: "center",
             }}
           >
-            {deleting ? "…" : "✕"}
+            {deleting ? "…" : (
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1.5,6 4.5,9 10.5,3" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
