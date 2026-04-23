@@ -6,6 +6,7 @@ Schedule (all times UTC, Madrid = UTC+1 winter / UTC+2 summer):
   Score finalization             →  05:30 UTC and 20:30 UTC (after all 3 scans complete)
   Dark Web (breach + typosquatting) →  07:00 UTC (09:00 Madrid summer), gated by plan interval
   Monthly credit reset            →  00:00 UTC daily
+  Daily cleanup                  →  03:00 UTC daily (orphan cleanup, auto-healing, anomaly detection)
 """
 # ──────────────────────────────────────────────────────────────────────────────
 # ⚠️  IMPORTANT — Celery Beat persisted schedule
@@ -37,6 +38,7 @@ celery_app = Celery(
     backend=settings.REDIS_URL,
     include=[
         "app.workers.tasks",
+        "app.tasks.cleanup_tasks",
     ],
 )
 
@@ -116,6 +118,15 @@ celery_app.conf.beat_schedule = {
     "generate-monthly-reports": {
         "task": "app.workers.tasks.generate_monthly_reports",
         "schedule": crontab(hour=8, minute=0, day_of_month=1),  # 1st of month
+    },
+
+    # ── Daily cleanup: orphan removal, auto-healing, anomaly detection ───────────
+    # Runs at 03:00 UTC — after breach scan (02-03 UTC) and before SSL/uptime (05:00 UTC)
+    # Tasks: purge orphaned scan results, expire old stripe events,
+    #        flag domains with 3+ consecutive failures, warn on score drops >20 pts.
+    "daily-cleanup": {
+        "task": "app.tasks.cleanup_tasks.daily_cleanup",
+        "schedule": crontab(hour=3, minute=0),
     },
 
     # NOTE: recalculate-scores intentionally removed from schedule.
