@@ -10,21 +10,21 @@ interface PlanContextValue {
 }
 
 const PlanContext = createContext<PlanContextValue>({
-  plan: "starter",
+  plan: "solo",
   status: "active",
   loading: true,
   refresh: () => {},
 });
 
 export function PlanProvider({ children }: { children: ReactNode }) {
-  const [plan, setPlan] = useState("starter");
+  const [plan, setPlan] = useState("solo");
   const [status, setStatus] = useState("active");
   const [loading, setLoading] = useState(true);
 
   const fetchPlan = async () => {
     try {
       const res = await billingApi.subscription();
-      setPlan(res.data?.plan ?? "starter");
+      setPlan(res.data?.plan ?? "solo");
       setStatus(res.data?.status ?? "active");
     } catch {
       // keep defaults

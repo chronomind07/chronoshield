@@ -6,24 +6,39 @@ import { supabase } from "@/lib/supabase";
 import { billingApi } from "@/lib/api";
 
 // ── Feature lists ─────────────────────────────────────────────────────────────
-const STARTER_FEATURES = [
+const SOLO_FEATURES = [
   "1 dominio monitorizado",
   "5 emails protegidos",
   "5 créditos/mes",
   "Scans SSL, Uptime, Dark Web",
   "Alertas por email",
   "ChronoAI: 5 consultas/mes",
+  "Informe mensual",
 ];
 
 const BUSINESS_FEATURES = [
-  "2 dominios monitorizados",
+  "3 dominios monitorizados",
   "15 emails protegidos",
-  "15 créditos/mes",
+  "20 créditos/mes",
   "Scans prioritarios",
   "Alertas instantáneas",
   "ChronoAI: 20 consultas/mes",
   "Informes semanales y mensuales",
   "Historial 90 días",
+  "Typosquatting monitoring",
+];
+
+const PROFESSIONAL_FEATURES = [
+  "5 dominios monitorizados",
+  "25 emails protegidos",
+  "40 créditos/mes",
+  "Scans en tiempo real",
+  "Alertas multi-canal",
+  "ChronoAI: 50 consultas/mes",
+  "Informes avanzados + NIS2 PDF",
+  "Historial 180 días",
+  "Typosquatting + Due Diligence",
+  "Soporte prioritario 24h",
 ];
 
 // ── Noise texture overlay ─────────────────────────────────────────────────────
@@ -46,11 +61,13 @@ function CheckIcon() {
   );
 }
 
+type Plan = "solo" | "business" | "professional";
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SelectPlanPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
-  const [loading, setLoading] = useState<"starter" | "business" | null>(null);
+  const [loading, setLoading] = useState<Plan | null>(null);
 
   // Auth + subscription guard
   useEffect(() => {
@@ -59,13 +76,12 @@ export default function SelectPlanPage() {
         router.replace("/login");
         return;
       }
-      // If user already has an active paid plan → go to dashboard
-      // (but allow trial/free users to stay on select-plan to upgrade)
       try {
         const res = await billingApi.subscription();
         const plan = res.data?.plan;
         const status = res.data?.status;
-        if (plan && plan !== "trial" && plan !== "free" && status === "active") {
+        const PAID = ["solo", "business", "professional", "enterprise"];
+        if (plan && PAID.includes(plan) && status === "active") {
           router.replace("/dashboard");
           return;
         }
@@ -81,7 +97,7 @@ export default function SelectPlanPage() {
     router.replace("/login");
   };
 
-  const handleSelect = useCallback(async (plan: "starter" | "business") => {
+  const handleSelect = useCallback(async (plan: Plan) => {
     setLoading(plan);
     try {
       const res = await billingApi.checkout(plan);
@@ -138,7 +154,7 @@ export default function SelectPlanPage() {
         .sp-btn:active:not(:disabled) { transform: scale(0.98); }
       `}</style>
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 900, margin: "0 auto", padding: "60px 24px 80px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: "60px 24px 80px" }}>
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 56, animation: "fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both" }}>
@@ -155,52 +171,25 @@ export default function SelectPlanPage() {
           <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)", fontWeight: 700, color: "#f5f5f5", margin: "0 0 14px", letterSpacing: "-0.03em", lineHeight: 1.15 }}>
             Elige tu plan
           </h1>
-          <p style={{ color: "#71717a", fontSize: "0.95rem", margin: "0 0 14px", maxWidth: 460, marginInline: "auto", lineHeight: 1.6 }}>
+          <p style={{ color: "#71717a", fontSize: "0.95rem", margin: "0 0 14px", maxWidth: 480, marginInline: "auto", lineHeight: 1.6 }}>
             Protege tu negocio desde el primer día. Sin permanencia, cancela cuando quieras.
           </p>
-          {/* Launch badge */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(62,207,142,0.08)", border: "1px solid rgba(62,207,142,0.22)", borderRadius: 20, padding: "5px 14px" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3ecf8e", display: "inline-block", flexShrink: 0 }} />
-            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#3ecf8e", fontFamily: "var(--font-dm-mono, monospace)", letterSpacing: "0.04em" }}>
-              PRECIO DE LANZAMIENTO · SOLO EL PRIMER MES
-            </span>
-          </div>
         </div>
 
         {/* Plan cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, maxWidth: 1000, margin: "0 auto" }}>
 
-          {/* ── Starter ── */}
-          <div
-            className="sp-card"
-            style={{
-              background: "#0f0f0f",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 20,
-              padding: "36px 32px",
-              display: "flex",
-              flexDirection: "column",
-              animationDelay: "0.05s",
-            }}
-          >
-            <div style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#71717a", marginBottom: 20 }}>
-              Starter
-            </div>
-            {/* Strikethrough real price */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>29,99€/mes</span>
-            </div>
+          {/* ── Solo ── */}
+          <div className="sp-card" style={{ background: "#0f0f0f", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "36px 28px", display: "flex", flexDirection: "column", animationDelay: "0.05s" }}>
+            <div style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#71717a", marginBottom: 20 }}>Solo</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-              <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>
-                24€
-              </span>
-              <span style={{ fontSize: "0.82rem", color: "#71717a" }}>/mes</span>
+              <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>19€</span>
+              <span style={{ fontSize: "0.82rem", color: "#71717a" }}>/mes + IVA</span>
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#3ecf8e", marginBottom: 4, fontWeight: 500 }}>Precio de lanzamiento · Solo el primer mes</div>
-            <div style={{ fontSize: "0.72rem", color: "#3a3a3a", marginBottom: 24 }}>IVA incluido</div>
+            <div style={{ fontSize: "0.72rem", color: "#71717a", marginBottom: 24 }}>Para autónomos y equipos de 1-3 personas</div>
 
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 36px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-              {STARTER_FEATURES.map((f) => (
+              {SOLO_FEATURES.map((f) => (
                 <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 9, fontSize: "0.83rem", color: "#a3a3a3" }}>
                   <CheckIcon />
                   {f}
@@ -210,28 +199,23 @@ export default function SelectPlanPage() {
 
             <button
               className="sp-btn"
-              onClick={() => handleSelect("starter")}
+              onClick={() => handleSelect("solo")}
               disabled={!!loading}
               style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#f5f5f5",
-                fontSize: "0.9rem",
-                fontWeight: 600,
+                width: "100%", padding: "14px", borderRadius: 12,
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+                color: "#f5f5f5", fontSize: "0.9rem", fontWeight: 600,
                 cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading && loading !== "starter" ? 0.4 : 1,
+                opacity: loading && loading !== "solo" ? 0.4 : 1,
                 fontFamily: "inherit",
               }}
             >
-              {loading === "starter" ? (
+              {loading === "solo" ? (
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
                   Redirigiendo…
                 </span>
-              ) : "Empezar con Starter"}
+              ) : "Empezar con Solo"}
             </button>
           </div>
 
@@ -240,42 +224,20 @@ export default function SelectPlanPage() {
             className="sp-card sp-card-business"
             style={{
               background: "linear-gradient(160deg, rgba(62,207,142,0.06) 0%, #0f0f12 60%)",
-              border: "1px solid rgba(62,207,142,0.25)",
-              borderRadius: 20,
-              padding: "36px 32px",
-              display: "flex",
-              flexDirection: "column",
-              position: "relative",
-              animationDelay: "0.12s",
+              border: "1px solid rgba(62,207,142,0.25)", borderRadius: 20, padding: "36px 28px",
+              display: "flex", flexDirection: "column", position: "relative", animationDelay: "0.12s",
             }}
           >
-            {/* Popular badge */}
-            <div style={{
-              position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)",
-              background: "rgba(62,207,142,0.15)", color: "#3ecf8e",
-              border: "1px solid rgba(62,207,142,0.3)",
-              fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.62rem", fontWeight: 700,
-              textTransform: "uppercase", letterSpacing: "0.15em",
-              padding: "3px 14px", borderRadius: 20, whiteSpace: "nowrap",
-            }}>
+            <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "rgba(62,207,142,0.15)", color: "#3ecf8e", border: "1px solid rgba(62,207,142,0.3)", fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", padding: "3px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>
               Popular
             </div>
 
-            <div style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#3ecf8e", marginBottom: 20 }}>
-              Business
-            </div>
-            {/* Strikethrough real price */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#3a3a3a", textDecoration: "line-through" }}>68,99€/mes</span>
-            </div>
+            <div style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#3ecf8e", marginBottom: 20 }}>Business</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-              <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>
-                59€
-              </span>
-              <span style={{ fontSize: "0.82rem", color: "#71717a" }}>/mes</span>
+              <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>49€</span>
+              <span style={{ fontSize: "0.82rem", color: "#71717a" }}>/mes + IVA</span>
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#3ecf8e", marginBottom: 4, fontWeight: 500 }}>Precio de lanzamiento · Solo el primer mes</div>
-            <div style={{ fontSize: "0.72rem", color: "#3a3a3a", marginBottom: 24 }}>IVA incluido</div>
+            <div style={{ fontSize: "0.72rem", color: "#71717a", marginBottom: 24 }}>Para pymes de 4-20 personas</div>
 
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 36px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
               {BUSINESS_FEATURES.map((f) => (
@@ -291,14 +253,9 @@ export default function SelectPlanPage() {
               onClick={() => handleSelect("business")}
               disabled={!!loading}
               style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: 12,
-                background: "linear-gradient(135deg, #3ecf8e, #2db87a)",
-                border: "none",
-                color: "#0a0a0a",
-                fontSize: "0.9rem",
-                fontWeight: 700,
+                width: "100%", padding: "14px", borderRadius: 12,
+                background: "linear-gradient(135deg, #3ecf8e, #2db87a)", border: "none",
+                color: "#0a0a0a", fontSize: "0.9rem", fontWeight: 700,
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading && loading !== "business" ? 0.4 : 1,
                 fontFamily: "inherit",
@@ -312,14 +269,52 @@ export default function SelectPlanPage() {
               ) : "Empezar con Business"}
             </button>
           </div>
+
+          {/* ── Professional ── */}
+          <div className="sp-card" style={{ background: "#0f0f0f", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: "36px 28px", display: "flex", flexDirection: "column", animationDelay: "0.19s" }}>
+            <div style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#71717a", marginBottom: 20 }}>Professional</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
+              <span style={{ fontSize: "2.4rem", fontWeight: 700, color: "#f5f5f5", letterSpacing: "-0.04em", lineHeight: 1 }}>99€</span>
+              <span style={{ fontSize: "0.82rem", color: "#71717a" }}>/mes + IVA</span>
+            </div>
+            <div style={{ fontSize: "0.72rem", color: "#71717a", marginBottom: 24 }}>Para pymes medianas de 20-50+ personas</div>
+
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 36px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+              {PROFESSIONAL_FEATURES.map((f) => (
+                <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 9, fontSize: "0.83rem", color: "#a3a3a3" }}>
+                  <CheckIcon />
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              className="sp-btn"
+              onClick={() => handleSelect("professional")}
+              disabled={!!loading}
+              style={{
+                width: "100%", padding: "14px", borderRadius: 12,
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+                color: "#f5f5f5", fontSize: "0.9rem", fontWeight: 600,
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading && loading !== "professional" ? 0.4 : 1,
+                fontFamily: "inherit",
+              }}
+            >
+              {loading === "professional" ? (
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                  Redirigiendo…
+                </span>
+              ) : "Empezar con Professional"}
+            </button>
+          </div>
+
         </div>
 
         {/* Footer notes */}
-        <p style={{ textAlign: "center", color: "#4a4a4a", fontSize: "0.75rem", marginTop: 32, fontFamily: "var(--font-dm-mono, monospace)", lineHeight: 1.7 }}>
-          A partir del segundo mes: <span style={{ color: "#71717a" }}>29,99€/mes (Starter)</span> · <span style={{ color: "#71717a" }}>68,99€/mes (Business)</span>
-        </p>
-        <p style={{ textAlign: "center", color: "#3a3a3a", fontSize: "0.75rem", marginTop: 8, fontFamily: "var(--font-dm-mono, monospace)" }}>
-          Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
+        <p style={{ textAlign: "center", color: "#3a3a3a", fontSize: "0.75rem", marginTop: 40, fontFamily: "var(--font-dm-mono, monospace)" }}>
+          Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras · Precios sin IVA
         </p>
       </div>
     </div>

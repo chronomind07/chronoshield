@@ -6,15 +6,18 @@ from typing import Optional
 from app.core.security import get_current_user_id
 from app.db.supabase import get_db
 from app.services.ai_service import generate_security_analysis
+from app.services.plan_service import get_ai_query_limit
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-# Monthly AI analysis limits per plan
+# Monthly AI analysis limits per plan — sourced from plan_service
 _AI_LIMITS: dict[str, int] = {
-    "trial":      3,
-    "starter":    5,
-    "business":   15,
-    "enterprise": 50,
+    "trial":        3,
+    "solo":         5,
+    "starter":      5,    # backward compat alias
+    "business":     20,
+    "professional": 50,
+    "enterprise":   200,
 }
 
 
@@ -45,7 +48,7 @@ async def analyze_security(
     # Free/trial users cannot access AI analysis
     if plan in ("trial", "free"):
         raise HTTPException(status_code=403, detail="plan_upgrade_required")
-    limit = _AI_LIMITS.get(plan, 3)
+    limit = _AI_LIMITS.get(plan, get_ai_query_limit(plan))
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
     usage_res = db.table("ai_analyses").select("id", count="exact").eq("user_id", user_id).gte("created_at", month_start).execute()

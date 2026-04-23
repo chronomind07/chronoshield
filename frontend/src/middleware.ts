@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    const PAID_PLANS = ["starter", "business", "enterprise"];
+    const PAID_PLANS = ["solo", "business", "professional", "enterprise"];
     const hasPaidPlan =
       sub &&
       PAID_PLANS.includes(sub.plan ?? "") &&

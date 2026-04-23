@@ -8,6 +8,7 @@ per domain per scan cycle instead of three redundant recalculations.
 """
 from app.workers.celery_app import celery_app
 from app.db.supabase import get_supabase_client
+from app.services.plan_service import get_darkweb_interval, get_plan_limits
 import structlog
 
 logger = structlog.get_logger()
@@ -41,7 +42,7 @@ def _get_paid_user_ids() -> set:
     rows = (
         db.table("subscriptions")
         .select("user_id")
-        .in_("plan", ["starter", "business", "enterprise"])
+        .in_("plan", ["solo", "business", "professional", "enterprise"])
         .eq("status", "active")
         .execute()
         .data
@@ -50,7 +51,7 @@ def _get_paid_user_ids() -> set:
 
 
 def _get_paid_active_domains():
-    """Active domains belonging to paid (starter/business/enterprise) users only."""
+    """Active domains belonging to paid (solo/business/professional/enterprise) users only."""
     paid = _get_paid_user_ids()
     if not paid:
         return []
@@ -66,7 +67,7 @@ def _get_paid_active_domains():
 
 
 def _get_paid_active_emails():
-    """Active emails belonging to paid (starter/business/enterprise) users only."""
+    """Active emails belonging to paid (solo/business/professional/enterprise) users only."""
     paid = _get_paid_user_ids()
     if not paid:
         return []
@@ -337,7 +338,7 @@ def darkweb_scan_all_users(self):
     subs = (
         db.table("subscriptions")
         .select("user_id,plan")
-        .in_("plan", ["starter", "business"])
+        .in_("plan", ["solo", "business", "professional"])
         .eq("status", "active")
         .execute()
         .data
@@ -353,7 +354,7 @@ def darkweb_scan_all_users(self):
         plan    = sub["plan"]
 
         # ── Base interval (days) by plan ──────────────────────────────────────
-        base_interval = 7 if plan == "starter" else 3   # Business changed 2→3
+        base_interval = get_darkweb_interval(plan)
 
         try:
             emails_rows = (
@@ -464,8 +465,8 @@ def darkweb_scan_all_users(self):
                 except Exception as e:
                     logger.error("Auto domain breach scan failed", domain=domain, error=str(e))
 
-            # Typosquatting — Business only
-            if plan == "business" and domains:
+            # Typosquatting — Business, Professional, Enterprise
+            if get_plan_limits(plan).get("typosquatting", False) and domains:
                 try:
                     profile = (
                         db.table("profiles")
@@ -534,7 +535,7 @@ def generate_weekly_reports(self):
     subs = (
         db.table("subscriptions")
         .select("user_id")
-        .eq("plan", "business")
+        .in_("plan", ["business", "professional"])
         .eq("status", "active")
         .execute()
         .data
@@ -555,7 +556,7 @@ def generate_monthly_reports(self):
     subs = (
         db.table("subscriptions")
         .select("user_id,plan")
-        .in_("plan", ["starter", "business"])
+        .in_("plan", ["solo", "business", "professional"])
         .eq("status", "active")
         .execute()
         .data

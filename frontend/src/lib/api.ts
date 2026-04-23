@@ -56,7 +56,7 @@ export const aiApi = {
 // Billing endpoints
 export const billingApi = {
   subscription: () => api.get("/billing/subscription"),
-  checkout: (plan: "starter" | "business") =>
+  checkout: (plan: "solo" | "business" | "professional") =>
     api.post(`/billing/checkout/${plan}`),
   portal: () => api.post("/billing/portal"),
 };

@@ -33,11 +33,14 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 PLAN_LIMITS = {
-    "starter":  {"max_domains": 1,  "max_emails": 10},
-    "business": {"max_domains": 3,  "max_emails": 30},
-    "trial":    {"max_domains": 0,  "max_emails": 0},
+    "solo":         {"max_domains": 1,  "max_emails": 5},
+    "starter":      {"max_domains": 1,  "max_emails": 5},   # backward compat alias
+    "business":     {"max_domains": 3,  "max_emails": 15},
+    "professional": {"max_domains": 5,  "max_emails": 25},
+    "enterprise":   {"max_domains": 10, "max_emails": 50},
+    "trial":        {"max_domains": 0,  "max_emails": 0},
 }
-PLAN_CREDITS = {"starter": 5, "business": 20, "trial": 0}
+PLAN_CREDITS = {"solo": 5, "starter": 5, "business": 20, "professional": 40, "enterprise": 100, "trial": 0}
 
 
 # ── Auth dependency ───────────────────────────────────────────────────────────
@@ -59,7 +62,7 @@ def require_admin(
 
 class SetPlanRequest(BaseModel):
     email: EmailStr
-    plan: str   # starter | business | trial
+    plan: str   # solo | business | professional | enterprise | trial
 
 
 class AddCreditsRequest(BaseModel):

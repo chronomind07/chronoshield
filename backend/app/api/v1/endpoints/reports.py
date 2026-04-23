@@ -34,7 +34,7 @@ def _utcnow() -> datetime:
 
 def _get_plan(db, user_id: str) -> str:
     r = db.table("subscriptions").select("plan").eq("user_id", user_id).single().execute()
-    return r.data["plan"] if r.data else "starter"
+    return r.data["plan"] if r.data else "solo"
 
 
 

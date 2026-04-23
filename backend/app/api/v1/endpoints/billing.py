@@ -13,21 +13,16 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 PLAN_PRICES = {
-    "starter": settings.STRIPE_STARTER_PRICE_ID,
-    "business": settings.STRIPE_BUSINESS_PRICE_ID,
-}
-
-# Launch coupons — applied automatically on first checkout (1-month discount).
-# After month 1 Stripe charges the full price automatically.
-PLAN_COUPONS = {
-    "starter": settings.STRIPE_STARTER_COUPON_ID,   # 11.99€ off → effective 24€
-    "business": settings.STRIPE_BUSINESS_COUPON_ID, # 13.99€ off → effective 59€
+    "solo":         settings.STRIPE_SOLO_PRICE_ID,          # Solo plan: 19€+IVA/mes
+    "business":     settings.STRIPE_BUSINESS_PRICE_ID,      # Business plan: 49€+IVA/mes
+    "professional": settings.STRIPE_PROFESSIONAL_PRICE_ID,  # Professional plan: 99€+IVA/mes
 }
 
 PLAN_LIMITS = {
-    "starter":    {"max_domains": 1, "max_emails": 5},
-    "business":   {"max_domains": 2, "max_emails": 15},
-    "enterprise": {"max_domains": 5, "max_emails": 25},
+    "solo":         {"max_domains": 1, "max_emails": 5},
+    "business":     {"max_domains": 3, "max_emails": 15},
+    "professional": {"max_domains": 5, "max_emails": 25},
+    "enterprise":   {"max_domains": 10, "max_emails": 50},
 }
 
 
@@ -85,8 +80,6 @@ async def create_checkout_session(
             else:
                 raise
 
-    # Apply launch coupon if configured (first month at discounted price)
-    coupon_id = PLAN_COUPONS.get(plan, "")
     session_kwargs: dict = dict(
         customer=stripe_customer_id,
         payment_method_types=["card"],
@@ -96,8 +89,6 @@ async def create_checkout_session(
         cancel_url="https://chronoshield.eu/billing?upgrade=canceled",
         metadata={"user_id": user_id, "plan": plan},
     )
-    if coupon_id:
-        session_kwargs["discounts"] = [{"coupon": coupon_id}]
 
     session = stripe.checkout.Session.create(**session_kwargs)
     return CheckoutSession(url=session.url)
@@ -202,7 +193,7 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None))
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
         db.table("subscriptions").update(
-            {"status": "canceled", "plan": "trial"}
+            {"status": "canceled", "plan": "solo"}
         ).eq("stripe_subscription_id", sub["id"]).execute()
 
     return {"status": "ok"}

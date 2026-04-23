@@ -25,11 +25,14 @@ router = APIRouter(prefix="/superadmin", tags=["superadmin"])
 SUPERADMIN_EMAIL = "support@chronoshield.eu"
 
 PLAN_LIMITS = {
-    "starter":  {"max_domains": 1,  "max_emails": 10},
-    "business": {"max_domains": 3,  "max_emails": 30},
-    "trial":    {"max_domains": 0,  "max_emails": 0},
+    "solo":         {"max_domains": 1,  "max_emails": 5},
+    "starter":      {"max_domains": 1,  "max_emails": 5},   # backward compat alias
+    "business":     {"max_domains": 3,  "max_emails": 15},
+    "professional": {"max_domains": 5,  "max_emails": 25},
+    "enterprise":   {"max_domains": 10, "max_emails": 50},
+    "trial":        {"max_domains": 0,  "max_emails": 0},
 }
-PLAN_MRR = {"starter": 29, "business": 59, "trial": 0}
+PLAN_MRR = {"solo": 19, "starter": 29, "business": 49, "professional": 99, "enterprise": 199, "trial": 0}
 
 # ── Simple in-memory rate limiter ─────────────────────────────────────────────
 
@@ -70,7 +73,7 @@ def _audit(db, admin_user_id: str, action: str, target_user_id: str | None = Non
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
 class ChangePlanRequest(BaseModel):
-    plan: str  # starter | business | trial
+    plan: str  # solo | business | professional | enterprise | trial
 
 class ChangeCreditsRequest(BaseModel):
     delta: int        # positive = add, negative = subtract
@@ -148,15 +151,19 @@ async def get_stats(request: Request, admin=Depends(require_admin), db=Depends(g
 
     # Plans distribution
     subs = db.table("subscriptions").select("plan,status").execute().data or []
-    plan_dist = {"starter": 0, "business": 0, "trial": 0}
-    active_subs = {"starter": 0, "business": 0}
+    plan_dist = {"solo": 0, "business": 0, "professional": 0, "trial": 0}
+    active_subs = {"solo": 0, "business": 0, "professional": 0}
     for s in subs:
         plan = s.get("plan", "trial")
         plan_dist[plan] = plan_dist.get(plan, 0) + 1
         if s.get("status") == "active" and plan in active_subs:
             active_subs[plan] += 1
 
-    mrr = active_subs["starter"] * PLAN_MRR["starter"] + active_subs["business"] * PLAN_MRR["business"]
+    mrr = (
+        active_subs["solo"] * PLAN_MRR["solo"]
+        + active_subs["business"] * PLAN_MRR["business"]
+        + active_subs["professional"] * PLAN_MRR["professional"]
+    )
 
     # Total monitored domains
     domains = db.table("domains").select("id").eq("is_active", True).execute().data or []

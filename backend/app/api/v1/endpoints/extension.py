@@ -42,7 +42,7 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/extension", tags=["extension"])
 
 # ── Daily limits per plan ──────────────────────────────────────────────────────
-DAILY_LIMITS = {"starter": 20, "business": 100, "trial": 5}
+DAILY_LIMITS = {"solo": 20, "business": 100, "professional": 200, "enterprise": 500}
 
 # ── Risky TLDs & brand keywords ───────────────────────────────────────────────
 RISKY_TLDS = frozenset({

@@ -4,11 +4,13 @@ from app.api.v1.endpoints import (
     darkweb, credits, admin, alerts, history, settings, contact, extension,
     mitigation, uptime, superadmin, reports,
 )
+from app.api.v1.endpoints.health import router as health_router
 
 api_router = APIRouter()
 
 # ── Public endpoints (no auth required) ───────────────────────────────────────
 api_router.include_router(contact.router)
+api_router.include_router(health_router)
 
 # ── Protected endpoints (auth enforced per-route via get_current_user_id) ─────
 api_router.include_router(dashboard.router)

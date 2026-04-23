@@ -2,9 +2,11 @@
 Credits service — manages monthly scan credits per user.
 
 Plan allowances:
-  starter  → 5 credits / month
-  business → 20 credits / month
-  trial    → 0 credits / month
+  solo         → 5 credits / month
+  business     → 20 credits / month
+  professional → 40 credits / month
+  enterprise   → 100 credits / month
+  trial        → 0 credits / month
 
 Credit packs (one-time Stripe purchase):
   Pack S → 5 credits  (6.99€)
@@ -19,11 +21,16 @@ import structlog
 
 logger = structlog.get_logger()
 
-PLAN_MONTHLY_CREDITS = {
-    "starter": settings.PLAN_STARTER_CREDITS,    # 5
-    "business": settings.PLAN_BUSINESS_CREDITS,  # 20
-    "trial": 0,
+PLAN_CREDITS = {
+    "solo":         5,
+    "starter":      5,    # backward compat alias
+    "business":     20,
+    "professional": 40,
+    "enterprise":   100,
 }
+
+PLAN_MONTHLY_CREDITS = PLAN_CREDITS  # alias for backward compat within this module
+PLAN_MONTHLY_CREDITS["trial"] = 0
 
 CREDIT_PACKS = {
     "s": {"credits": 5,  "amount_eur": 6.99,  "price_id": settings.STRIPE_CREDITS_S_PRICE_ID},

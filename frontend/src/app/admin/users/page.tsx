@@ -6,7 +6,7 @@ import { adminApi } from "@/lib/api";
 
 const ACCENT = "#f59e0b";
 const PLAN_COLORS: Record<string, string> = {
-  business: "#4ade80", starter: ACCENT, trial: "#64748b"
+  business: "#4ade80", solo: ACCENT, professional: ACCENT, trial: "#64748b"
 };
 
 interface User {
@@ -63,8 +63,9 @@ export default function UsersPage() {
                    color: "#e2e8f0", fontSize: 13, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
           <option value="">Todos los planes</option>
           <option value="trial">Trial</option>
-          <option value="starter">Starter</option>
+          <option value="solo">Solo (19€/mes)</option>
           <option value="business">Business</option>
+          <option value="professional">Professional (99€/mes)</option>
         </select>
       </div>
 

@@ -180,7 +180,7 @@ export default function UptimePage() {
           {t("nav.uptime")}
         </h1>
         <p style={{ color: "#71717a", fontSize: "0.8rem", margin: "5px 0 0" }}>
-          {t(["starter","business","enterprise","trial"].includes(plan) ? `uptime.subtitle.${plan}` : "uptime.subtitle")}
+          {t(["solo","business","professional","enterprise"].includes(plan) ? `uptime.subtitle.${plan}` : "uptime.subtitle")}
         </p>
       </div>
 

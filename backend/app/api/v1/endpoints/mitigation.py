@@ -18,11 +18,13 @@ router = APIRouter(prefix="/mitigation", tags=["mitigation"])
 
 # ── Plan limits ────────────────────────────────────────────────────────────────
 MITIGATION_LIMITS: dict[str, int] = {
-    "starter":    5,
-    "business":   20,
-    "enterprise": 50,
-    "free":       0,
-    "trial":      5,
+    "solo":         5,
+    "starter":      5,    # backward compat alias
+    "business":     20,
+    "professional": 50,
+    "enterprise":   50,
+    "free":         0,
+    "trial":        5,
 }
 
 MAX_CHAT_SESSIONS = 3  # per user
@@ -319,7 +321,7 @@ async def mitigation_chat(
     current_count: int = (usage_res.data[0]["count"] if usage_res.data else 0)
 
     if current_count >= limit:
-        upgrade_note = " Actualiza a Business para más consultas." if plan == "starter" else ""
+        upgrade_note = " Actualiza a Business para más consultas." if plan == "solo" else ""
         raise HTTPException(
             status_code=429,
             detail=f"Has alcanzado el límite mensual de {limit} consultas.{upgrade_note}",

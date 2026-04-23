@@ -275,8 +275,9 @@ export default function UserDetailPage() {
               <select value={newPlan} onChange={e => setNewPlan(e.target.value)}
                 style={{ ...inputStyle, width: "auto" }}>
                 <option value="trial">Trial</option>
-                <option value="starter">Starter (29€/mes)</option>
-                <option value="business">Business (59€/mes)</option>
+                <option value="solo">Solo (19€/mes)</option>
+                <option value="business">Business (49€/mes)</option>
+                <option value="professional">Professional (99€/mes)</option>
               </select>
               <button onClick={handleChangePlan} disabled={saving} style={btnStyle()}>
                 {saving ? "Guardando…" : "Aplicar plan"}

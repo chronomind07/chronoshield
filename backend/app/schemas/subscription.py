@@ -6,8 +6,10 @@ from enum import Enum
 
 
 class PlanType(str, Enum):
-    starter = "starter"
+    starter = "starter"      # kept for backward compat with existing DB rows
+    solo = "solo"
     business = "business"
+    professional = "professional"
     trial = "trial"
 
 

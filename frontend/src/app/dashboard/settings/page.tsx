@@ -137,9 +137,10 @@ function fmtDate(iso: string) {
 // ── Plan Badge ─────────────────────────────────────────────────────────────────
 function PlanBadge({ plan }: { plan: string }) {
   const map: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    business: { label: "Business", color: "#3ecf8e", bg: "rgba(62,207,142,0.10)", border: "rgba(62,207,142,0.2)" },
-    starter:  { label: "Starter",  color: "#3ecf8e", bg: "rgba(62,207,142,0.08)", border: "rgba(62,207,142,0.15)" },
-    trial:    { label: "Trial",    color: "#71717a", bg: "rgba(113,113,122,0.08)", border: "rgba(113,113,122,0.15)" },
+    business:     { label: "Business",     color: "#3ecf8e", bg: "rgba(62,207,142,0.10)", border: "rgba(62,207,142,0.2)" },
+    solo:         { label: "Solo",         color: "#3ecf8e", bg: "rgba(62,207,142,0.08)", border: "rgba(62,207,142,0.15)" },
+    professional: { label: "Professional", color: "#3ecf8e", bg: "rgba(62,207,142,0.10)", border: "rgba(62,207,142,0.2)" },
+    trial:        { label: "Trial",        color: "#71717a", bg: "rgba(113,113,122,0.08)", border: "rgba(113,113,122,0.15)" },
   };
   const s = map[plan] ?? map.trial;
   return (
@@ -517,7 +518,7 @@ function TabSubscription({ info, lang }: { info: SubscriptionInfo; lang: "es" | 
               )}
             </div>
             <div style={{ fontSize: "0.82rem", color: "#b3b4b5", fontFamily: "var(--font-dm-sans)" }}>
-              {info.plan === "business" ? "59€/mes" : info.plan === "starter" ? "29€/mes" : "—"}
+              {info.plan === "business" ? "49€/mes" : info.plan === "solo" ? "19€/mes" : info.plan === "professional" ? "99€/mes" : "—"}
             </div>
             {info.current_period_end && (
               <div style={{ fontSize: "0.78rem", color: "#71717a", marginTop: 6, fontFamily: "var(--font-dm-sans)" }}>
