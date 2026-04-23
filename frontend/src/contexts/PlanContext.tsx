@@ -6,30 +6,28 @@ interface PlanContextValue {
   plan: string;
   status: string;
   loading: boolean;
-  isFree: boolean;
   refresh: () => void;
 }
 
 const PlanContext = createContext<PlanContextValue>({
-  plan: "free",
-  status: "trialing",
+  plan: "starter",
+  status: "active",
   loading: true,
-  isFree: false,   // Don't assume free while loading — avoids banner flicker
   refresh: () => {},
 });
 
 export function PlanProvider({ children }: { children: ReactNode }) {
-  const [plan, setPlan] = useState("free");
-  const [status, setStatus] = useState("trialing");
+  const [plan, setPlan] = useState("starter");
+  const [status, setStatus] = useState("active");
   const [loading, setLoading] = useState(true);
 
   const fetchPlan = async () => {
     try {
       const res = await billingApi.subscription();
-      setPlan(res.data?.plan ?? "free");
-      setStatus(res.data?.status ?? "trialing");
+      setPlan(res.data?.plan ?? "starter");
+      setStatus(res.data?.status ?? "active");
     } catch {
-      // default to free
+      // keep defaults
     } finally {
       setLoading(false);
     }
@@ -37,12 +35,8 @@ export function PlanProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { fetchPlan(); }, []);
 
-  // Only mark as free AFTER the plan has been fetched — avoids showing the
-  // upgrade banner briefly on every reload for paying users.
-  const isFree = !loading && (plan === "free" || plan === "trial" || status === "trialing");
-
   return (
-    <PlanContext.Provider value={{ plan, status, loading, isFree, refresh: fetchPlan }}>
+    <PlanContext.Provider value={{ plan, status, loading, refresh: fetchPlan }}>
       {children}
     </PlanContext.Provider>
   );

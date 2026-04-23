@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { uptimeApi, billingApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
-import FeatureGate from "@/components/FeatureGate";
-import { usePlan } from "@/contexts/PlanContext";
 import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -101,7 +99,6 @@ function StatCard({ label, value, unit, color }: { label: string; value: string 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function UptimePage() {
-  const { isFree, loading: planLoading } = usePlan();
   const { t, lang } = useTranslation();
   const [domains, setDomains]               = useState<UptimeDomain[]>([]);
   const [selectedId, setSelectedId]         = useState<string>("");
@@ -111,10 +108,7 @@ export default function UptimePage() {
   const [domainsLoading, setDomainsLoading] = useState(true);
   const [plan, setPlan]                     = useState<string>("trial");
 
-  // Early return for free users — no API calls
   useEffect(() => {
-    if (planLoading || isFree) { setDomainsLoading(false); return; }
-
     uptimeApi.domains()
       .then(r => {
         const list: UptimeDomain[] = r.data?.domains ?? [];
@@ -127,11 +121,11 @@ export default function UptimePage() {
     billingApi.subscription()
       .then(r => { if (r.data?.plan) setPlan(r.data.plan); })
       .catch(() => { /* non-critical */ });
-  }, [planLoading, isFree, t]); // eslint-disable-line
+  }, [t]); // eslint-disable-line
 
   // Load timeline when domain or range changes
   const loadTimeline = useCallback(async () => {
-    if (!selectedId || isFree) return;
+    if (!selectedId) return;
     setLoading(true);
     try {
       const r = await uptimeApi.timeline(selectedId, range);
@@ -141,7 +135,7 @@ export default function UptimePage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedId, range, isFree, t]);
+  }, [selectedId, range, t]);
 
   useEffect(() => { loadTimeline(); }, [loadTimeline]);
 
@@ -155,21 +149,6 @@ export default function UptimePage() {
     : timeline.uptime_pct >= 99 ? "#3ecf8e"
     : timeline.uptime_pct >= 95 ? "#f59e0b"
     : "#ef4444";
-
-  // ── Free users gate ──────────────────────────────────────────────────────────
-  if (!planLoading && isFree) {
-    return (
-      <FeatureGate
-        feature="uptime"
-        title="Disponibilidad"
-        subtitle="Monitorea el uptime de tus dominios en tiempo real, visualiza el historial de disponibilidad y detecta caídas al instante."
-        requiredPlan="starter"
-        isFree={isFree}
-      >
-        <></>
-      </FeatureGate>
-    );
-  }
 
   // ── Loading domains ──────────────────────────────────────────────────────────
   if (domainsLoading) {

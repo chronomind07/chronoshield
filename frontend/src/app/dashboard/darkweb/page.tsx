@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { darkwebApi, creditsApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
-import FeatureGate from "@/components/FeatureGate";
-import { usePlan } from "@/contexts/PlanContext";
 import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -1008,7 +1006,6 @@ function CreditPackModal({
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function DarkWebPage() {
-  const { isFree, loading: planLoading } = usePlan();
   const { t, lang } = useTranslation();
   const [summary, setSummary]         = useState<DarkWebSummary | null>(null);
   const [loading, setLoading]         = useState(true);
@@ -1017,7 +1014,6 @@ export default function DarkWebPage() {
   const [showPacks, setShowPacks]     = useState(false);
 
   const load = useCallback(async () => {
-    if (planLoading || isFree) { setLoading(false); return; }
     try {
       const res = await darkwebApi.summary();
       setSummary(res.data);
@@ -1026,7 +1022,7 @@ export default function DarkWebPage() {
     } finally {
       setLoading(false);
     }
-  }, [planLoading, isFree, t]);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -1061,20 +1057,6 @@ export default function DarkWebPage() {
     return <GenericPageSkeleton rows={5} statCards={3} />;
   }
 
-  if (!planLoading && isFree) {
-    return (
-      <FeatureGate
-        feature="darkweb"
-        title="Dark Web Monitor"
-        subtitle="Detecta si tus emails y contraseñas han sido filtrados en la dark web. Recibe alertas instantáneas y guías de recuperación."
-        requiredPlan="starter"
-        isFree={isFree}
-      >
-        <></>
-      </FeatureGate>
-    );
-  }
-
   if (!summary) return null;
 
   const totalEmailDanger   = (summary.emails ?? []).filter((e) => e.status === "breached").length;
@@ -1083,13 +1065,6 @@ export default function DarkWebPage() {
   const overallDanger      = totalEmailDanger + totalDomainDanger + totalImpoDanger;
 
   return (
-    <FeatureGate
-      feature="darkweb"
-      title="Dark Web Monitor"
-      subtitle="Detecta si tus emails y contraseñas han sido filtrados en la dark web. Recibe alertas instantáneas y guías de recuperación."
-      requiredPlan="starter"
-      isFree={isFree}
-    >
     <div style={{
       padding: "28px 32px 60px",
       background: "#0b0b0b",
@@ -1384,6 +1359,5 @@ export default function DarkWebPage() {
         <span style={{ fontSize: "12px", color: "#71717a" }}>by <span style={{ color: "#b3b4b5", fontWeight: 500 }}>ChronoShield</span></span>
       </div>
     </div>
-    </FeatureGate>
   );
 }

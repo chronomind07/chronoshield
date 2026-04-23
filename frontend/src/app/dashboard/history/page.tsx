@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { historyApi } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { useTranslation } from "@/contexts/LanguageContext";
-import FeatureGate from "@/components/FeatureGate";
-import { usePlan } from "@/contexts/PlanContext";
 import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -443,7 +441,6 @@ function Pagination({ page, total, perPage, onPage, tShowing }: {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
-  const { isFree, loading: planLoading } = usePlan();
   const { t, lang } = useTranslation();
   const [data, setData]                 = useState<HistoryData | null>(null);
   const [loading, setLoading]           = useState(true);
@@ -486,16 +483,14 @@ export default function HistoryPage() {
   }, [dateFilter, categoryFilter, problemsOnly, t]);
 
   useEffect(() => {
-    if (planLoading || isFree) { setLoading(false); return; }
     setPage(1);
     setExpandedId(null);
     load(1);
-  }, [planLoading, isFree, dateFilter, categoryFilter, problemsOnly]); // eslint-disable-line
+  }, [dateFilter, categoryFilter, problemsOnly]); // eslint-disable-line
 
   useEffect(() => {
-    if (planLoading || isFree) { setLoading(false); return; }
     load(page);
-  }, [planLoading, isFree, page]); // eslint-disable-line
+  }, [page]); // eslint-disable-line
 
   const handlePage = (p: number) => {
     setPage(p);
@@ -526,13 +521,6 @@ export default function HistoryPage() {
   ) : [];
 
   return (
-    <FeatureGate
-      feature="history"
-      title="Historial de Escaneos"
-      subtitle="Accede al historial completo de todos tus escaneos, compara resultados a lo largo del tiempo y detecta tendencias."
-      requiredPlan="starter"
-      isFree={isFree}
-    >
     <div style={{ padding: "28px 32px 60px", background: "#0b0b0b", minHeight: "100vh",
       fontFamily: "var(--font-dm-sans)" }}>
 
@@ -653,6 +641,5 @@ export default function HistoryPage() {
         </span>
       </div>
     </div>
-    </FeatureGate>
   );
 }

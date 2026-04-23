@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/Toast";
 import { emailsApi } from "@/lib/api";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { usePlan } from "@/contexts/PlanContext";
-import FeatureGate from "@/components/FeatureGate";
 import type { AxiosError } from "axios";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -621,7 +619,6 @@ function EmailCard({
 
 export default function EmailsPage() {
   const { t, lang } = useTranslation();
-  const { isFree, loading: planLoading } = usePlan();
   const [emails, setEmails] = useState<MonitoredEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -634,7 +631,6 @@ export default function EmailsPage() {
   // ── Load emails ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (planLoading || isFree) { setLoading(false); return; }
     (async () => {
       try {
         const res = await emailsApi.list();
@@ -645,7 +641,7 @@ export default function EmailsPage() {
         setLoading(false);
       }
     })();
-  }, [planLoading, isFree]); // eslint-disable-line
+  }, []); // eslint-disable-line
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -658,10 +654,6 @@ export default function EmailsPage() {
     emailItem: MonitoredEmail
   ) => {
     e.stopPropagation();
-    if (isFree) {
-      toast.error("Los escaneos manuales requieren créditos. Mejora tu plan →");
-      return;
-    }
     setScanning(emailItem.id);
     try {
       const res = await emailsApi.scan(emailItem.id);
@@ -755,13 +747,6 @@ export default function EmailsPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <FeatureGate
-      feature="emails"
-      title="Seguridad de Email"
-      subtitle="Monitoriza SPF, DKIM y DMARC de tus dominios y detecta configuraciones que permiten suplantación de identidad."
-      requiredPlan="starter"
-      isFree={isFree}
-    >
     <div
       style={{
         minHeight: "100vh",
@@ -980,6 +965,5 @@ export default function EmailsPage() {
         </div>
       </div>
     </div>
-    </FeatureGate>
   );
 }

@@ -518,14 +518,13 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
-  const [showBanner, setShowBanner] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("dark");
   const { credits, refreshCredits } = useCredits();
   const { t } = useTranslation();
-  const { plan: userPlan, isFree } = usePlan();
+  const { plan: userPlan } = usePlan();
 
   // Poll unread count every 2 min
   useEffect(() => {
@@ -871,11 +870,6 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 <span style={{ fontSize: 13, fontWeight: 400, color: "#f5f5f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>
                   {username}
                 </span>
-                {isFree && (
-                  <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 4, padding: "1px 5px", letterSpacing: "0.08em", flexShrink: 0 }}>
-                    FREE
-                  </span>
-                )}
               </div>
             </div>
             {/* Chevron */}
@@ -939,43 +933,8 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Upgrade banner for free/trial users */}
-        {isFree && showBanner && (
-          <div style={{
-            position: "sticky", top: 64, zIndex: 29,
-            background: "rgba(245,158,11,0.07)",
-            borderBottom: "1px solid rgba(245,158,11,0.15)",
-            padding: "10px 24px",
-            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-          }}>
-            <span style={{ fontSize: "0.82rem", color: "#d4a017" }}>
-              Estás en el plan gratuito. Mejora tu plan para desbloquear monitoreo continuo y todas las funciones.
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-              <Link
-                href="/select-plan"
-                style={{
-                  fontSize: "0.78rem", fontWeight: 700, color: "#f59e0b",
-                  background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)",
-                  borderRadius: 6, padding: "4px 12px", textDecoration: "none",
-                  transition: "all 0.15s",
-                }}
-              >
-                Mejorar plan →
-              </Link>
-              <button
-                onClick={() => setShowBanner(false)}
-                style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 4px" }}
-                aria-label="Cerrar banner"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Page content */}
-        <main key={pathname} className="cs-page" style={{ paddingTop: isFree && showBanner ? 64 : 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
+        <main key={pathname} className="cs-page" style={{ paddingTop: 64, paddingLeft: 24, paddingRight: 24, paddingBottom: 40 }}>
           {children}
         </main>
 

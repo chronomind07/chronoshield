@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { reportsApi } from "@/lib/api";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useCredits } from "@/contexts/CreditsContext";
-import FeatureGate from "@/components/FeatureGate";
-import { usePlan } from "@/contexts/PlanContext";
 import { GenericPageSkeleton } from "@/components/Skeleton";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -704,7 +702,6 @@ function Nis2Tab() {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
-  const { isFree, loading: planLoading } = usePlan();
   const { t } = useTranslation();
   const { credits, refreshCredits } = useCredits();
   const [activeTab,  setActiveTab]  = useState<"reports" | "nis2">("reports");
@@ -716,7 +713,6 @@ export default function ReportsPage() {
   const [preview,    setPreview]    = useState<{ data: ReportData; meta: Partial<ReportMeta> } | null>(null);
 
   const loadReports = useCallback(async () => {
-    if (planLoading || isFree) { setLoading(false); return; }
     setLoading(true);
     setError("");
     try {
@@ -727,7 +723,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [planLoading, isFree, typeFilter, t]);
+  }, [typeFilter, t]);
 
   useEffect(() => { if (activeTab === "reports") loadReports(); }, [activeTab, loadReports]);
 
@@ -762,13 +758,6 @@ export default function ReportsPage() {
   };
 
   return (
-    <FeatureGate
-      feature="reports"
-      title="Informes de Seguridad"
-      subtitle="Genera informes PDF profesionales, mide el cumplimiento NIS2 y compártelos con tu equipo o clientes."
-      requiredPlan="starter"
-      isFree={isFree}
-    >
     <div style={{ padding: "32px 0", maxWidth: 860, margin: "0 auto" }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -946,6 +935,5 @@ export default function ReportsPage() {
         />
       )}
     </div>
-    </FeatureGate>
   );
 }

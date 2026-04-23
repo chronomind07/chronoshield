@@ -25,8 +25,6 @@ PLAN_COUPONS = {
 }
 
 PLAN_LIMITS = {
-    "free":       {"max_domains": 1, "max_emails": 0},
-    "trial":      {"max_domains": 1, "max_emails": 0},
     "starter":    {"max_domains": 1, "max_emails": 5},
     "business":   {"max_domains": 2, "max_emails": 15},
     "enterprise": {"max_domains": 5, "max_emails": 25},
